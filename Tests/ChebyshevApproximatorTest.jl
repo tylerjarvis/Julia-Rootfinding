@@ -1,4 +1,4 @@
-include("../../Julia-Rootfinding/ChebyshevApproximator.jl")
+include("../../Julia-Rootfinding/yroots/ChebyshevApproximator.jl")
 
 # TESTING TRANSFORM
 # 1 dim test
