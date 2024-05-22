@@ -65,22 +65,30 @@ function getfinal_degree(coeff,tol)
     rho : float
         The geometric rate of convergence of the coefficients
     """
-    # # Set the final degree to the position of the last coefficient greater than convergence value
-    # convergedDeg = int(3 * (len(coeff) - 1) / 4) # Assume convergence at degree 3n/2.
-    # epsVal = 2*np.max(coeff[convergedDeg:]) # Set epsVal to 2x the largest coefficient past degree 3n/2
-    # nonZeroCoeffs = np.where(coeff > epsVal)[0]
-    # degree = 1 if len(nonZeroCoeffs) == 0 else max(1, nonZeroCoeffs[-1])
 
-    # # Set degree to 0 for constant functions (all coefficients but first are less than tol)
-    # if np.all(coeff[1:] < tol):
-    #     degree = 0
+    # Set the final degree to the position of the last coefficient greater than convergence value
+    converged_deg = Int64(div((3 * (length(coeff) - 1) / 4),1)) + 1 # Assume convergence at degree 3n/2.
+    epsval = 2*maximum(coeff[converged_deg:end]) # Set epsVal to 2x the largest coefficient past degree 3n/2
+    nonzero_coeffs_index = [i for i in 1:length(coeff) if coeff[i]>epsval]
+    if isempty(nonzero_coeffs_index) 
+        degree = 1
+    else
+        degree = max(1,nonzero_coeffs_index[end]-1)
+    end
+
+    # Set degree to 0 for constant functions (all coefficients but first are less than tol)
+    if all(x -> x < tol, coeff[2:end])
+        degree = 0
+    end
     
-    # # Calculate the rate of convergence
-    # maxSpot = np.argmax(coeff)
-    # if epsVal == 0: #Avoid divide by 0. epsVal shouldn't be able to shrink by more than 1e-24 cause floating point.
-    #      epsVal = coeff[maxSpot] * 1e-24
-    # rho = (coeff[maxSpot]/epsVal)**(1/((degree - maxSpot) + 1)) 
-    # return degree, epsVal, rho
+    # Calculate the rate of convergence
+    maxspot = argmax(coeff)
+    if epsval == 0 #Avoid divide by 0. epsVal shouldn't be able to shrink by more than 1e-24 cause floating point.
+         epsval = coeff[maxspot] * 1e-24
+    end
+
+    rho = (coeff[maxspot]/epsval)^(1/(degree - (maxspot[2]) + 2))
+    return degree, epsval, rho
 end
 
 function startedconverging(coefflist,tol)

@@ -81,7 +81,74 @@ end
 # end
 
 function getfinal_degree_test()
+    # Test 1 checks if getFinalDegree properly returns a 5th degree 
+    coeff1 = [4 8 .019 .09 .01 .001 .0001 .00005 .00004]
+    tol1 = .02
+    # Expected Outputs
+    degree1 = 5
+    epsval1 = .0002
+    rho1 = 8.325532074018731520936853485182
+    expected_outputs1 = [degree1 epsval1 rho1]
+    degree1o, epsval1o, rho1o = getfinal_degree(coeff1,tol1)
+    @assert isapprox(expected_outputs1, [degree1o epsval1o rho1o]) "getFinalDegree doesn't find 5th degree polynomial approximation correctly"
 
+
+    # Test 2 checks if getFinalDegree properly finds 1 degree polynomials
+    coeff2 = [.5 .02 .00111 .00287 .0028 .0015 .0005 .0004 .0015]
+    tol2 = .01
+    # Expected Outputs
+    degree2 = 1
+    epsval2 = .003
+    rho2 = 12.909944487358055553727353981230
+    expected_outputs2 = [degree2 epsval2 rho2]
+    degree2o, epsval2o, rho2o = getfinal_degree(coeff2,tol2)
+    @assert isapprox(expected_outputs2, [degree2o epsval2o rho2o]) "getFinalDegree doesn't find 1st degree polynomial approximation correctly"
+
+
+    # Test 3 checks if getFinalDegree properly finds constant functions
+    coeff3 = [.5 .001 .00111 .00287 .0028 .0015 .0005 .0004 .0015]
+    tol3 = .01
+    # Expected Outputs
+    degree3 = 0
+    epsval3 = .003
+    rho3 = 166.666666666666657192763523198664
+    expected_outputs3 = [degree3 epsval3 rho3]
+    degree3o, epsval3o, rho3o = getfinal_degree(coeff3,tol3)
+    @assert isapprox(expected_outputs3, [degree3o epsval3o rho3o]) "getFinalDegree doesn't return constant function appropriately"
+
+    # Test 4 checks if degree of 1 is found when there are no non-zero coeff, but all coeff are still greater than the given tolerance
+    coeff4 = [.0002 .0002 .0002 .0002 .0002 .0002 .0002 .0002 .0002]
+    tol4 = .0001
+    # # Expected Outputs
+    degree4 = 1
+    epsval4 = 0.0004
+    rho4 = 0.707106781186547572737310929369
+    expected_outputs4 = [degree4 epsval4 rho4]
+    degree4o, epsval4o, rho4o = getfinal_degree(coeff4,tol4)
+    @assert isapprox(expected_outputs4, [degree4o epsval4o rho4o]) "getFinalDegree doesn't find 1st degree polynomial approximation correctly"
+
+    # Test 5 checks if getFinalDegree correctly handles the case where epsval will be 0 and the case when there are repeate maximum values in the coeff array that could be used in rho calculation
+    coeff5 = [4 3 4 1 .1 .1 0 0 0]
+    tol5 = .02
+    # Expected Outputs
+    degree5 = 5
+    epsval5 = 4 * 1e-24
+    rho5 = 9999.999999999994543031789362430573
+    degree5o, epsval5o, rho5o = getfinal_degree(coeff5,tol5)
+    @assert isapprox(epsval5o,epsval5) "getFinalDegree doesn't deal with epsval = 0 correctly"
+    @assert isapprox(rho5o,rho5) "getFinalDegree doesn't deal with repeat max values correctly"
+    @assert degree5 == degree5o "getFinalDegree doesn't find 5th degree correctly"
+
+    # Test 6 verifies that getFinalDegree correctly evaluates a 6th degree polynomial when an array of length 11 is passed in.
+    coeff6 = [4 8 6 3 .019 .09 .01 .001 .0001 .00005 .00004]
+    tol6 = .02
+    # Expected Outputs
+    degree6 = 6
+    epsval6 = .002
+    rho6 = 3.98422018965844726424
+    expected_outputs6 = [degree6 epsval6 rho6]
+    degree6o, epsval6o, rho6o = getfinal_degree(coeff6,tol6)
+    @assert isapprox(expected_outputs6, [degree6o epsval6o rho6o]) "getFinalDegree doesn't find 6th degree polynomial approximation correctly"
 end
 
 function startedconverging_test()
@@ -112,10 +179,10 @@ end
 
 # RUNNING ALL TESTS
 function alltests()
-        transformpoints_test()
-        # hasconverged_test()
-        getfinal_degree_test()
-        startedconverging_test()
+    transformpoints_test()
+    # hasconverged_test()
+    getfinal_degree_test()
+    startedconverging_test()
 end
 
 alltests()
