@@ -1,6 +1,6 @@
 include("../../Julia-Rootfinding/yroots/ChebyshevApproximator.jl")
 
-function transformpoints_test()
+function test_transformpoints()
     """Tests if the transformpoints functions
     correctly transforms points to the new bounds
     """
@@ -76,11 +76,7 @@ function transformpoints_test()
     @assert isapprox(transformpoints(x_4,a_4,b_4), result_4) "transform 4 dim failed"
 end
 
-# function hasconverged_test()
-
-# end
-
-function getfinal_degree_test()
+function test_getfinal_degree()
     # Test 1 checks if getFinalDegree properly returns a 5th degree 
     coeff1 = [4 8 .019 .09 .01 .001 .0001 .00005 .00004]
     tol1 = .02
@@ -151,7 +147,7 @@ function getfinal_degree_test()
     @assert isapprox(expected_outputs6, [degree6o epsval6o rho6o]) "getFinalDegree doesn't find 6th degree polynomial approximation correctly"
 end
 
-function startedconverging_test()
+function test_startedconverging()
     # .1 tolerance
     # should return true
     coefflist_1 = [3 2 1 .09999999999 .000456 .023 .01 .005]
@@ -177,12 +173,89 @@ function startedconverging_test()
     @assert startedconverging(coefflist_4,tol_4) == false ".0000000000001 tolerance that should have returned false that coefficients have started converging"
 end
 
+function test_check_constant_in_dimension()
+
+    # Functions with bounds for testing
+    f = (x_1,x_2,x_3,x_4) -> x_2 + 0.00000001*x_3
+    bf = [5 5 1.1 5]
+    af = [-5 -5 1 -5]
+    
+    g = (x_1,x_2,x_3,x_4,x_5) -> cos(x_1) + cos(x_2/80) + x_4 + sin(x_5)
+    bg = [.5 .5 5 .5 5]
+    ag = [0 0 -5 0 -5]
+
+    # Tests with low tolerance
+    tol = 1e-15
+    @assert check_constant_in_dimension(f,af,bf,0,tol) == true "should return true since this dimension does not affect the function"
+    @assert check_constant_in_dimension(f,af,bf,1,tol) == false "should return false since this dimension affects the function"
+    @assert check_constant_in_dimension(f,af,bf,2,tol) == false "should return false since this dimension affects the funcion"
+    @assert check_constant_in_dimension(f,af,bf,3,tol) == true "should return true since this dimension does not affect the function"
+                                
+    @assert check_constant_in_dimension(g,ag,bg,0,tol) == false "should return false since this dimension affects the function"
+    @assert check_constant_in_dimension(g,ag,bg,1,tol) == false "should return false since this dimension affects the function"
+    @assert check_constant_in_dimension(g,ag,bg,2,tol) == true "should return true since this dimension does not affect the function"
+    @assert check_constant_in_dimension(g,ag,bg,3,tol) == false "should return false since this dimension affects the function"
+    @assert check_constant_in_dimension(g,ag,bg,4,tol) == false "should return false since this dimension affects the function"
+
+    # Tests with different tolerances where function changes little when selected dimension changes
+    tol = 1e-10
+    @assert check_constant_in_dimension(f,af,bf,2,tol) == false "should return false since this dimension affects the funcion"
+    tol = 1e-7
+    @assert check_constant_in_dimension(f,af,bf,2,tol) == true "should return true since the given change in this dimension is within the tolerance"
+
+    tol = 1e-7
+    @assert check_constant_in_dimension(g,ag,bg,1,tol) == false "should return true since the given change in this dimension is within the tolerance"
+    tol = 1e-4
+    @assert check_constant_in_dimension(g,ag,bg,1,tol) == true "should return false since this dimension affects the function"
+
+
+    # Similar tolerance tests with the same functions, but less room for error
+    tol = 1e-9
+    @assert check_constant_in_dimension(f,af,bf,2,tol) == false "should return false since this dimension affects the funcion"
+    tol = 1e-8
+    @assert check_constant_in_dimension(f,af,bf,2,tol) == true "should return true since the given change in this dimension is within the tolerance"
+
+    tol = 1e-6
+    @assert check_constant_in_dimension(g,ag,bg,1,tol) == false "should return true since the given change in this dimension is within the tolerance"
+    tol = 1e-5
+    @assert check_constant_in_dimension(g,ag,bg,1,tol) == true "should return false since this dimension affects the function"
+
+end
+
+function test_has_converged()
+    # Test case 1: Large tolerance, converged
+    coeff = [0.1  0.0000001  -0.3]
+    coeff2 = [0.11  -0.01  -0.31]
+    tol = 0.01001
+    @assert hasConverged(coeff, coeff2, tol) == true "has converged"
+
+    # Test case 2: Small tolerance, not converged
+    coeff = [0.1 0.2 0.3]
+    coeff2 = [0.11 0.21 0.31]
+    tol = 0.001
+    @assert hasConverged(coeff, coeff2, tol) == false "has not converged"
+
+    # Test case 3: Zero tolerance, not converged
+    coeff = [0.1 0.2 0.3]
+    coeff2 = [0.1000000001 0.2 0.3]
+    tol = 0
+    @assert hasConverged(coeff, coeff2, tol) == false "has not converged"
+
+    # Test case 4: Large number of inputs, converged
+    coeff = [i * 0.1 for i in 0:9]
+    coeff2 = [(i * 0.1) + 0.0001 for i in 0:9]
+    tol = 0.001
+    @assert hasConverged(coeff, coeff2, tol) == true "has converged"
+end
+
+
 # RUNNING ALL TESTS
 function alltests()
-    transformpoints_test()
-    # hasconverged_test()
-    getfinal_degree_test()
-    startedconverging_test()
+    # test_transformpoints()
+    # test_getfinal_degree()
+    # test_startedconverging()
+    # test_check_constant_in_dimension()
+    test_has_converged()
 end
 
 alltests()
