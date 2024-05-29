@@ -1,3 +1,4 @@
+Pkg.add("FFTW")
 function transformpoints(x,a,b)
     """Transforms points from the interval [-1, 1] to the interval [a, b].
 
@@ -168,4 +169,114 @@ function hasConverged(coeff, coeff2, tol)
     coeff3 = copy(coeff2)
 	coeff3[CartesianIndices(coeff)] .-= coeff 
     return maximum(abs.(coeff3)) < tol
+end
+
+function create_meshgrid(point_arrays)
+    num_arrays = length(point_arrays)
+    matrix_lengths = [length(point_array) for point_array in point_arrays]
+    outputs = []
+    for i in 1:num_arrays
+        if i == 1
+            arr = []
+            point_array = point_arrays[i]
+            repeat = prod(matrix_lengths[2:end])
+            for item in point_array
+                for j in 1:repeat
+                push!(arr,item)
+                end
+            end
+            push!(outputs,reshape(arr,matrix_lengths))
+        elseif i == num_arrays
+            arr = []
+            point_array = point_arrays[i]
+            for j in 1:prod(matrix_lengths[1:i-1])
+                for item in point_array
+                    push!(arr,item)
+                end
+            end
+            push!(outputs,reshape(arr,matrix_lengths))
+        else
+            arr = []
+            point_array = point_arrays[i]
+            repeat = prod(matrix_lengths[i+1:end])
+            for j in 1:product(matrix_lengths[1:i-1])
+                for item in point_array
+                    for k in 1:repeat
+                    push!(arr,item)
+                    end
+                end
+            push!(outputs,reshape(arr,matrix_lengths))
+        end
+    end
+    return outputs
+end
+
+
+function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
+    """Generates an approximation of f on [a,b] using Chebyshev polynomials of degs degrees.
+
+    Calculates the values of the function at the Chebyshev grid points and performs the FFT
+    on these points to achieve the desired approximation.
+
+    Parameters
+    ----------
+    f : function from R^n -> R
+        The function to interpolate.
+    a : array
+        The lower bound on the interval.
+    b : array
+        The upper bound on the interval.
+    degs : list of ints
+        A list of the degree of interpolation in each dimension.
+    retSupNorm : bool
+        Whether to return the sup norm of the function.
+
+    Returns
+    -------
+    coeffs : array
+        The coefficients of the Chebyshev interpolating polynomial.
+    supNorm : float (optional)
+        The sup norm of the function, approximated as the maximum function evaluation.
+    """
+    dim = length(degs)
+    # If any dimension has degree 0, turn it to degree 1 (will be sliced out at the end)
+    originalDegs = copy(degs)
+    degs[degs .== 0] .= 1 
+
+    # Get the Chebyshev Grid Points
+    cheb_grid = create_meshgrid([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
+                                    for (deg, a_, b_) in zip(degs, a, b)]...)
+    cheb_pts = hcat(map(x -> x.flatten(), cheb_grid))
+
+    # values = f(*cheb_pts.T).reshape(*(degs+1))
+    values = [f(cheb_pt...) for cheb_pt in cheb_pts].reshape((degs.+1)...)
+    #Get the supNorm if we want it
+    if retSupNorm
+        supNorm = maximum(abs(values))
+    end
+
+    #TODO: Save the duplicated function values when we double the approximation.
+    #Less efficient in higher dimensions, we save 1/2**(dim-1) of the functions evals
+
+
+# ======================????????????????????????????==============================
+    #Do real DCT
+    coeffs = dct(values/prod(degs), type=1, overwrite_x=True)
+    #Divide edges by 2    
+    for d in 0:dim-1
+        coeffs[tuple([slice(None) if i != d else 0 for i in 0:dim-1])] /= 2
+        coeffs[tuple([slice(None) if i != d else degs[i] for i in 0:dim-1])] /= 2
+    end
+
+    #Return the coefficient tensor and the sup norm
+    slices = tuple([slice(0, d+1) for d in originalDegs]) # get values corresponding to originalDegs only
+    if retSupNorm
+        return coeffs[slices], supNorm
+    else
+        return coeffs[slices]
+    end
+
+# 
+import("FFTW")
+
 end

@@ -248,14 +248,130 @@ function test_has_converged()
     @assert hasConverged(coeff, coeff2, tol) == true "has converged"
 end
 
+function test_interval_approximate_nd()
+    f = (x,y,z) -> sin(5*x+y+z)
+    g = (x,y,z) -> cos(x*y*z)
+    h = (x,y,z) -> x^2+y^2-z^2-1
+
+    function1 = g
+    degs1 =  [32 5 5]
+    a1 =  [-4.2 0. 2.]
+    b1 =  [3.3 5.67 3.3]
+    expected_return_val1 = -0.215230482021798591452110827049
+    expected_supnorm1 =  1.0
+    return1, supnorm1 = interval_approximate_nd(function1, degs1, a1, b1, true)
+    @assert isapprox(expected_return_val1,return1[2,1,1])
+    @assert isapprox(expected_supnorm1,supnorm1) "incorrect supnorm"
+
+    function2 = f
+    degs2 =  [32 5 5]
+    a2 =  [-4.2 0. 2.]
+    b2 =  [3.3 5.67 3.3]
+    expected_return_val2 = 0.011960163308428820028161965183
+    expected_supnorm2 = 0.999999291590031313958775172068
+    return2, supnorm2 = interval_approximate_nd(function2, degs2, a2, b2, true)
+    @assert isapprox(expected_return_val2,return2[2,1,1])
+    @assert isapprox(expected_supnorm2,supnorm2) "incorrect supnorm"
+
+    function_3 = h
+    degs_3 =  [2 2 17]
+    a_3 =  [-4.2 0. 2.]
+    b_3 =  [3.3 5.67 3.3]
+    expected_return_val3 = 0
+    expected_supnorm3 = 44.788899999999998158273228909820
+    return3, supnorm3 = interval_approximate_nd(function_3, degs_3, a_3, b_3, true)
+    @assert isapprox(expected_return_val3,return3[2,1,1])
+    @assert isapprox(expected_supnorm3,supnorm3) "incorrect supnorm"
+
+    function4 = g
+    degs4 =  [112 75 42]
+    a4 =  [-4.2 0. 2.]
+    b4 =  [3.3 5.67 3.3]
+    expected_return_val4 = -0.012081908710314039068212110806
+    return4 = interval_approximate_nd(function4, degs4, a4, b4, false)
+    @assert isapprox(expected_return_val4,return4[2,1,1])
+
+    # One dimensional tests
+    oned_function = x -> x^3 + 3
+
+    function5 = oned_function
+    degs5 =  [8]
+    a5 =  [-30.4]
+    b5 =  [15.6]
+    expected_return_val5 = 3041.75
+    supnorm5 = 28091.463999999996303813531994819641
+    return5, supnorm5 = interval_approximate_nd(function5, degs5, a5, b5, true)
+    @assert isapprox(expected_return_val5,return5[3])
+    @assert isapprox(supnorm5,supnorm_5) "incorrect supNorm"
+
+    function6 = oned_function
+    degs6 =  [3]
+    a6 =  [-30.4]
+    b6 =  [15.6]
+    expected_return_val6 = 3041.75
+    return6 = interval_approximate_nd(function6, degs6, a6, b6, false)
+    @assert isaprrox(expected_return_val6,return6[3])
+end
+
+function test_getApproxError()
+    # Inputs
+    degree1 = 5
+    epsval1 = .0002
+    rho1 = 8.325532074018731520936853485182
+
+    degree2 = 1
+    epsval2 = .003
+    rho2 = 12.909944487358055553727353981230
+
+    degree3 = 0
+    epsval3 = .003
+    rho3 = 166.666666666666657192763523198664
+
+    degree4 = 1
+    epsval4 = 0.0004
+    rho4 = 0.707106781186547572737310929369
+
+    degree5 = 5
+    epsval5 = 4 * 1e-24
+    rho5 = 9999.999999999994543031789362430573
+
+    degree6 = 6
+    epsval6 = .002
+    rho6 = 3.98422018965844726424
+
+    degs1 = [degree1]
+    epsilons1 = [epsval1]
+    rhos1 = [rho1]
+    expected_approx_error1 = 0.00002730177111766866
+    @assert isapprox(getApproxError(degs1,epsilons1,rhos1),expected_approx_error1) "wrong error value from 1 dim in getApproxError"
+
+    degs2 = [degree1 degree2 degree3]
+    epsilons2 = [epsval1 epsval2 epsval3]
+    rhos2 = [rho1 rho2 rho3]
+    expected_approx_error2 = 0.00183190901327267099
+    @assert isapprox(getApproxError(degs2,epsilons2,rhos2),expected_approx_error2) "wrong error value getApproxError"
+
+    degs3 = [degree1 degree2 degree3 degree4 degree5 degree6]
+    epsilons3 = [epsval1 epsval2 epsval3 epsval4 epsval5 epsval6]
+    rhos3 = [rho1 rho2 rho3 rho4 rho5 rho6]
+    expected_approx_error3 = -0.87980728903851423972
+    @assert isapprox(getApproxError(degs3,epsilons3,rhos3),expected_approx_error3) "wrong error value getApproxError"
+
+    degs4 = [degree5]
+    epsilons4 = [epsval5]
+    rhos4 = [rho5]
+    expected_approx_error4 = 1e-24
+    @assert isapprox(getApproxError(degs4,epsilons4,rhos4),expected_approx_error4) "wrong error value from getApproxError when error is very small"
+end
 
 # RUNNING ALL TESTS
 function alltests()
-    # test_transformpoints()
-    # test_getfinal_degree()
-    # test_startedconverging()
-    # test_check_constant_in_dimension()
+    test_transformpoints()
+    test_getfinal_degree()
+    test_startedconverging()
+    test_check_constant_in_dimension()
     test_has_converged()
+    test_interval_approximate_nd()
 end
 
 alltests()
