@@ -56,7 +56,7 @@ function getApproxError(degs, epsilons, rhos)
     return approxError
 end
 
-function transformpoints(x,a,b)
+function transformPoints(x,a,b)
     """Transforms points from the interval [-1, 1] to the interval [a, b].
 
     Parameters
@@ -77,7 +77,7 @@ function transformpoints(x,a,b)
     return ((b-a).*x .+(b+a))/2
 end
 
-function getfinal_degree(coeff,tol)
+function getFinalDegree(coeff,tol)
     """Finalize the degree of Chebyshev approximation to use along one particular dimension.
 
     This function is called after the coefficients have started converging at degree n. A degree
@@ -129,7 +129,7 @@ function getfinal_degree(coeff,tol)
     return degree, epsval, rho
 end
 
-function startedconverging(coefflist,tol)
+function startedConverging(coefflist,tol)
     """Determine whether the high-degree coefficients of a given Chebyshev approximation are near 0.
 
     Parameters
@@ -147,7 +147,7 @@ function startedconverging(coefflist,tol)
     return all(x -> x < tol, coefflist[end-4:end])
 end
 
-function check_constant_in_dimension(f,a,b,currdim,tol)
+function checkConstantInDimension(f,a,b,currdim,tol)
     """Check to see if the output of f is not dependent on the input coordinate of a dimension.
     
     Uses predetermined random numbers to find a point x in the interval where f(x) != 0 and checks
