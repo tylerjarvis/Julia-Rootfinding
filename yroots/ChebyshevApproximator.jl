@@ -22,7 +22,7 @@ function getApproxError(degs, epsilons, rhos)
     approxError : Float64
         An upper bound on the approximation error
     """
-    
+
     approxError = 0.0
     
     # Create a partition of coefficients where idxs[i]=1 represents coefficients being greater than
@@ -226,4 +226,46 @@ function hasConverged(coeff, coeff2, tol)
     coeff3 = copy(coeff2)
 	coeff3[CartesianIndices(coeff)] .-= coeff 
     return maximum(abs.(coeff3)) < tol
+end
+
+function create_meshgrid(point_arrays...)
+    num_arrays = length(point_arrays)
+    matrix_lengths = [length(point_array) for point_array in point_arrays]
+    outputs = []
+
+    if num_arrays == 1
+        return point_arrays[1]
+    end
+
+    for i in 1:num_arrays
+        arr = []
+        point_array = point_arrays[i]
+        if i == 1
+            repeat = prod(matrix_lengths[2:end])
+            for item in point_array
+                for j in 1:repeat
+                push!(arr,item)
+                end
+            end
+            push!(outputs,reshape(arr,Tuple(matrix_lengths)))
+        elseif i == num_arrays
+            for j in 1:prod(matrix_lengths[1:i-1])
+                for item in point_array
+                    push!(arr,item)
+                end
+            end
+            push!(outputs,reshape(arr,Tuple(matrix_lengths)))
+        else
+            repeat = prod(matrix_lengths[i+1:end])
+            for j in 1:product(matrix_lengths[1:i-1])
+                for item in point_array
+                    for k in 1:repeat
+                    push!(arr,item)
+                    end
+                end
+            end
+        end
+        push!(outputs,reshape(arr,Tuple(matrix_lengths)))
+    end
+    return outputs
 end
