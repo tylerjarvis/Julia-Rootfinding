@@ -1,4 +1,4 @@
-# import Pkg; Pkg.add("IterTools")
+#import Pkg; Pkg.add("IterTools")
 using IterTools
 
 function getApproxError(degs, epsilons, rhos)
@@ -269,3 +269,18 @@ function create_meshgrid(point_arrays...)
     end
     return outputs
 end
+
+function create_meshgrid2(arrays...)
+    dims = []
+    for array in arrays
+        push!(dims,length(array))
+    end
+    println(dims)
+end
+
+
+
+
+x = [1 2 3 4]
+y = [5 6 7]
+create_meshgrid2(x,y)
