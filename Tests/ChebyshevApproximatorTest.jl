@@ -371,6 +371,7 @@ function alltests()
     test_startedconverging()
     test_check_constant_in_dimension()
     test_has_converged()
+    test_getApproxError()
 end
 
 alltests()
