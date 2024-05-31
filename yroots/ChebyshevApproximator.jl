@@ -1,3 +1,61 @@
+# import Pkg; Pkg.add("IterTools")
+using IterTools
+
+function getApproxError(degs, epsilons, rhos)
+    """
+    Computes an upper bound for the error of the Chebyshev approximation.
+
+    Using the epsilon values and rates of geometric convergence calculated in getChebyshevDegrees,
+    calculates the infinite sum of the coefficients past those used in the approximation.
+    
+    Parameters
+    ----------
+    degs :
+        The degrees used in each dimension of the approximation.
+    epsilons : 
+        The values to which the approximation converged in each dimension.
+    rhos : 
+        The calculated rate of convergence in each dimension.
+    
+    Returns
+    -------
+    approxError : Float64
+        An upper bound on the approximation error
+    """
+    
+    approxError = 0.0
+    
+    # Create a partition of coefficients where idxs[i]=1 represents coefficients being greater than
+    # degs[i] in dimension i and idxs[i]=0 represents coefficients being less than [i] in dimension i.
+    for idxs in product([0, 1], length(degs))
+        # Skip the set of all 0's, corresponding to the terms actually included in the approximation.
+        if sum(idxs) == 0
+            continue
+        end
+        
+        s = 1.0
+        thisEps = 0.0
+        
+        for (i, used) in enumerate(idxs)
+            if used != 0
+                # multiply by infinite sum of coeffs past the degree at which the approx stops in dim i
+                #1/rhos[i] is the rate, so this is (1/rhos[i]) / (1 - 1/rhos[i]) = 1/(rhos[i]-1)
+                s /= (rhos[i] - 1)
+                # The points in this section are going to be < max(epsilons[i] that contribute to it)
+                thisEps = max(thisEps, epsilons[i])
+            else
+                # multiply by the number of coefficients in the approximation along dim i
+                s *= (degs[i] + 1)
+            end
+        end
+        
+        # Append to the error
+        approxError += s * thisEps
+    end
+    
+    return approxError
+end
+
 function transformpoints(x,a,b)
     """Transforms points from the interval [-1, 1] to the interval [a, b].
 
