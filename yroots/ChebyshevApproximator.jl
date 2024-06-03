@@ -10,11 +10,11 @@ function getApproxError(degs, epsilons, rhos)
     
     Parameters
     ----------
-    degs :
+    degs : row array
         The degrees used in each dimension of the approximation.
-    epsilons : 
+    epsilons :  row array
         The values to which the approximation converged in each dimension.
-    rhos : 
+    rhos : row array
         The calculated rate of convergence in each dimension.
     
     Returns
@@ -62,10 +62,10 @@ function transformpoints(x,a,b)
     Parameters
     ----------
     x : array
-        The points to be tranformed.
-    a : array
+        The points to be tranformed. Each row is a point
+    a : row array
         The lower bounds on the interval.
-    b : array
+    b : row array
         The upper bounds on the interval.
 
     Returns
@@ -91,7 +91,7 @@ function getfinal_degree(coeff,tol)
 
     Parameters
     ----------
-    coeff : array
+    coeff : row array
         Absolute values of chebyshev coefficients.
     
     Returns
@@ -134,7 +134,7 @@ function startedconverging(coefflist,tol)
 
     Parameters
     ----------
-    coeffList : array
+    coeffList : row array
         Absolute values of chebyshev coefficients.
     tol : float
         Tolerance (distance from zero) used to determine whether coeffList has started converging.
@@ -157,9 +157,9 @@ function check_constant_in_dimension(f,a,b,currdim,tol)
     ----------
     f : function
         The function being evaluated.
-    a : array
+    a : row array
         The lower bound on the interval.
-    b : array
+    b : row array
         The upper bound on the interval.
     currDim : int
         The dimension being examined.
@@ -211,9 +211,9 @@ function hasConverged(coeff, coeff2, tol)
 
     Parameters
     ----------
-    coeff : array
+    coeff : row array
         Absolute values of chebyshev coefficients of degree n approximation.
-    coeff2 : array
+    coeff2 : row array
         Absolute values of chebyshev coefficients of degree 2n+1 approximation.
     tol : float
         Tolerance (distance from zero) used to determine whether the coefficients have converged.
@@ -228,7 +228,17 @@ function hasConverged(coeff, coeff2, tol)
     return maximum(abs.(coeff3)) < tol
 end
 
-function create_meshgrid(point_arrays...)
+function create_meshgrid(point_arrays)
+    """Creates a meshgrid like numpy would with row vectors and indexing = 'ij'
+
+    Parameters
+    ----------
+    point_arrays : array of row arrays
+
+    Returns
+    -------
+    meshgrids of arrays : Tuple
+    """
     num_arrays = length(point_arrays)
     matrix_lengths = [length(point_array) for point_array in point_arrays]
     outputs = []
@@ -269,3 +279,90 @@ function create_meshgrid(point_arrays...)
     end
     return outputs
 end
+
+function dct(cheb_zeros)
+    dims = collect(size(cheb_zeros))
+    dim_arrays = [collect(range(0,stop=i-1)) for i in dims]
+    meshgrids = create_meshgrid(dim_arrays)
+
+    point_indices = []
+    for meshgrid in meshgrids
+        if (isempty(point_indices))
+            point_indices = vec(meshgrid)
+        else
+        hcat(point_indices,vec(meshgrid))
+        end
+    end
+
+    num_points = length(point_indices[1,:])
+    coeffs = zeros(dims...)
+
+    for col in 1:num_points
+        coeffs[point_indices[:,col].+1...] = cheb_zeros([point_indices[:,col].+1...])*prod([])
+    end
+    return coeffs
+end
+
+function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
+    """Generates an approximation of f on [a,b] using Chebyshev polynomials of degs degrees.
+
+    Calculates the values of the function at the Chebyshev grid points and performs the FFT
+    on these points to achieve the desired approximation.
+
+    Parameters
+    ----------
+    f : function from R^n -> R
+        The function to interpolate.
+    a : row array
+        The lower bound on the interval.
+    b : row array
+        The upper bound on the interval.
+    degs : list of ints
+        A list of the degree of interpolation in each dimension.
+    retSupNorm : bool
+        Whether to return the sup norm of the function.
+
+    Returns
+    -------
+    coeffs : array
+        The coefficients of the Chebyshev interpolating polynomial.
+    supNorm : float (optional)
+        The sup norm of the function, approximated as the maximum function evaluation.
+    """
+    dim = length(degs)
+    # If any dimension has degree 0, turn it to degree 1 (will be sliced out at the end)
+    originalDegs = copy(degs)
+    degs[degs .== 0] .= 1 
+
+    # Get the Chebyshev Grid Points
+    cheb_grid = create_meshgrid([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
+                                    for (deg, a_, b_) in zip(degs, a, b)]...)
+    cheb_pts = hcat(map(x -> x.flatten(), cheb_grid))
+
+    # values = f(*cheb_pts.T).reshape(*(degs+1))
+    values = [f(cheb_pt...) for cheb_pt in cheb_pts].reshape((degs.+1)...)
+    #Get the supNorm if we want it
+    if retSupNorm
+        supNorm = maximum(abs(values))
+    end
+
+    #TODO: Save the duplicated function values when we double the approximation.
+    #Less efficient in higher dimensions, we save 1/2**(dim-1) of the functions evals
+
+
+# ======================????????????????????????????==============================
+    #Do real DCT
+    coeffs = dct(values/prod(degs))
+    #Divide edges by 2    
+    for d in 1:dim
+        coeffs[CartesianIndices([i != d ? Colon() : 1 for i in 1:dim])] ./= 2
+        coeffs[CartesianIndices([i != d ? Colon() : degs[i] for i in 1:dim])] ./= 2
+    end
+
+    #Return the coefficient tensor and the sup norm
+    slices = Tuple([slice(0, d+1) for d in originalDegs]) # get values corresponding to originalDegs only
+    if retSupNorm
+        return coeffs[slices], supNorm
+    else
+        return coeffs[slices]
+    end
