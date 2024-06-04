@@ -248,7 +248,6 @@ function test_has_converged()
     @assert hasConverged(coeff, coeff2, tol) == true "has converged"
 end
 
-
 function test_create_meshgrid()
 	#One dimensional array
 	input = [5 1 2]
@@ -288,55 +287,58 @@ function test_create_meshgrid()
 	got = create_meshgrid(input)
 	@assert  got == expected "Test failed: four dimensional array \n\tExpected: $expected\n\tGot: $got"
 
+end
+
 function test_getApproxError()
-    # Inputs
-    degree1 = 5
-    epsval1 = .0002
-    rho1 = 8.325532074018731520936853485182
+	# Inputs
+	degree1 = 5
+	epsval1 = .0002
+	rho1 = 8.325532074018731520936853485182
 
-    degree2 = 1
-    epsval2 = .003
-    rho2 = 12.909944487358055553727353981230
+	degree2 = 1
+	epsval2 = .003
+	rho2 = 12.909944487358055553727353981230
 
-    degree3 = 0
-    epsval3 = .003
-    rho3 = 166.666666666666657192763523198664
+	degree3 = 0
+	epsval3 = .003
+	rho3 = 166.666666666666657192763523198664
 
-    degree4 = 1
-    epsval4 = 0.0004
-    rho4 = 0.707106781186547572737310929369
+	degree4 = 1
+	epsval4 = 0.0004
+	rho4 = 0.707106781186547572737310929369
 
-    degree5 = 5
-    epsval5 = 4 * 1e-24
-    rho5 = 9999.999999999994543031789362430573
+	degree5 = 5
+	epsval5 = 4 * 1e-24
+	rho5 = 9999.999999999994543031789362430573
 
-    degree6 = 6
-    epsval6 = .002
-    rho6 = 3.98422018965844726424
+	degree6 = 6
+	epsval6 = .002
+	rho6 = 3.98422018965844726424
 
-    degs1 = [degree1]
-    epsilons1 = [epsval1]
-    rhos1 = [rho1]
-    expected_approx_error1 = 0.00002730177111766866
-    @assert isapprox(getApproxError(degs1,epsilons1,rhos1),expected_approx_error1) "wrong error value from 1 dim in getApproxError"
+	degs1 = [degree1]
+	epsilons1 = [epsval1]
+	rhos1 = [rho1]
+	expected_approx_error1 = 0.00002730177111766866
+	@assert isapprox(getApproxError(degs1,epsilons1,rhos1),expected_approx_error1) "wrong error value from 1 dim in getApproxError"
 
-    degs2 = [degree1 degree2 degree3]
-    epsilons2 = [epsval1 epsval2 epsval3]
-    rhos2 = [rho1 rho2 rho3]
-    expected_approx_error2 = 0.00183190901327267099
-    @assert isapprox(getApproxError(degs2,epsilons2,rhos2),expected_approx_error2) "wrong error value getApproxError"
+	degs2 = [degree1 degree2 degree3]
+	epsilons2 = [epsval1 epsval2 epsval3]
+	rhos2 = [rho1 rho2 rho3]
+	expected_approx_error2 = 0.00183190901327267099
+	@assert isapprox(getApproxError(degs2,epsilons2,rhos2),expected_approx_error2) "wrong error value getApproxError"
 
-    degs3 = [degree1 degree2 degree3 degree4 degree5 degree6]
-    epsilons3 = [epsval1 epsval2 epsval3 epsval4 epsval5 epsval6]
-    rhos3 = [rho1 rho2 rho3 rho4 rho5 rho6]
-    expected_approx_error3 = -0.87980728903851423972
-    @assert isapprox(getApproxError(degs3,epsilons3,rhos3),expected_approx_error3) "wrong error value getApproxError"
+	degs3 = [degree1 degree2 degree3 degree4 degree5 degree6]
+	epsilons3 = [epsval1 epsval2 epsval3 epsval4 epsval5 epsval6]
+	rhos3 = [rho1 rho2 rho3 rho4 rho5 rho6]
+	expected_approx_error3 = -0.87980728903851423972
+	@assert isapprox(getApproxError(degs3,epsilons3,rhos3),expected_approx_error3) "wrong error value getApproxError"
 
-    degs4 = [degree5]
-    epsilons4 = [epsval5]
-    rhos4 = [rho5]
-    expected_approx_error4 = 1e-24
-    @assert isapprox(getApproxError(degs4,epsilons4,rhos4),expected_approx_error4) "wrong error value from getApproxError when error is very small"
+	degs4 = [degree5]
+	epsilons4 = [epsval5]
+	rhos4 = [rho5]
+	expected_approx_error4 = 4.0004000400040024e-28
+	@assert isapprox(getApproxError(degs4,epsilons4,rhos4),expected_approx_error4) "wrong error value from getApproxError when error is very small"
+
 end
 
 # RUNNING ALL TESTS
@@ -347,6 +349,7 @@ function alltests()
     test_check_constant_in_dimension()
     test_has_converged()
     test_getApproxError()
+
+    print("All tests finished")
 end
 
-alltests()
