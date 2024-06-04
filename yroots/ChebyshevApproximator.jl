@@ -1,5 +1,3 @@
-# import Pkg; Pkg.add("IterTools")
-
 function getApproxError(degs, epsilons, rhos)
     """
     Computes an upper bound for the error of the Chebyshev approximation.
