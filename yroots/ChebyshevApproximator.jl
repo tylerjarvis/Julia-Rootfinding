@@ -1,3 +1,6 @@
+#import Pkg; Pkg.add("IterTools")
+using IterTools
+
 function getApproxError(degs, epsilons, rhos)
     """
     Computes an upper bound for the error of the Chebyshev approximation.
@@ -53,7 +56,7 @@ function getApproxError(degs, epsilons, rhos)
     return approxError
 end
 
-function transformPoints(x,a,b)
+function transformpoints(x,a,b)
     """Transforms points from the interval [-1, 1] to the interval [a, b].
 
     Parameters
@@ -74,7 +77,7 @@ function transformPoints(x,a,b)
     return ((b-a).*x .+(b+a))/2
 end
 
-function getFinalDegree(coeff,tol)
+function getfinal_degree(coeff,tol)
     """Finalize the degree of Chebyshev approximation to use along one particular dimension.
 
     This function is called after the coefficients have started converging at degree n. A degree
@@ -126,7 +129,7 @@ function getFinalDegree(coeff,tol)
     return degree, epsval, rho
 end
 
-function startedConverging(coefflist,tol)
+function startedconverging(coefflist,tol)
     """Determine whether the high-degree coefficients of a given Chebyshev approximation are near 0.
 
     Parameters
@@ -144,7 +147,7 @@ function startedConverging(coefflist,tol)
     return all(x -> x < tol, coefflist[end-4:end])
 end
 
-function checkConstantInDimension(f,a,b,currdim,tol)
+function check_constant_in_dimension(f,a,b,currdim,tol)
     """Check to see if the output of f is not dependent on the input coordinate of a dimension.
     
     Uses predetermined random numbers to find a point x in the interval where f(x) != 0 and checks
@@ -266,3 +269,59 @@ function create_meshgrid(point_arrays...)
     end
     return outputs
 end
+
+function create_meshgrid2(arrays...)
+    """ Takes arguments x1,x2,...,xn, each xi being a row vector. Does meshgrid. 
+    Output is in the format [X,Y,Z,...], where each element in the list is a matrix.
+    Example: create_meshgrid2([1 2],[3 4]) -> [[1;1;;2;2],[3;4;;3;4]].
+        Note: This would output as [[1 2;1 2],[3 3;4 4]], which looks wrong, but for our 
+        purposes it will be easier to think of the matricies in the first format instead of the printing one.
+        This way, accessing elements and slices is exactly like in Python but reversed.
+    """
+    dims = []
+    for array in arrays
+        push!(dims,length(array))
+    end
+    finals = []
+    for iter in range(1,length(arrays))
+        # Get product of array sizes before and after the current array
+        reps = 1
+        full_reps=1
+        try 
+            reps = prod(dims[iter+1:end])
+        catch end
+        try 
+            full_reps = prod(dims[1:iter-1])
+        catch end
+        # Repeat the current array into a matrix with height and width determined by the sizes before and after
+        newArray = arrays[iter]
+        endArray = repeat((arrays[iter])',full_reps,reps)
+        # Reshape it to the meshgrid array and push it onto our final list
+        push!(finals,reshape(reduce(vcat,endArray';init=[0])[2:end],Tuple(reverse(dims)))) 
+    end
+    return finals
+end
+
+
+#f = (x,y,z) -> x+y+z
+#A = [1 2 3;4 5 6;1 1 1]
+#X = mapslices(x -> f(x...),A;dims=2)
+#println(X)
+#X = f(eachrow(A))
+#println(X)
+#X = [f(A[i,:]...) for i in range(1,2)]
+#println(X)
+#v = [0 1 2; 3 4 5;;; 6 7 8; 9 10 11;;; 12 13 14; 15 16 17;;; 18 19 20; 21 22 23]
+#w =  [0;3;;1;4;;2;5;;;6;7;;8;9;;10;11;;;;0;3;;1;4;;2;5;;;6;7;;8;9;;10;11]
+#println(w)
+#println(w[1,:,2,:])
+#println(size(w))
+#println(v[5,3,2])
+#x = [1;2;;3;4]
+#display(v)
+#println(reverse([1 2 3]))
+x = [1 2]
+y = [2 3 4]
+z = [3 1 6 7]
+#println(create_meshgrid2(x,y,z))
+
