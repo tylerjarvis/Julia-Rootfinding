@@ -56,7 +56,7 @@ function getApproxError(degs, epsilons, rhos)
     return approxError
 end
 
-function transformpoints(x,a,b)
+function transformPoints(x,a,b)
     """Transforms points from the interval [-1, 1] to the interval [a, b].
 
     Parameters
@@ -77,7 +77,7 @@ function transformpoints(x,a,b)
     return ((b-a).*x .+(b+a))/2
 end
 
-function getfinal_degree(coeff,tol)
+function getFinalDegree(coeff,tol)
     """Finalize the degree of Chebyshev approximation to use along one particular dimension.
 
     This function is called after the coefficients have started converging at degree n. A degree
@@ -129,7 +129,7 @@ function getfinal_degree(coeff,tol)
     return degree, epsval, rho
 end
 
-function startedconverging(coefflist,tol)
+function startedConverging(coefflist,tol)
     """Determine whether the high-degree coefficients of a given Chebyshev approximation are near 0.
 
     Parameters
@@ -147,7 +147,7 @@ function startedconverging(coefflist,tol)
     return all(x -> x < tol, coefflist[end-4:end])
 end
 
-function check_constant_in_dimension(f,a,b,currdim,tol)
+function checkConstantInDimension(f,a,b,currdim,tol)
     """Check to see if the output of f is not dependent on the input coordinate of a dimension.
     
     Uses predetermined random numbers to find a point x in the interval where f(x) != 0 and checks
@@ -173,13 +173,13 @@ function check_constant_in_dimension(f,a,b,currdim,tol)
     dim = length(a)
     currdim = currdim + 1
     # First test point x1
-    x1 = transformpoints([0.8984743990614998^(val) for val in 1:dim]',a,b)
+    x1 = transformPoints([0.8984743990614998^(val) for val in 1:dim]',a,b)
     eval1 = f(x1...)
     if isapprox(eval1,0,rtol=tol)
         return false
     end
     # Test how changing x_1[dim] changes the value of f for several values         
-    for val in transformpoints([-0.7996847717584993 0.18546110255464776 -0.13975937255055182 0. 1. -1.]',a[currdim],b[currdim])
+    for val in transformPoints([-0.7996847717584993 0.18546110255464776 -0.13975937255055182 0. 1. -1.]',a[currdim],b[currdim])
         x1[currdim] = val
         eval2 = f(x1...)
         if !isapprox(eval1,eval2,rtol=tol) # Corresponding points gave different values for f(x)
@@ -188,13 +188,13 @@ function check_constant_in_dimension(f,a,b,currdim,tol)
     end
 
     # Second test point x_2
-    x2 = transformpoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim]',a,b)
+    x2 = transformPoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim]',a,b)
     eval1 = f(x2...)
     if isapprox(eval1,0,rtol=tol) # Make sure f(x_2) != 0 (unlikely)
         return false
     end
 
-    for val in transformpoints([-0.17223860129797386,0.10828286380141305,-0.5333148248321931,0.46471703497219596]',a[currdim],b[currdim])
+    for val in transformPoints([-0.17223860129797386,0.10828286380141305,-0.5333148248321931,0.46471703497219596]',a[currdim],b[currdim])
         x2[currdim] = val
         eval2 = f(x2...)
         if !isapprox(eval1,eval2,rtol=tol)
@@ -228,8 +228,9 @@ function hasConverged(coeff, coeff2, tol)
     return maximum(abs.(coeff3)) < tol
 end
 
-function create_meshgrid(point_arrays)
-    """Creates a meshgrid like numpy would with row vectors and indexing = 'ij'
+function createMeshgrid2(point_arrays)
+    """This is Nathan's original implementation. This is currently not used, but we are keeping it to look at for when we optimize the code
+    Creates a meshgrid like numpy would with row vectors and indexing = 'ij'
 
     Parameters
     ----------
@@ -283,7 +284,7 @@ end
 function dct(cheb_zeros)
     dims = collect(size(cheb_zeros))
     dim_arrays = [collect(range(0,stop=i-1)) for i in dims]
-    meshgrids = create_meshgrid2(dim_arrays...)
+    meshgrids = createMeshgrid(dim_arrays...)
 
     point_indices = []
     for meshgrid in meshgrids
@@ -307,14 +308,14 @@ function dct(cheb_zeros)
 
     for col in 1:num_points
         k_vals = point_indices[:,col]
-        coordinate = k_vals.+1...
+        coordinate = k_vals.+1
         coeffs[coordinate] = sum([cheb_zeros[n_vals...]*cos_prod(k_vals,n_vals) for n_vals in n_coords])
     end
 
     return coeffs
 end
 
-function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
+function intervalApproximateND(f, degs, a, b, retSupNorm = false)
     """Generates an approximation of f on [a,b] using Chebyshev polynomials of degs degrees.
 
     Calculates the values of the function at the Chebyshev grid points and performs the FFT
@@ -346,7 +347,7 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     degs[degs .== 0] .= 1 
 
     # Get the Chebyshev Grid Points
-    cheb_grid = create_meshgrid2([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
+    cheb_grid = createMeshgrid([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
                                     for (deg, a_, b_) in zip(degs, a, b)]...)
     cheb_pts = hcat(map(x -> x.flatten(), cheb_grid))
 
@@ -363,7 +364,7 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
         values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
         values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
-    coeffs = dct(values/prod(degs))
+    coeffs = DCT(values/prod(degs))
 
     #Divide edges by 2    
     for d in reverse(1:dim)
@@ -380,10 +381,10 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     end
 end
 
-function create_meshgrid2(arrays...)
+function createMeshgrid(arrays...)
     """ Takes arguments x1,x2,...,xn, each xi being a row vector. Does meshgrid. 
     Output is in the format [X,Y,Z,...], where each element in the list is a matrix.
-    Example: create_meshgrid2([1 2],[3 4]) -> [[1;1;;2;2],[3;4;;3;4]].
+    Example: createMeshgrid([1 2],[3 4]) -> [[1;1;;2;2],[3;4;;3;4]].
         Note: This would output as [[1 2;1 2],[3 3;4 4]], which looks wrong, but for our 
         purposes it will be easier to think of the matricies in the first format instead of the printing one.
         This way, accessing elements and slices is exactly like in Python but reversed.
