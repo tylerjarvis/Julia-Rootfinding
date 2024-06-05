@@ -352,11 +352,17 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
 
 # ======================????????????????????????????==============================
     #Do real DCT
+
+    for d in reverse(1:dim)
+        values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
+        values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
+    end
+
     coeffs = dct(values/prod(degs))
     #Divide edges by 2    
-    for d in 1:dim
-        coeffs[CartesianIndices([i != d ? Colon() : 1 for i in 1:dim])] ./= 2
-        coeffs[CartesianIndices([i != d ? Colon() : degs[i] for i in 1:dim])] ./= 2
+    for d in reverse(1:dim)
+        coeffs[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
+        coeffs[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
 
     #Return the coefficient tensor and the sup norm
