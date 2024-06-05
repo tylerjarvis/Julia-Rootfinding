@@ -240,33 +240,33 @@ end
 	input = [5 1 2]
 	expected = [[5, 1, 2]]
 	got = create_meshgrid2(input)
-	@assert  isapprox(got,expected) "Test failed: One dimensional array \n\tExpected: $expected\n\tGot: $got"
+	@test  isapprox(got,expected) 
 	
 	# 1x1x1 array 
 	expected = [reshape([5],1,1,1),reshape([1],(1,1,1)),reshape([2],(1,1,1))]
 	got = create_meshgrid2([5],[1],[2])
-	@assert  got == expected "Test failed: One dimensional array (nested) \n\tExpected: $expected\n\tGot: $got"
+	@test  got == expected 
 
 	#One dimensional array with unnnecesarily nested values 
 	expected = [[1;1;;2;2],[3;4;;3;4]]
 	got = create_meshgrid2([1 2],[3 4])
-	@assert  got == expected "Test failed: 2x2 array \n\tExpected: $expected\n\tGot: $got"
+	@test  got == expected 
 
 	#Rectangular shape array 2 of length 3 
 	input = [[1 2 3] [4 5 6]]
 	expected = [[1;1;1;;2;2;2;;3;3;3],[4;5;6;;4;5;6;;4;5;6]]
 	got = create_meshgrid2([1 2 3],[4 5 6])
-	@assert  got == expected "Test failed: Rectangular array 3x2 \n\tExpected: $expected\n\tGot: $got"
+	@test  got == expected 
 
 	#Four dimensional array 
 	input = [[1 2] [3 4] [5 6] [7 8]]
 	expected = [[1;1;;1;1;;;1;1;;1;1;;;;2;2;;2;2;;;2;2;;2;2],[3;3;;3;3;;;4;4;;4;4;;;;3;3;;3;3;;;4;4;;4;4],[5;5;;6;6;;;5;5;;6;6;;;;5;5;;6;6;;;5;5;;6;6],[7;8;;7;8;;;7;8;;7;8;;;;7;8;;7;8;;;7;8;;7;8]]
 	got = create_meshgrid2([1 2],[3 4],[5 6],[7 8])
-	@assert  got == expected "Test failed: four dimensional array \n\tExpected: $expected\n\tGot: $got"
+	@test  got == expected 
 end
 
 
-    function test_getApproxError()
+@testset "getApproxError unit tests" begin
     # Inputs
     degree1 = 5
     epsval1 = .0002
