@@ -239,32 +239,31 @@ end
 	#One dimensional array
 	input = [5 1 2]
 	expected = [[5, 1, 2]]
-	got = create_meshgrid2(input)
+	got = createMeshgrid(input)
 	@test  isapprox(got,expected) 
 	
 	# 1x1x1 array 
 	expected = [reshape([5],1,1,1),reshape([1],(1,1,1)),reshape([2],(1,1,1))]
-	got = create_meshgrid2([5],[1],[2])
+	got = createMeshgrid([5],[1],[2])
 	@test  got == expected 
 
 	#One dimensional array with unnnecesarily nested values 
 	expected = [[1;1;;2;2],[3;4;;3;4]]
-	got = create_meshgrid2([1 2],[3 4])
+	got = createMeshgrid([1 2],[3 4])
 	@test  got == expected 
 
 	#Rectangular shape array 2 of length 3 
 	input = [[1 2 3] [4 5 6]]
 	expected = [[1;1;1;;2;2;2;;3;3;3],[4;5;6;;4;5;6;;4;5;6]]
-	got = create_meshgrid2([1 2 3],[4 5 6])
+	got = createMeshgrid([1 2 3],[4 5 6])
 	@test  got == expected 
 
 	#Four dimensional array 
 	input = [[1 2] [3 4] [5 6] [7 8]]
 	expected = [[1;1;;1;1;;;1;1;;1;1;;;;2;2;;2;2;;;2;2;;2;2],[3;3;;3;3;;;4;4;;4;4;;;;3;3;;3;3;;;4;4;;4;4],[5;5;;6;6;;;5;5;;6;6;;;;5;5;;6;6;;;5;5;;6;6],[7;8;;7;8;;;7;8;;7;8;;;;7;8;;7;8;;;7;8;;7;8]]
-	got = create_meshgrid2([1 2],[3 4],[5 6],[7 8])
+	got = createMeshgrid([1 2],[3 4],[5 6],[7 8])
 	@test  got == expected 
 end
-
 
 @testset "getApproxError unit tests" begin
     # Inputs
