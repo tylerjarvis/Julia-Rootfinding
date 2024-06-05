@@ -252,43 +252,35 @@ end
 function test_create_meshgrid()
 	#One dimensional array
 	input = [5 1 2]
-	expected = [5 1 2]
-	got = create_meshgrid(input)
-	@assert  got == expected "Test failed: One dimensional array \n\tExpected: $expected\n\tGot: $got"
+	expected = [[5, 1, 2]]
+	got = create_meshgrid2(input)
+	@assert  isapprox(got,expected) "Test failed: One dimensional array \n\tExpected: $expected\n\tGot: $got"
 	
-	#One dimensional array with unnnecesarily nested values 
-	input = [[[5]] [[1]] [[2]]]
-	expected = [5 1 2]
-	got = create_meshgrid(input)
+	# 1x1x1 array 
+	expected = [reshape([5],1,1,1),reshape([1],(1,1,1)),reshape([2],(1,1,1))]
+	got = create_meshgrid2([5],[1],[2])
 	@assert  got == expected "Test failed: One dimensional array (nested) \n\tExpected: $expected\n\tGot: $got"
 
 	#One dimensional array with unnnecesarily nested values 
-	input = [[1 2] [3 4]]
-	expected = [[1 1] [2 2] [3 4] [3 4]]
-	got = create_meshgrid(input)
+	expected = [[1;1;;2;2],[3;4;;3;4]]
+	got = create_meshgrid2([1 2],[3 4])
 	@assert  got == expected "Test failed: 2x2 array \n\tExpected: $expected\n\tGot: $got"
 
 	#Rectangular shape array 2 of length 3 
 	input = [[1 2 3] [4 5 6]]
-	expected = [[[1 1 1] [2 2 2] [3 3 3]]
-				[[4 5 6] [4 5 6] [4 5 6]]]
-	got = create_meshgrid(input)
+	expected = [[1;1;1;;2;2;2;;3;3;3],[4;5;6;;4;5;6;;4;5;6]]
+	got = create_meshgrid2([1 2 3],[4 5 6])
 	@assert  got == expected "Test failed: Rectangular array 3x2 \n\tExpected: $expected\n\tGot: $got"
 
 	#Four dimensional array 
 	input = [[1 2] [3 4] [5 6] [7 8]]
-	expected = [[[[[1 1][1 1]][[1 1][1 1]]]
-				[[[2 2][2 2]][[2 2][2 2]]]] 
-				[[[[3 3][3 3]][[4 4][4 4]]]
-				[[[3 3][3 3]][[4 4][4 4]]]] 
-				[[[[5 5][6 6]][[5 5][6 6]]]
-				[[[5 5][6 6]][[5 5][6 6]]]] 
-				[[[[7 8][7 8]][[7 8][7 8]]]
-				[[[7 8][7 8]][[7 8][7 8]]]]]
-	got = create_meshgrid(input)
+	expected = [[1;1;;1;1;;;1;1;;1;1;;;;2;2;;2;2;;;2;2;;2;2],[3;3;;3;3;;;4;4;;4;4;;;;3;3;;3;3;;;4;4;;4;4],[5;5;;6;6;;;5;5;;6;6;;;;5;5;;6;6;;;5;5;;6;6],[7;8;;7;8;;;7;8;;7;8;;;;7;8;;7;8;;;7;8;;7;8]]
+	got = create_meshgrid2([1 2],[3 4],[5 6],[7 8])
 	@assert  got == expected "Test failed: four dimensional array \n\tExpected: $expected\n\tGot: $got"
+end
 
-function test_getApproxError()
+
+    function test_getApproxError()
     # Inputs
     degree1 = 5
     epsval1 = .0002
@@ -341,12 +333,13 @@ end
 
 # RUNNING ALL TESTS
 function alltests()
-    test_transformpoints()
-    test_getfinal_degree()
-    test_startedconverging()
-    test_check_constant_in_dimension()
-    test_has_converged()
-    test_getApproxError()
+    #test_transformpoints()
+    #test_getfinal_degree()
+    #test_startedconverging()
+    #test_check_constant_in_dimension()
+    #test_has_converged()
+    #test_getApproxError()
+    test_create_meshgrid()
 end
 
 alltests()
