@@ -170,13 +170,13 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     dim = length(a)
     currdim = currdim + 1
     # First test point x1
-    x1 = transformpoints([0.8984743990614998^(val) for val in 1:dim]',a,b)
+    x1 = transformPoints([0.8984743990614998^(val) for val in 1:dim]',a,b)
     eval1 = f(x1...)
     if isapprox(eval1,0,rtol=tol)
         return false
     end
     # Test how changing x_1[dim] changes the value of f for several values         
-    for val in transformpoints([-0.7996847717584993 0.18546110255464776 -0.13975937255055182 0. 1. -1.]',a[currdim],b[currdim])
+    for val in transformPoints([-0.7996847717584993 0.18546110255464776 -0.13975937255055182 0. 1. -1.]',a[currdim],b[currdim])
         x1[currdim] = val
         eval2 = f(x1...)
         if !isapprox(eval1,eval2,rtol=tol) # Corresponding points gave different values for f(x)
@@ -185,13 +185,13 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     end
 
     # Second test point x_2
-    x2 = transformpoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim]',a,b)
+    x2 = transformPoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim]',a,b)
     eval1 = f(x2...)
     if isapprox(eval1,0,rtol=tol) # Make sure f(x_2) != 0 (unlikely)
         return false
     end
 
-    for val in transformpoints([-0.17223860129797386,0.10828286380141305,-0.5333148248321931,0.46471703497219596]',a[currdim],b[currdim])
+    for val in transformPoints([-0.17223860129797386,0.10828286380141305,-0.5333148248321931,0.46471703497219596]',a[currdim],b[currdim])
         x2[currdim] = val
         eval2 = f(x2...)
         if !isapprox(eval1,eval2,rtol=tol)
@@ -225,7 +225,7 @@ function hasConverged(coeff, coeff2, tol)
     return maximum(abs.(coeff3)) < tol
 end
 
-function create_meshgrid(point_arrays...)
+function createMeshgrid(point_arrays...)
     num_arrays = length(point_arrays)
     matrix_lengths = [length(point_array) for point_array in point_arrays]
     outputs = []
