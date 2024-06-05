@@ -27,7 +27,7 @@ function getApproxError(degs, epsilons, rhos)
     
     # Create a partition of coefficients where idxs[i]=1 represents coefficients being greater than
     # degs[i] in dimension i and idxs[i]=0 represents coefficients being less than [i] in dimension i.
-    for idxs in product([0, 1], length(degs))
+    for idxs in Iterators.product(Iterators.repeated((0,1), length(degs))...)
         # Skip the set of all 0's, corresponding to the terms actually included in the approximation.
         if sum(idxs) == 0
             continue
@@ -37,7 +37,7 @@ function getApproxError(degs, epsilons, rhos)
         thisEps = 0.0
         
         for (i, used) in enumerate(idxs)
-            if used != 0
+            if Bool(used)
                 # multiply by infinite sum of coeffs past the degree at which the approx stops in dim i
                 #1/rhos[i] is the rate, so this is (1/rhos[i]) / (1 - 1/rhos[i]) = 1/(rhos[i]-1)
                 s /= (rhos[i] - 1)
