@@ -1,4 +1,4 @@
-# import Pkg; Pkg.add("IterTools")
+#import Pkg; Pkg.add("IterTools")
 using IterTools
 
 function getApproxError(degs, epsilons, rhos)
@@ -27,7 +27,7 @@ function getApproxError(degs, epsilons, rhos)
     
     # Create a partition of coefficients where idxs[i]=1 represents coefficients being greater than
     # degs[i] in dimension i and idxs[i]=0 represents coefficients being less than [i] in dimension i.
-    for idxs in product([0, 1], length(degs))
+    for idxs in Iterators.product(Iterators.repeated((0,1), length(degs))...)
         # Skip the set of all 0's, corresponding to the terms actually included in the approximation.
         if sum(idxs) == 0
             continue
@@ -37,7 +37,7 @@ function getApproxError(degs, epsilons, rhos)
         thisEps = 0.0
         
         for (i, used) in enumerate(idxs)
-            if used != 0
+            if Bool(used)
                 # multiply by infinite sum of coeffs past the degree at which the approx stops in dim i
                 #1/rhos[i] is the rate, so this is (1/rhos[i]) / (1 - 1/rhos[i]) = 1/(rhos[i]-1)
                 s /= (rhos[i] - 1)
@@ -283,7 +283,7 @@ end
 function dct(cheb_zeros)
     dims = collect(size(cheb_zeros))
     dim_arrays = [collect(range(0,stop=i-1)) for i in dims]
-    meshgrids = create_meshgrid(dim_arrays...)
+    meshgrids = create_meshgrid2(dim_arrays...)
 
     point_indices = []
     for meshgrid in meshgrids
@@ -346,7 +346,7 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     degs[degs .== 0] .= 1 
 
     # Get the Chebyshev Grid Points
-    cheb_grid = create_meshgrid([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
+    cheb_grid = create_meshgrid2([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
                                     for (deg, a_, b_) in zip(degs, a, b)]...)
     cheb_pts = hcat(map(x -> x.flatten(), cheb_grid))
 
@@ -378,4 +378,36 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     else
         return coeffs[reverse(slices)]
     end
+end
+
+function create_meshgrid2(arrays...)
+    """ Takes arguments x1,x2,...,xn, each xi being a row vector. Does meshgrid. 
+    Output is in the format [X,Y,Z,...], where each element in the list is a matrix.
+    Example: create_meshgrid2([1 2],[3 4]) -> [[1;1;;2;2],[3;4;;3;4]].
+        Note: This would output as [[1 2;1 2],[3 3;4 4]], which looks wrong, but for our 
+        purposes it will be easier to think of the matricies in the first format instead of the printing one.
+        This way, accessing elements and slices is exactly like in Python but reversed.
+    """
+    dims = []
+    for array in arrays
+        push!(dims,length(array))
+    end
+    finals = []
+    for iter in range(1,length(arrays))
+        # Get product of array sizes before and after the current array
+        reps = 1
+        full_reps=1
+        try 
+            reps = prod(dims[iter+1:end])
+        catch end
+        try 
+            full_reps = prod(dims[1:iter-1])
+        catch end
+        # Repeat the current array into a matrix with height and width determined by the sizes before and after
+        newArray = arrays[iter]
+        endArray = repeat((arrays[iter])',full_reps,reps)
+        # Reshape it to the meshgrid array and push it onto our final list
+        push!(finals,reshape(reduce(vcat,endArray';init=[0])[2:end],Tuple(reverse(dims)))) 
+    end
+    return finals
 end
