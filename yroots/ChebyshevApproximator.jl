@@ -283,7 +283,7 @@ end
 function dct(cheb_zeros)
     dims = collect(size(cheb_zeros))
     dim_arrays = [collect(range(0,stop=i-1)) for i in dims]
-    meshgrids = create_meshgrid(dim_arrays)
+    meshgrids = create_meshgrid(dim_arrays...)
 
     point_indices = []
     for meshgrid in meshgrids
@@ -296,10 +296,21 @@ function dct(cheb_zeros)
 
     num_points = length(point_indices[1,:])
     coeffs = zeros(dims...)
+    n_coords = [point_indices[:,col] for col in 1:num_points]
+
+
+
+    function cos_prod(n_vals,k_vals)
+        len = length(k_vals)
+        return prod([cos(pi/(dims[i]-1))*(n_vals[i]*k_vals[i]) for i in 1:len])
+    end
 
     for col in 1:num_points
-        coeffs[point_indices[:,col].+1...] = cheb_zeros([point_indices[:,col].+1...])*prod([])
+        k_vals = point_indices[:,col]
+        coordinate = k_vals.+1...
+        coeffs[coordinate] = sum([cheb_zeros[n_vals...]*cos_prod(k_vals,n_vals) for n_vals in n_coords])
     end
+
     return coeffs
 end
 
@@ -345,20 +356,15 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     if retSupNorm
         supNorm = maximum(abs(values))
     end
-
-    #TODO: Save the duplicated function values when we double the approximation.
-    #Less efficient in higher dimensions, we save 1/2**(dim-1) of the functions evals
-
-
-# ======================????????????????????????????==============================
+    
     #Do real DCT
-
+    #Divide edges by 2 for DCT
     for d in reverse(1:dim)
         values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
         values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
-
     coeffs = dct(values/prod(degs))
+
     #Divide edges by 2    
     for d in reverse(1:dim)
         coeffs[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
@@ -366,9 +372,10 @@ function interval_approximate_nd(f, degs, a, b, retSupNorm = false)
     end
 
     #Return the coefficient tensor and the sup norm
-    slices = Tuple([slice(0, d+1) for d in originalDegs]) # get values corresponding to originalDegs only
+    slices = [collect(2:d+1)... for d in originalDegs]... # get values corresponding to originalDegs only
     if retSupNorm
-        return coeffs[slices], supNorm
+        return coeffs[reverse(slices)], supNorm
     else
-        return coeffs[slices]
+        return coeffs[reverse(slices)]
     end
+end
