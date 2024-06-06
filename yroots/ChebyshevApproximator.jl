@@ -412,3 +412,53 @@ function createMeshgrid(arrays...)
     end
     return finals
 end
+
+function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
+    # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
+    """
+
+    Parameters (Note that ::Function and  ::Union{AbstractArray, Real} in the header do the type checking for us. The error will no longer be thrown in our code, but in the built-in stuff)
+    ----------
+    f : function
+        The function to be approximated. NOTE: Valid input is restricted to callable Python functions
+        (including user-created functions) and yroots Polynomial (MultiCheb and MultiPower) objects.
+        String representations of functions are not valid input.
+    a: array-like or single value
+        An array containing the lower bound of the approximation interval in each dimension, listed in
+        dimension order
+    b: array-like or single value
+        An array containing the upper bound of the approximation interval in each dimension, listed in
+        dimension order.
+    relApproxTol : float
+        The relative tolerance used to determine at what degree the Chebyshev coefficients have
+        converged to zero. If all coefficients after degree n are within relApproxTol * supNorm
+        (the maximum function evaluation on the interval) of zero, the coefficients will be
+        considered to have converged at degree n. Defaults to 1e-10.
+    
+    Returns
+    -------
+    coefficient_matrix : numpy array
+        The coefficient matrix of the Chebyshev approximation.
+    error : float
+        The error associated with the approximation.
+    """
+    # Convert single values to arrays. This is in the case that a, b ∈ ℝ
+	a = (a isa Real) ? [a] : a
+	b = (b isa Real) ? [b] : b
+
+	if length(a) ≠ length(b)
+		throw(ValueError("Invalid input: $(length(a)) lower bounds were given but $(length(b)) upper bounds were given"))
+	end
+    
+	#TODO: Figure out if this code runs through the whole array first or not .< may be slower than checking each element individually
+	if any(b .< a)
+		throw(ValueError("Invalid input: at least one lower bound is greater than the corresponding upper bound."))
+	end
+
+    if (methods(f)[1].nargs - 1 ≠ length(a))
+        throw(ValueError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
+    
+    # Generate and return the approximation
+    degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
+    return interval_approximate_nd(f, degs, a, b), getApproxError(degs, epsilons, rhos)
+end
