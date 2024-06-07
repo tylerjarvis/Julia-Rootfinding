@@ -279,7 +279,7 @@ function test_create_meshgrid()
 end
 
 
-    function test_getApproxError()
+function test_getApproxError()
     # Inputs
     degree1 = 5
     epsval1 = .0002
