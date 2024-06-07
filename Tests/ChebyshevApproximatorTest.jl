@@ -5,115 +5,115 @@ using Test
 
 @testset "transformPoints unit tests" begin
     # 1 dim test
-    x_1 = [1;
-            -1;
-            .234775;
+    x_1 = [1;;
+            -1;;
+            .234775;;
             -1/3]
     a_1 = [-5.54]
     b_1 = [1.2]
-    result_1 = [1.2;
-    -5.54;
-    -1.37880825;
+    result_1 = [1.2;;
+    -5.54;;
+    -1.37880825;;
     -3.293333333333333]
     @test isapprox(transformPoints(x_1,a_1,b_1), result_1) # "transform 1 dim failed"
     # 1 dim test without arrays for upper/lower bounds
-    x_1 = [1;
-            -1;
-            .234775;
+    x_1 = [1;;
+            -1;;
+            .234775;;
             -1/3]
     a_1 = -5.54
     b_1 = 1.2
-    result_1 = [1.2;
-                -5.54;
-                -1.37880825;
+    result_1 = [1.2;;
+                -5.54;;
+                -1.37880825;;
                 -3.293333333333333]
     @test isapprox(transformPoints(x_1,a_1,b_1), result_1) # "transform 1 dim failed without array boxes"
     # 2 dim test
-    x_2 = [1 1;
-            -1 -1;
-            .234775 .3456;
-            -1/3 .99999999]
-    a_2 = [-5.54 0]
-    b_2 = [1.2 7.5]
-    result_2 = [1.2 7.5;
-            -5.54 0.0;
-            -1.37880825 5.046;
-            -3.293333333333333 7.4999999625]
+    x_2 = [1;1;;
+            -1;-1;;
+            .234775;.3456;;
+            -1/3;.99999999]
+    a_2 = [-5.54;0]
+    b_2 = [1.2;7.5]
+    result_2 = [1.2;7.5;;
+            -5.54;0.0;;
+            -1.37880825;5.046;;
+            -3.293333333333333;7.4999999625]
     @test isapprox(transformPoints(x_2,a_2,b_2), result_2) # "transform 2 dim failed"
     
     # 3 dim test
-    x_3 = [1 1 1;
-            -1 -1 -1;
-            -.2345555 .5 -.23455;
-            -1/3 .99999999 1]
-    a_3 = [0 0 1]
-    b_3 = [1.2 7.5 4]
-    result_3 = [1.2 7.5 4.;
-            0. 0. 1.;
-            0.4592667 5.625 2.148175;
-            0.4 7.4999999625 4.] 
+    x_3 = [1;1;1;;
+            -1;-1;-1;;
+            -.2345555;.5;-.23455;;
+            -1/3;.99999999;1]
+    a_3 = [0;0;1]
+    b_3 = [1.2;7.5;4]
+    result_3 = [1.2;7.5;4.;;
+            0.;0.;1.;;
+            0.4592667;5.625;2.148175;;
+            0.4;7.4999999625;4.] 
     @test isapprox(transformPoints(x_3,a_3,b_3), result_3) # "transform 3 dim failed"
     # 4 dim test
-    x_4 = [1 1 1 1;
-            -1 -1 -1 -1;
-            4/9 -.9 5/166 -5/8;
-            1/3 -9/10 1 -1]
-    a_4 = [-19 4 7 -8]
-    b_4 = [4/9 21/5 8 0]
-    result_4 = [0.44444444444444 4.2 8 0;
-            -19 4 7 -8;
-            -4.956790123456791263834020355716 4.01 7.515060240963855164864071412012 -6.5;
-            -6.037037037037038089692941866815 4.01 8 -8]
+    x_4 = [1;1;1;1;;
+            -1;-1;-1;-1;;
+            4/9;-.9;5/166;-5/8;;
+            1/3;-9/10;1;-1]
+    a_4 = [-19;4;7;-8]
+    b_4 = [4/9;21/5;8;0]
+    result_4 = [0.44444444444444;4.2;8;0;;
+            -19;4;7;-8;;
+            -4.956790123456791263834020355716;4.01;7.515060240963855164864071412012;-6.5;;
+            -6.037037037037038089692941866815;4.01;8;-8]
     @test isapprox(transformPoints(x_4,a_4,b_4), result_4) # "transform 4 dim failed"
 end
 
 @testset "getFinalDegree unit tests" begin
     # Test 1 checks if getFinalDegree properly returns a 5th degree 
-    coeff1 = [4 8 .019 .09 .01 .001 .0001 .00005 .00004]
+    coeff1 = [4;8;.019;.09;.01;.001;.0001;.00005;.00004]
     tol1 = .02
     # Expected Outputs
     degree1 = 5
     epsval1 = .0002
     rho1 = 8.325532074018731520936853485182
-    expected_outputs1 = [degree1 epsval1 rho1]
+    expected_outputs1 = [degree1;epsval1;rho1]
     degree1o, epsval1o, rho1o = getFinalDegree(coeff1,tol1)
-    @test isapprox(expected_outputs1, [degree1o epsval1o rho1o])
+    @test isapprox(expected_outputs1, [degree1o;epsval1o;rho1o])
 
     # Test 2 checks if getFinalDegree properly finds 1 degree polynomials
-    coeff2 = [.5 .02 .00111 .00287 .0028 .0015 .0005 .0004 .0015]
+    coeff2 = [.5;.02;.00111;.00287;.0028;.0015;.0005;.0004;.0015]
     tol2 = .01
     # Expected Outputs
     degree2 = 1
     epsval2 = .003
     rho2 = 12.909944487358055553727353981230
-    expected_outputs2 = [degree2 epsval2 rho2]
+    expected_outputs2 = [degree2;epsval2;rho2]
     degree2o, epsval2o, rho2o = getFinalDegree(coeff2,tol2)
-    @test isapprox(expected_outputs2, [degree2o epsval2o rho2o])
+    @test isapprox(expected_outputs2, [degree2o;epsval2o;rho2o])
 
     # Test 3 checks if getFinalDegree properly finds constant functions
-    coeff3 = [.5 .001 .00111 .00287 .0028 .0015 .0005 .0004 .0015]
+    coeff3 = [.5;.001;.00111;.00287;.0028;.0015;.0005;.0004;.0015]
     tol3 = .01
     # Expected Outputs
     degree3 = 0
     epsval3 = .003
     rho3 = 166.666666666666657192763523198664
-    expected_outputs3 = [degree3 epsval3 rho3]
+    expected_outputs3 = [degree3;epsval3;rho3]
     degree3o, epsval3o, rho3o = getFinalDegree(coeff3,tol3)
-    @test isapprox(expected_outputs3, [degree3o epsval3o rho3o])
+    @test isapprox(expected_outputs3, [degree3o;epsval3o;rho3o])
 
     # Test 4 checks if degree of 1 is found when there are no non-zero coeff, but all coeff are still greater than the given tolerance
-    coeff4 = [.0002 .0002 .0002 .0002 .0002 .0002 .0002 .0002 .0002]
+    coeff4 = [.0002;.0002;.0002;.0002;.0002;.0002;.0002;.0002;.0002]
     tol4 = .0001
     # # Expected Outputs
     degree4 = 1
     epsval4 = 0.0004
     rho4 = 0.707106781186547572737310929369
-    expected_outputs4 = [degree4 epsval4 rho4]
+    expected_outputs4 = [degree4;epsval4;rho4]
     degree4o, epsval4o, rho4o = getFinalDegree(coeff4,tol4)
-    @test isapprox(expected_outputs4, [degree4o epsval4o rho4o])
+    @test isapprox(expected_outputs4, [degree4o;epsval4o;rho4o])
 
     # Test 5 checks if getFinalDegree correctly handles the case where epsval will be 0 and the case when there are repeate maximum values in the coeff array that could be used in rho calculation
-    coeff5 = [4 3 4 1 .1 .1 0 0 0]
+    coeff5 = [4;3;4;1;.1;.1;0;0;0]
     tol5 = .02
     # Expected Outputs
     degree5 = 5
@@ -125,15 +125,15 @@ end
     @test degree5 == degree5o
 
     # Test 6 verifies that getFinalDegree correctly evaluates a 6th degree polynomial when an array of length 11 is passed in.
-    coeff6 = [4 8 6 3 .019 .09 .01 .001 .0001 .00005 .00004]
+    coeff6 = [4;8;6;3;.019;.09;.01;.001;.0001;.00005;.00004]
     tol6 = .02
     # Expected Outputs
     degree6 = 6
     epsval6 = .002
     rho6 = 3.98422018965844726424
-    expected_outputs6 = [degree6 epsval6 rho6]
+    expected_outputs6 = [degree6;epsval6;rho6]
     degree6o, epsval6o, rho6o = getFinalDegree(coeff6,tol6)
-    @test isapprox(expected_outputs6, [degree6o epsval6o rho6o])
+    @test isapprox(expected_outputs6, [degree6o;epsval6o;rho6o])
 end
 
 @testset "startedConverging unit tests" begin
@@ -329,7 +329,7 @@ end
     expected_supnorm1 =  1.0
     return1, supnorm1 = interval_approximate_nd(function1, degs1, a1, b1, true)
     @test isapprox(expected_return_val1,return1[2,1,1])
-    @test isapprox(expected_supnorm1,supnorm1) "incorrect supnorm"
+    @test isapprox(expected_supnorm1,supnorm1) # "incorrect supnorm"
     function2 = f
     degs2 =  [32 5 5]
     a2 =  [-4.2 0. 2.]
@@ -338,7 +338,7 @@ end
     expected_supnorm2 = 0.999999291590031313958775172068
     return2, supnorm2 = interval_approximate_nd(function2, degs2, a2, b2, true)
     @test isapprox(expected_return_val2,return2[2,1,1])
-    @test isapprox(expected_supnorm2,supnorm2) "incorrect supnorm"
+    @test isapprox(expected_supnorm2,supnorm2) # "incorrect supnorm"
     function_3 = h
     degs_3 =  [2 2 17]
     a_3 =  [-4.2 0. 2.]
@@ -347,7 +347,7 @@ end
     expected_supnorm3 = 44.788899999999998158273228909820
     return3, supnorm3 = interval_approximate_nd(function_3, degs_3, a_3, b_3, true)
     @test isapprox(expected_return_val3,return3[2,1,1])
-    @test isapprox(expected_supnorm3,supnorm3) "incorrect supnorm"
+    @test isapprox(expected_supnorm3,supnorm3) # "incorrect supnorm"
     function4 = g
     degs4 =  [112 75 42]
     a4 =  [-4.2 0. 2.]
@@ -365,7 +365,7 @@ end
     supnorm5 = 28091.463999999996303813531994819641
     return5, supnorm5 = interval_approximate_nd(function5, degs5, a5, b5, true)
     @test isapprox(expected_return_val5,return5[3])
-    @test isapprox(supnorm5,supnorm_5) "incorrect supNorm"
+    @test isapprox(supnorm5,supnorm_5) # "incorrect supNorm"
     function6 = oned_function
     degs6 =  [3]
     a6 =  [-30.4]
