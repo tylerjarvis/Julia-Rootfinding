@@ -1,5 +1,8 @@
-#import Pkg; Pkg.add("IterTools")
-using IterTools
+# using Pkg
+# Pkg.activate(".")
+# Pkg.add("FFTW")
+# Pkg.add("Test")
+import FFTW: r2r
 
 function getApproxError(degs, epsilons, rhos)
     """
@@ -363,8 +366,11 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
         values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
         values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
-    coeffs = DCT(values/prod(degs))
-
+    
+    coeffs = r2r(values/prod(degs), "FFTW.REDFT00") #Perform Type-I DCT
+    #https://github.com/JuliaMath/FFTW.jl/blob/master/src/fft.jl 
+    #http://www.fftw.org/doc/1d-Real_002deven-DFTs-_0028DCTs_0029.html
+    
     #Divide edges by 2    
     for d in reverse(1:dim)
         coeffs[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
