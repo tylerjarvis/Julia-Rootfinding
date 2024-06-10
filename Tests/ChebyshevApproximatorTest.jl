@@ -139,25 +139,25 @@ end
 @testset "startedConverging unit tests" begin
     # .1 tolerance
     # should return true
-    coefflist_1 = [3 2 1 .09999999999 .000456 .023 .01 .005]
+    coefflist_1 = [3;2;1;.09999999999;.000456;.023;.01;.005]
     tol_1 = .1
     @test startedConverging(coefflist_1,tol_1) == true
 
     # .1 tolerance
     # should return false
-    coefflist_2 = [11 5.23 1.34 .09999999999 .000456 .023 .1 .005]
+    coefflist_2 = [11;5.23;1.34;.09999999999;.000456;.023;.1;.005]
     tol_2 = .1
     @test startedConverging(coefflist_2,tol_2) == false
 
     # .0000000000001 tolerance
     # should return true
-    coefflist_3 = [75456 .0000000000000999978866666 .00000000000008726 .000000000000017382 .00000000000000327 .00000000000000019]
+    coefflist_3 = [75456;.0000000000000999978866666;.00000000000008726;.000000000000017382;.00000000000000327;.00000000000000019]
     tol_3 = .0000000000001
     @test startedConverging(coefflist_3,tol_3) == true 
 
     # .0000000000001 tolerance
     # should return false
-    coefflist_4 = [75456 .000000000000100000000000003829 .00000000000008726 .000000000000017382 .00000000000000327 .00000000000000019]
+    coefflist_4 = [75456;.000000000000100000000000003829;.00000000000008726;.000000000000017382;.00000000000000327;.00000000000000019]
     tol_4 = .0000000000001
     @test startedConverging(coefflist_4,tol_4) == false
 end
@@ -166,12 +166,12 @@ end
 
     # Functions with bounds for testing
     f = (x_1,x_2,x_3,x_4) -> x_2 + 0.00000001*x_3
-    bf = [5 5 1.1 5]
-    af = [-5 -5 1 -5]
+    bf = [5;5;1.1;5]
+    af = [-5;-5;1;-5]
     
     g = (x_1,x_2,x_3,x_4,x_5) -> cos(x_1) + cos(x_2/80) + x_4 + sin(x_5)
-    bg = [.5 .5 5 .5 5]
-    ag = [0 0 -5 0 -5]
+    bg = [.5;.5;5;.5;5]
+    ag = [0;0;-5;0;-5]
 
     # Tests with low tolerance
     tol = 1e-15
@@ -211,33 +211,33 @@ end
 
 @testset "hasConverged unit tests" begin
     # Test case 1: Large tolerance, converged
-    coeff = [0.1  0.0000001  -0.3]
-    coeff2 = [0.11  -0.01  -0.31]
+    coeff = [0.1;0.0000001;-0.3]
+    coeff2 = [0.11;-0.01;-0.31]
     tol = 0.01001
     @test hasConverged(coeff, coeff2, tol) == true
 
     # Test case 2: Small tolerance, not converged
-    coeff = [0.1 0.2 0.3]
-    coeff2 = [0.11 0.21 0.31]
+    coeff = [0.1;0.2;0.3]
+    coeff2 = [0.11;0.21;0.31]
     tol = 0.001
     @test hasConverged(coeff, coeff2, tol) == false
 
     # Test case 3: Zero tolerance, not converged
-    coeff = [0.1 0.2 0.3]
-    coeff2 = [0.1000000001 0.2 0.3]
+    coeff = [0.1;0.2;0.3]
+    coeff2 = [0.1000000001;0.2;0.3]
     tol = 0
     @test hasConverged(coeff, coeff2, tol) == false
 
     # Test case 4: Large number of inputs, converged
-    coeff = [i * 0.1 for i in 0:9]
-    coeff2 = [(i * 0.1) + 0.0001 for i in 0:9]
+    coeff = [i * 0.1 for i in 0:9]'
+    coeff2 = [(i * 0.1) + 0.0001 for i in 0:9]'
     tol = 0.001
     @test hasConverged(coeff, coeff2, tol) == true
 end
 
 @testset "createMeshgrid unit tests" begin
 	#One dimensional array
-	input = [5 1 2]
+	input = [5;1;2]
 	expected = [[5, 1, 2]]
 	got = createMeshgrid(input)
 	@test  isapprox(got,expected) 
@@ -249,19 +249,17 @@ end
 
 	#One dimensional array with unnnecesarily nested values 
 	expected = [[1;1;;2;2],[3;4;;3;4]]
-	got = createMeshgrid([1 2],[3 4])
+	got = createMeshgrid([1;2],[3;4])
 	@test  got == expected 
 
 	#Rectangular shape array 2 of length 3 
-	input = [[1 2 3] [4 5 6]]
 	expected = [[1;1;1;;2;2;2;;3;3;3],[4;5;6;;4;5;6;;4;5;6]]
-	got = createMeshgrid([1 2 3],[4 5 6])
+	got = createMeshgrid([1;2;3],[4;5;6])
 	@test  got == expected 
 
 	#Four dimensional array 
-	input = [[1 2] [3 4] [5 6] [7 8]]
 	expected = [[1;1;;1;1;;;1;1;;1;1;;;;2;2;;2;2;;;2;2;;2;2],[3;3;;3;3;;;4;4;;4;4;;;;3;3;;3;3;;;4;4;;4;4],[5;5;;6;6;;;5;5;;6;6;;;;5;5;;6;6;;;5;5;;6;6],[7;8;;7;8;;;7;8;;7;8;;;;7;8;;7;8;;;7;8;;7;8]]
-	got = createMeshgrid([1 2],[3 4],[5 6],[7 8])
+	got = createMeshgrid([1;2],[3;4],[5;6],[7;8])
 	@test  got == expected 
 end
 
@@ -297,15 +295,15 @@ end
 	expected_approx_error1 = 0.00002730177111766866
 	@test isapprox(getApproxError(degs1,epsilons1,rhos1),expected_approx_error1) 
 
-	degs2 = [degree1 degree2 degree3]
-	epsilons2 = [epsval1 epsval2 epsval3]
-	rhos2 = [rho1 rho2 rho3]
+	degs2 = [degree1;degree2;degree3]
+	epsilons2 = [epsval1;epsval2;epsval3]
+	rhos2 = [rho1;rho2;rho3]
 	expected_approx_error2 = 0.00183190901327267099
 	@test isapprox(getApproxError(degs2,epsilons2,rhos2),expected_approx_error2) 
 
-	degs3 = [degree1 degree2 degree3 degree4 degree5 degree6]
-	epsilons3 = [epsval1 epsval2 epsval3 epsval4 epsval5 epsval6]
-	rhos3 = [rho1 rho2 rho3 rho4 rho5 rho6]
+	degs3 = [degree1;degree2;degree3;degree4;degree5;degree6]
+	epsilons3 = [epsval1;epsval2;epsval3;epsval4;epsval5;epsval6]
+	rhos3 = [rho1;rho2;rho3;rho4;rho5;rho6]
 	expected_approx_error3 = -0.87980728903851423972
 	@test isapprox(getApproxError(degs3,epsilons3,rhos3),expected_approx_error3) 
 
@@ -322,36 +320,36 @@ end
     g = (x,y,z) -> cos(x*y*z)
     h = (x,y,z) -> x^2+y^2-z^2-1
     function1 = g
-    degs1 =  [32 5 5]
-    a1 =  [-4.2 0. 2.]
-    b1 =  [3.3 5.67 3.3]
+    degs1 =  [32;5;5]
+    a1 =  [-4.2;0.;2.]
+    b1 =  [3.3;5.67;3.3]
     expected_return_val1 = -0.215230482021798591452110827049
     expected_supnorm1 =  1.0
     return1, supnorm1 = interval_approximate_nd(function1, degs1, a1, b1, true)
     @test isapprox(expected_return_val1,return1[2,1,1])
     @test isapprox(expected_supnorm1,supnorm1) # "incorrect supnorm"
     function2 = f
-    degs2 =  [32 5 5]
-    a2 =  [-4.2 0. 2.]
-    b2 =  [3.3 5.67 3.3]
+    degs2 =  [32;5;5]
+    a2 =  [-4.2;0.;2.]
+    b2 =  [3.3;5.67;3.3]
     expected_return_val2 = 0.011960163308428820028161965183
     expected_supnorm2 = 0.999999291590031313958775172068
     return2, supnorm2 = interval_approximate_nd(function2, degs2, a2, b2, true)
     @test isapprox(expected_return_val2,return2[2,1,1])
     @test isapprox(expected_supnorm2,supnorm2) # "incorrect supnorm"
     function_3 = h
-    degs_3 =  [2 2 17]
-    a_3 =  [-4.2 0. 2.]
-    b_3 =  [3.3 5.67 3.3]
+    degs_3 =  [2;2;17]
+    a_3 =  [-4.2;0.;2.]
+    b_3 =  [3.3;5.67;3.3]
     expected_return_val3 = 0
     expected_supnorm3 = 44.788899999999998158273228909820
     return3, supnorm3 = interval_approximate_nd(function_3, degs_3, a_3, b_3, true)
     @test isapprox(expected_return_val3,return3[2,1,1])
     @test isapprox(expected_supnorm3,supnorm3) # "incorrect supnorm"
     function4 = g
-    degs4 =  [112 75 42]
-    a4 =  [-4.2 0. 2.]
-    b4 =  [3.3 5.67 3.3]
+    degs4 =  [112;75;42]
+    a4 =  [-4.2;0.;2.]
+    b4 =  [3.3;5.67;3.3]
     expected_return_val4 = -0.012081908710314039068212110806
     return4 = interval_approximate_nd(function4, degs4, a4, b4, false)
     @test isapprox(expected_return_val4,return4[2,1,1])
