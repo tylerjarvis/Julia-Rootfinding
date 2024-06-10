@@ -124,8 +124,7 @@ function getFinalDegree(coeff,tol)
     if epsval == 0 #Avoid divide by 0. epsVal shouldn't be able to shrink by more than 1e-24 cause floating point.
          epsval = coeff[maxspot] * 1e-24
     end
-
-    rho = (coeff[maxspot]/epsval)^(1/(degree - (maxspot[2]) + 2))
+    rho = (coeff[maxspot]/epsval)^(1/(degree - (maxspot) + 2))
     return degree, epsval, rho
 end
 
@@ -173,13 +172,13 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     dim = length(a)
     currdim = currdim + 1
     # First test point x1
-    x1 = transformPoints([0.8984743990614998^(val) for val in 1:dim]',a,b)
+    x1 = transformPoints([0.8984743990614998^(val) for val in 1:dim],a,b)
     eval1 = f(x1...)
     if isapprox(eval1,0,rtol=tol)
         return false
     end
     # Test how changing x_1[dim] changes the value of f for several values         
-    for val in transformPoints([-0.7996847717584993 0.18546110255464776 -0.13975937255055182 0. 1. -1.]',a[currdim],b[currdim])
+    for val in transformPoints([-0.7996847717584993;0.18546110255464776;-0.13975937255055182;0.;1.;-1.],a[currdim],b[currdim])
         x1[currdim] = val
         eval2 = f(x1...)
         if !isapprox(eval1,eval2,rtol=tol) # Corresponding points gave different values for f(x)
@@ -188,13 +187,13 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     end
 
     # Second test point x_2
-    x2 = transformPoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim]',a,b)
+    x2 = transformPoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim],a,b)
     eval1 = f(x2...)
     if isapprox(eval1,0,rtol=tol) # Make sure f(x_2) != 0 (unlikely)
         return false
     end
 
-    for val in transformPoints([-0.17223860129797386,0.10828286380141305,-0.5333148248321931,0.46471703497219596]',a[currdim],b[currdim])
+    for val in transformPoints([-0.17223860129797386;0.10828286380141305;-0.5333148248321931;0.46471703497219596],a[currdim],b[currdim])
         x2[currdim] = val
         eval2 = f(x2...)
         if !isapprox(eval1,eval2,rtol=tol)
@@ -373,7 +372,7 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
     end
 
     #Return the coefficient tensor and the sup norm
-    slices = [collect(2:d+1)... for d in originalDegs]... # get values corresponding to originalDegs only
+    slices = [collect(2:d+1) for d in originalDegs] # get values corresponding to originalDegs only
     if retSupNorm
         return coeffs[reverse(slices)], supNorm
     else
@@ -382,9 +381,9 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
 end
 
 function createMeshgrid(arrays...)
-    """ Takes arguments x1,x2,...,xn, each xi being a row vector. Does meshgrid. 
+    """ Takes arguments x1,x2,...,xn, each xi being a 'row' vector. Does meshgrid. 
     Output is in the format [X,Y,Z,...], where each element in the list is a matrix.
-    Example: createMeshgrid([1 2],[3 4]) -> [[1;1;;2;2],[3;4;;3;4]].
+    Example: createMeshgrid([1;2],[3;4]) -> [[1;1;;2;2],[3;4;;3;4]].
         Note: This would output as [[1 2;1 2],[3 3;4 4]], which looks wrong, but for our 
         purposes it will be easier to think of the matricies in the first format instead of the printing one.
         This way, accessing elements and slices is exactly like in Python but reversed.
@@ -406,7 +405,7 @@ function createMeshgrid(arrays...)
         catch end
         # Repeat the current array into a matrix with height and width determined by the sizes before and after
         newArray = arrays[iter]
-        endArray = repeat((arrays[iter])',full_reps,reps)
+        endArray = repeat(arrays[iter],full_reps,reps)
         # Reshape it to the meshgrid array and push it onto our final list
         push!(finals,reshape(reduce(vcat,endArray';init=[0])[2:end],Tuple(reverse(dims)))) 
     end
@@ -457,7 +456,7 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
 
     if (methods(f)[1].nargs - 1 ≠ length(a))
         throw(ValueError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
-    
+    end
     # Generate and return the approximation
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
     return interval_approximate_nd(f, degs, a, b), getApproxError(degs, epsilons, rhos)
