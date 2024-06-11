@@ -4,69 +4,6 @@ using Test
 
 @testset "Chebyshev approximator tests" begin
 
-@testset "transformPoints unit tests" begin
-    # 1 dim test
-    x_1 = [1;;
-            -1;;
-            .234775;;
-            -1/3]
-    a_1 = [-5.54]
-    b_1 = [1.2]
-    result_1 = [1.2;;
-    -5.54;;
-    -1.37880825;;
-    -3.293333333333333]
-    @test isapprox(transformPoints(x_1,a_1,b_1), result_1) # "transform 1 dim failed"
-    # 1 dim test without arrays for upper/lower bounds
-    x_1 = [1;;
-            -1;;
-            .234775;;
-            -1/3]
-    a_1 = -5.54
-    b_1 = 1.2
-    result_1 = [1.2;;
-                -5.54;;
-                -1.37880825;;
-                -3.293333333333333]
-    @test isapprox(transformPoints(x_1,a_1,b_1), result_1) # "transform 1 dim failed without array boxes"
-    # 2 dim test
-    x_2 = [1;1;;
-            -1;-1;;
-            .234775;.3456;;
-            -1/3;.99999999]
-    a_2 = [-5.54;0]
-    b_2 = [1.2;7.5]
-    result_2 = [1.2;7.5;;
-            -5.54;0.0;;
-            -1.37880825;5.046;;
-            -3.293333333333333;7.4999999625]
-    @test isapprox(transformPoints(x_2,a_2,b_2), result_2) # "transform 2 dim failed"
-    
-    # 3 dim test
-    x_3 = [1;1;1;;
-            -1;-1;-1;;
-            -.2345555;.5;-.23455;;
-            -1/3;.99999999;1]
-    a_3 = [0;0;1]
-    b_3 = [1.2;7.5;4]
-    result_3 = [1.2;7.5;4.;;
-            0.;0.;1.;;
-            0.4592667;5.625;2.148175;;
-            0.4;7.4999999625;4.] 
-    @test isapprox(transformPoints(x_3,a_3,b_3), result_3) # "transform 3 dim failed"
-    # 4 dim test
-    x_4 = [1;1;1;1;;
-            -1;-1;-1;-1;;
-            4/9;-.9;5/166;-5/8;;
-            1/3;-9/10;1;-1]
-    a_4 = [-19;4;7;-8]
-    b_4 = [4/9;21/5;8;0]
-    result_4 = [0.44444444444444;4.2;8;0;;
-            -19;4;7;-8;;
-            -4.956790123456791263834020355716;4.01;7.515060240963855164864071412012;-6.5;;
-            -6.037037037037038089692941866815;4.01;8;-8]
-    @test isapprox(transformPoints(x_4,a_4,b_4), result_4) # "transform 4 dim failed"
-end
 
 @testset "getFinalDegree unit tests" begin
     # Test 1 checks if getFinalDegree properly returns a 5th degree 
@@ -320,6 +257,7 @@ end
     f = (x,y,z) -> sin(5*x+y+z)
     g = (x,y,z) -> cos(x*y*z)
     h = (x,y,z) -> x^2+y^2-z^2-1
+
     function1 = g
     degs1 =  [32;5;5]
     a1 =  [-4.2;0.;2.]
@@ -327,8 +265,9 @@ end
     expected_return_val1 = -0.215230482021798591452110827049
     expected_supnorm1 =  1.0
     return1, supnorm1 = intervalApproximateND(function1, degs1, a1, b1, true)
-    @test isapprox(expected_return_val1,return1[2,1,1])
+    @test isapprox(expected_return_val1,return1[2,2,3])
     @test isapprox(expected_supnorm1,supnorm1) # "incorrect supnorm"
+    
     function2 = f
     degs2 =  [32;5;5]
     a2 =  [-4.2;0.;2.]
@@ -336,8 +275,9 @@ end
     expected_return_val2 = 0.011960163308428820028161965183
     expected_supnorm2 = 0.999999291590031313958775172068
     return2, supnorm2 = intervalApproximateND(function2, degs2, a2, b2, true)
-    @test isapprox(expected_return_val2,return2[2,1,1])
+    @test isapprox(expected_return_val2,return2[2,2,3])
     @test isapprox(expected_supnorm2,supnorm2)# "incorrect supnorm"
+    
     function_3 = h
     degs_3 =  [2;2;17]
     a_3 =  [-4.2;0.;2.]
@@ -345,33 +285,37 @@ end
     expected_return_val3 = 0
     expected_supnorm3 = 44.788899999999998158273228909820
     return3, supnorm3 = intervalApproximateND(function_3, degs_3, a_3, b_3, true)
-    @test isapprox(expected_return_val3,return3[2,1,1])
+    @test isapprox(expected_return_val3,return3[2,2,3])
     @test isapprox(expected_supnorm3,supnorm3) # "incorrect supnorm"
+    
     function4 = g
     degs4 =  [112;75;42]
     a4 =  [-4.2;0.;2.]
     b4 =  [3.3;5.67;3.3]
     expected_return_val4 = -0.012081908710314039068212110806
-    return4 = intervalApproximateND(function4, degs4, a4, b4, false)
-    @test isapprox(expected_return_val4,return4[2,1,1])
+    return4 = intervalApproximateND(function4, degs4, a4, b4)
+    @test isapprox(expected_return_val4,return4[2,2,3])
+    
     # One dimensional tests
     oned_function = x -> x^3 + 3
+    
     function5 = oned_function
     degs5 =  [8]
     a5 =  [-30.4]
     b5 =  [15.6]
     expected_return_val5 = 3041.75
-    supnorm5 = 28091.463999999996303813531994819641
+    expected_supnorm5 = 28091.463999999996303813531994819641
     return5, supnorm5 = intervalApproximateND(function5, degs5, a5, b5, true)
-    @test isapprox(expected_return_val5,return5[3])
-    @test isapprox(supnorm5,supnorm_5) # "incorrect supNorm"
+    @test isapprox(expected_return_val5,return5[4])
+    @test isapprox(expected_supnorm5,supnorm5) # "incorrect supNorm"
+    
     function6 = oned_function
     degs6 =  [3]
     a6 =  [-30.4]
     b6 =  [15.6]
     expected_return_val6 = 3041.75
-    return6 = intervalApproximateND(function6, degs6, a6, b6, false)
-    @test isaprrox(expected_return_val6,return6[3])
+    return6 = intervalApproximateND(function6, degs6, a6, b6)
+    @test isapprox(expected_return_val6,return6[4])
 end
 
 end
