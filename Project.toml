@@ -1,4 +1,7 @@
+name = "YRoots"
+version = "0.1.0"
+uuid = "1c392413-6459-4f7b-baea-9bbdff4b4c0c"
+
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
-IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
