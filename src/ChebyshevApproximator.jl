@@ -410,7 +410,7 @@ function createMeshgrid(arrays...)
         newArray = arrays[iter]
         endArray = repeat(arrays[iter],full_reps,reps)
         # Reshape it to the meshgrid array and push it onto our final list
-        push!(finals,reshape(reduce(vcat,endArray';init=[0])[2:end],Tuple(reverse(dims)))) 
+        push!(finals,reshape(collect(Iterators.flatten(endArray')),Tuple(reverse(dims)))) 
     end
     return finals
 end
