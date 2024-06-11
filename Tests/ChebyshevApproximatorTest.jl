@@ -336,7 +336,7 @@ end
     expected_supnorm2 = 0.999999291590031313958775172068
     return2, supnorm2 = intervalApproximateND(function2, degs2, a2, b2, true)
     @test isapprox(expected_return_val2,return2[2,1,1])
-    @test isapprox(expected_supnorm2,supnorm2) # "incorrect supnorm"
+    @test isapprox(expected_supnorm2,supnorm2)# "incorrect supnorm"
     function_3 = h
     degs_3 =  [2;2;17]
     a_3 =  [-4.2;0.;2.]
