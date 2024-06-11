@@ -377,7 +377,7 @@ end
     a6 =  [-30.4]
     b6 =  [15.6]
     expected_return_val6 = 3041.75
-    return6 = intervalApproximateND(function6, degs6, a6, b6)
+    return6 = intervalApproximateND(function6, degs6, a6, b6,false)
     @test isapprox(expected_return_val6,return6[4])
 end
 
