@@ -1,7 +1,5 @@
-include("../../Julia-Rootfinding/yroots/ChebyshevApproximator.jl")
-using Test 
-# using Pkg
-# Pkg.test("MyProject"; coverage=false, test_args=["--verbose"])
+# Import the module to be tested
+include("../../Julia-Rootfinding/src/ChebyshevApproximator.jl")
 
 @testset "Chebyshev approximator tests" begin
 
