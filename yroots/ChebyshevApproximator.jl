@@ -367,7 +367,7 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
         values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
     
-    coeffs = r2r(values/prod(degs), "FFTW.REDFT00") #Perform Type-I DCT
+    coeffs = FFTW.r2r(values./prod(degs), FFTW.REDFT00) #Perform Type-I DCT
     #https://github.com/JuliaMath/FFTW.jl/blob/master/src/fft.jl 
     #http://www.fftw.org/doc/1d-Real_002deven-DFTs-_0028DCTs_0029.html
     
@@ -413,7 +413,7 @@ function createMeshgrid(arrays...)
         newArray = arrays[iter]
         endArray = repeat(arrays[iter],full_reps,reps)
         # Reshape it to the meshgrid array and push it onto our final list
-        push!(finals,reshape(reduce(vcat,endArray';init=[0])[2:end],Tuple(reverse(dims)))) 
+        push!(finals,reshape(collect(Iterators.flatten(endArray')),Tuple(reverse(dims)))) 
     end
     return finals
 end
