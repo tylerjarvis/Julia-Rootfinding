@@ -1,5 +1,6 @@
 # Import the module to be tested
 include("../../Julia-Rootfinding/src/ChebyshevApproximator.jl")
+using Test
 
 @testset "Chebyshev approximator tests" begin
 
