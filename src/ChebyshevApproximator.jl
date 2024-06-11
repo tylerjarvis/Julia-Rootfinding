@@ -1,8 +1,5 @@
-# using Pkg
-# Pkg.activate(".")
-# Pkg.add("FFTW")
-# Pkg.add("Test")
-import FFTW: r2r
+import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transform "kind"
+import FFTW: REDFT00 #This is the enum that represents DCT-I 
 
 function getApproxError(degs, epsilons, rhos)
     """
@@ -367,7 +364,7 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
         values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
     
-    coeffs = FFTW.r2r(values./prod(degs), FFTW.REDFT00) #Perform Type-I DCT
+    coeffs = r2r(values ./ prod(degs), FFTW.REDFT00) #Perform Type-I DCT
     #https://github.com/JuliaMath/FFTW.jl/blob/master/src/fft.jl 
     #http://www.fftw.org/doc/1d-Real_002deven-DFTs-_0028DCTs_0029.html
     
