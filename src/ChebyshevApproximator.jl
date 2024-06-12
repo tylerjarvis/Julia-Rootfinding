@@ -346,40 +346,45 @@ function intervalApproximateND(f, degs, a, b, retSupNorm = false)
     degs[degs .== 0] .= 1 
 
     # Get the Chebyshev Grid Points
-    cheb_grid = createMeshgrid([transformpoints(cos(collect(0:deg)*pi/deg), a_,b_) 
+    cheb_grid = createMeshgrid([transformPoints(cos.(collect(0:deg)*(pi/deg)), a_,b_) 
                                     for (deg, a_, b_) in zip(degs, a, b)]...)
-    cheb_pts = hcat(map(x -> x.flatten(), cheb_grid))
-
-    # values = f(*cheb_pts.T).reshape(*(degs+1))
-    values = [f(cheb_pt...) for cheb_pt in cheb_pts].reshape((degs.+1)...)
+    cheb_pts = reshape(vcat(map(x -> reshape(x,(1,length(x))),cheb_grid)...),(dim,:))
+    values = reshape(mapslices(x->f(x...),cheb_pts,dims=1),Tuple(reverse(degs.+1)))
     #Get the supNorm if we want it
     if retSupNorm
-        supNorm = maximum(abs(values))
+        supNorm = maximum(abs.(values))
     end
-    
-    #Do real DCT
-    #Divide edges by 2 for DCT
-    for d in reverse(1:dim)
-        values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
-        values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
-    end
-    
-    coeffs = r2r(values ./ prod(degs), FFTW.REDFT00) #Perform Type-I DCT
+
+    #Divide edges by 2 for DCT: (UNNECESARY WITH JULIA DCT)
+    # for d in reverse(1:dim)
+    #     values[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
+    #     values[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
+    # end
+
+    #Perform Type-I DCT
     #https://github.com/JuliaMath/FFTW.jl/blob/master/src/fft.jl 
     #http://www.fftw.org/doc/1d-Real_002deven-DFTs-_0028DCTs_0029.html
-    
-    #Divide edges by 2    
+    coeffs = r2r(values ./ prod(degs), REDFT00) 
+    # transpose array if it is only one dimensional since r2r doesn't put it in the format we need
+    if length(degs) == 1
+        coeffs = coeffs'
+    end
+    #Perform Type-I DCT
+    #https://github.com/JuliaMath/FFTW.jl/blob/master/src/fft.jl 
+    #http://www.fftw.org/doc/1d-Real_002deven-DFTs-_0028DCTs_0029.html
+
+    #Divide edges by 2 post DCT
     for d in reverse(1:dim)
         coeffs[[i != d ? Colon() : 1 for i in reverse(1:dim)]...] /= 2
         coeffs[[i != d ? Colon() : degs[i]+1 for i in reverse(1:dim)]...] /= 2
     end
 
     #Return the coefficient tensor and the sup norm
-    slices = [collect(2:d+1) for d in originalDegs] # get values corresponding to originalDegs only
+    slices = [collect(1:d+1) for d in originalDegs] # get values corresponding to originalDegs only
     if retSupNorm
-        return coeffs[reverse(slices)], supNorm
+        return coeffs[reverse(slices)...], supNorm
     else
-        return coeffs[reverse(slices)]
+        return coeffs[reverse(slices)...]
     end
 end
 
