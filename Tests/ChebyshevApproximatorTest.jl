@@ -70,7 +70,7 @@ end
 
 @testset "getFinalDegree unit tests" begin
     # Test 1 checks if getFinalDegree properly returns a 5th degree 
-    coeff1 = [4;8;.019;.09;.01;.001;.0001;.00005;.00004]
+    coeff1 = [4;8;.019;.09;.01;.001;.0001;.00005;.00004;;]
     tol1 = .02
     # Expected Outputs
     degree1 = 5
@@ -348,7 +348,7 @@ end
     expected_return_val3 = 0
     expected_supnorm3 = 44.788899999999998158273228909820
     return3, supnorm3 = intervalApproximateND(function_3, degs_3, a_3, b_3, true)
-    @test isapprox(expected_return_val3,return3[2,2,3])
+    @test isapprox(expected_return_val3,return3[2,2,3];atol=2e-15)
     @test isapprox(expected_supnorm3,supnorm3) # "incorrect supnorm"
     
     function4 = g
@@ -379,6 +379,18 @@ end
     expected_return_val6 = 3041.75
     return6 = intervalApproximateND(function6, degs6, a6, b6,false)
     @test isapprox(expected_return_val6,return6[4])
+
+    # Constant in a dimension test
+    fx = (x,y) -> cos(x)
+
+    function7 = fx
+    degs7 =  [8;0]
+    a7 =  [-pi;-1e-5]
+    b7 =  [pi;1e-5]
+    expected_return_val7 = -0.3042421775305829
+    return5, supnorm5 = intervalApproximateND(function7, degs7, a7, b7, true)
+    @test isapprox(expected_return_val7,return5[1])
+
 end
 
 end
