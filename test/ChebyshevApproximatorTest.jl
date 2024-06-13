@@ -12,6 +12,7 @@ function test_all()
         test_getApproxError()
         test_intervalApproximateND()
         test_getChebyshevDegrees()
+        test_chebApproximate()
     end
 end
 
@@ -337,7 +338,7 @@ function test_intervalApproximateND()
 end
 
 function test_getChebyshevDegrees()
-    @testset "getChebyshevDegrees unit test" begin
+    @testset "getChebyshevDegrees unit tests" begin
         relApproxTol = 1e-10
         f1 = x -> 4.2
         a1 = [-3.2]
@@ -390,5 +391,87 @@ function test_getChebyshevDegrees()
         @test isapprox(expected_cheb_degs5, cheb_degs5)
         @test isapprox(expected_epsilons5, epsilons5)
         @test isapprox(expected_rhos5, rhos5)
+    end
+end
+
+function test_chebApproximate()
+    @testset "chebApproximate unit tests" begin
+        f1 = (x,y,z) -> sin(5*x+y+z)
+        a1 =  [-4.2; 0.; 2.]
+        b1 =  [3.3; 5.67; 3.3]
+        expected_error1 = 0.00000000000006049631
+        expected_coeffs_shape1 = (23, 21, 48)
+        expected_coeffs_val1a = 0.00000000000000000097
+        expected_coeffs_val1b = -0.00000000000000000375
+
+        coeffs1, error1 = chebApproximate(f1,a1,b1)
+        @test isapprox(expected_error1,error1)
+        @test (size(coeffs1) == expected_coeffs_shape1)
+        @test isapprox(expected_coeffs_val1a,coeffs1[23;11;23])
+        @test isapprox(expected_coeffs_val1b,coeffs1[23;21;48])
+
+        f2 = x -> 3.1
+        a2 = [-3.2]
+        b2 = [4.2]
+        expected_error2 = 0
+        expected_coeffs_shape2 = (1,)
+        expected_coeffs2 = [3.10000000000000008882]
+
+        coeffs2, error2 = chebApproximate(f2,a2,b2)
+        @test isapprox(expected_error2,error2)
+        @test (size(coeffs2) == expected_coeffs_shape2)
+        @test isapprox(expected_coeffs2,coeffs2)
+
+        f3 = x -> 2*x^2-1
+        a3 = [-4.3]
+        b3 = [7/9]
+        expected_error3 = 0
+        expected_coeffs_shape3 = (3,)
+        expected_coeffs3 = [11.64898148148147782877;-17.88506172839506191963;6.44595679012345623704]
+
+        coeffs3,error3 = chebApproximate(f3,a3,b3)
+        @test isapprox(expected_error3,error3)
+        @test (size(coeffs3) == expected_coeffs_shape3)
+        @test isapprox(expected_coeffs3,coeffs3)
+
+        f4 = (x,y) -> 1e-5*x+1 + sin(y)
+        a4 = [-1;-4.3]
+        b4 = [1.2;1]
+        expected_error4 = 0.00000000000000006226
+        expected_coeffs_shape4 = (2, 19)
+        expected_coeffs_val4 = -0.00000010641012795735
+
+        coeffs4,error4 = chebApproximate(f4,a4,b4)
+        @test isapprox(expected_error4,error4)
+        @test (size(coeffs4) == expected_coeffs_shape4)
+        @test isapprox(expected_coeffs_val4,coeffs4[13,1])
+
+        f5 = (x1,x2,x3,x4) -> np.sin(7*x1/2) + x3^2 + x4
+        a5 = [-1;3.1;-8/7;-13]
+        b5 = [3.3;5.2;0;12]
+        expected_error5 = 0.00000000000000073350
+        expected_coeffs_shape5 = (2,3,1,29)
+        expected_coeffs_val5a = 0
+        expected_coeffs_val5b = -0.00000000000000013531
+
+        coeffs5,error5 = chebApproximate(f5,a5,b5)
+        @test isapprox(expected_error5,error5)
+        @test (size(coeffs5) == expected_coeffs_shape5)
+        @test isapprox(expected_coeffs_val5a,coeffs5[2,3,1,29])
+        @test isapprox(expected_coeffs_val5b,coeffs5[1,3,1,21])
+
+        f6 = (x1,x2,x3,x4) -> sin(7*x1/2) + x3^2 + x4
+        a6 = [-1;3.1;-8/7;-13]
+        b6 = [3.3;5.2;0;12]
+        expected_error6 = 0.00000000001651317497
+        expected_coeffs_shape6 = (2,3,1,24)
+        expected_coeffs_val6a = -0.2133864467336392678
+        expected_coeffs_val6b = -0.00000000000000077716
+
+        coeffs6,error6 = chebApproximate(f6,a6,b6,relApproxTol=1e-4)
+        @test isapprox(expected_error6,error6)
+        @test (size(coeffs6) == expected_coeffs_shape6)
+        @test isapprox(expected_coeffs_val6a,coeffs6[1,1,1,1])
+        @test isapprox(expected_coeffs_val6b,coeffs6[1,3,1,21])
     end
 end
