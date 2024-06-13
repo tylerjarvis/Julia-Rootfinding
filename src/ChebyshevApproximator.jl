@@ -1,5 +1,6 @@
 import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transform "kind"
 import FFTW: REDFT00 #This is the enum that represents DCT-I 
+using Statistics
 
 function getApproxError(degs, epsilons, rhos)
     """
@@ -22,7 +23,6 @@ function getApproxError(degs, epsilons, rhos)
     approxError : Float64
         An upper bound on the approximation error
     """
-
     approxError = 0.0
     
     # Create a partition of coefficients where idxs[i]=1 represents coefficients being greater than
@@ -121,6 +121,9 @@ function getFinalDegree(coeff,tol)
     
     # Calculate the rate of convergence
     maxspot = argmax(coeff)
+    if length(size(coeff)) > 1
+        maxspot = maxspot[1]
+    end
     if epsval == 0 #Avoid divide by 0. epsVal shouldn't be able to shrink by more than 1e-24 cause floating point.
          epsval = coeff[maxspot] * 1e-24
     end
@@ -146,7 +149,7 @@ function startedConverging(coefflist,tol)
     return all(x -> x < tol, coefflist[end-4:end])
 end
 
-function checkConstantInDimension(f,a,b,currdim,tol)
+function checkConstantInDimension(f,a,b,currdim,relTol,absTol=0)
     """Check to see if the output of f is not dependent on the input coordinate of a dimension.
     
     Uses predetermined random numbers to find a point x in the interval where f(x) != 0 and checks
@@ -174,14 +177,14 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     # First test point x1
     x1 = transformPoints([0.8984743990614998^(val) for val in 1:dim],a,b)
     eval1 = f(x1...)
-    if isapprox(eval1,0,rtol=tol)
+    if isapprox(eval1,0,rtol=relTol,atol=absTol)
         return false
     end
     # Test how changing x_1[dim] changes the value of f for several values         
     for val in transformPoints([-0.7996847717584993;0.18546110255464776;-0.13975937255055182;0.;1.;-1.],a[currdim],b[currdim])
         x1[currdim] = val
         eval2 = f(x1...)
-        if !isapprox(eval1,eval2,rtol=tol) # Corresponding points gave different values for f(x)
+        if !isapprox(eval1,eval2,rtol=relTol,atol=absTol) # Corresponding points gave different values for f(x)
             return false
         end
     end
@@ -189,14 +192,14 @@ function checkConstantInDimension(f,a,b,currdim,tol)
     # Second test point x_2
     x2 = transformPoints([(-0.2598647169391334*(val)/(dim))^2 for val in 1:dim],a,b)
     eval1 = f(x2...)
-    if isapprox(eval1,0,rtol=tol) # Make sure f(x_2) != 0 (unlikely)
+    if isapprox(eval1,0,rtol=relTol,atol=absTol) # Make sure f(x_2) != 0 (unlikely)
         return false
     end
 
     for val in transformPoints([-0.17223860129797386;0.10828286380141305;-0.5333148248321931;0.46471703497219596],a[currdim],b[currdim])
         x2[currdim] = val
         eval2 = f(x2...)
-        if !isapprox(eval1,eval2,rtol=tol)
+        if !isapprox(eval1,eval2,rtol=relTol,atol=absTol)
             return false # Corresponding points gave different values for f(x)
         end
     end
@@ -418,6 +421,107 @@ function createMeshgrid(arrays...)
         push!(finals,reshape(endArray',Tuple(reverse(dims)))) 
     end
     return finals
+end
+
+function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
+    """Compute the minimum degrees in each dimension that give a reliable Chebyshev approximation for f.
+
+    For each dimension, starts with degree 8, generates an approximation, and checks to see if the
+    sequence of coefficients is converging. Repeats, doubling the degree guess until the coefficients
+    are seen to converge to 0. Then calls getFinalDegree to get the exact degree of convergence.
+    
+    Parameters
+    ----------
+    f : function
+        The function being approximated.
+    a : array-like
+        The lower bound on the interval.
+    b : array-like
+        The upper bound on the interval.
+    relApproxTol : float
+        The relative tolerance (distance from zero) used to determine convergence
+    absApproxTol : float
+        The absolute tolerance (distance from zero) used to determine convergence
+    
+    Returns
+    -------
+    chebDegrees : array-like
+        The numerical degree in each dimension.
+    epsilons : array-like
+        The value the coefficients converged to in each dimension.
+    rhos : array-like
+        The rate of convergence in each dimension.
+    """
+    a = reshape(a,:,1)
+    b = reshape(b,:,1)
+    dim = length(a)
+    chebDegrees = (ones(Int,dim,1)*Inf) # the approximation degree in each dimension
+    epsilons = [] # the value the approximation has converged to in each dimension
+    rhos = [] # the calculated rate of convergence in each dimension
+    # Check to see if f varies each input; set degree to 0 if not
+    for currDim in range(1,dim)
+        if checkConstantInDimension(f,a,b,currDim-1,relApproxTol,absApproxTol)
+            chebDegrees[currDim] = 0
+        end
+    end
+    # Find the degree in each dimension seperately
+    for currDim in range(1,dim)
+        if chebDegrees[currDim] == 0 # skip the guessing algorithm if f is constant in dim currDim
+            push!(epsilons,0)
+            push!(rhos,Inf)
+            continue
+        end
+        # Isolate the current dimension by fixing all other dimensions at constant degree approximation
+        degs = ones(Int,dim,1)*(dim<=5 ? 5 : 2)
+        for i in range(1,dim) # save computation by using already computed degrees if lower
+            if chebDegrees[i] < degs[i]
+                degs[i] = chebDegrees[i]
+            end
+        end
+        currGuess = 8 # Take initial guess degree 8 in the current dimension
+        tupleForChunk = tuple(deleteat!([i for i in range(1,dim)],dim+1-currDim)...)
+        while true # Runs until the coefficients are shown to converge to 0 in this dimension
+            if currGuess > 1e5
+                #warnings.warn(f"Approximation bound exceeded!\n\nApproximation degree in dimension {currDim} "
+                #              + "has exceeded 1e5, so the process may not finish.\n\nConsider interrupting "
+                #              "and restarting the process after ensuring that the function(s) inputted are " +
+                #              "continuous and smooth on the approximation interval.\n\n")
+            end
+            #g = lambda *x: f(*x)/totSupNorm
+            degs[currDim] = currGuess
+            coeff, supNorm = intervalApproximateND(f, degs, a, b, true) # get approximation
+            #totSupNorm *= supNorm
+            #print("minmax coeff, supnorm:", np.max(np.min(abs(coeff[:,:,:,0]),axis=2)), supNorm)
+            # Get "average" coefficients along the current dimension
+            coeffChunk = mean(abs.(coeff), dims=tupleForChunk)
+            tol = absApproxTol + supNorm * relApproxTol # Set tolerance for convergence from the supNorm
+            currGuess *= 2 # Ensure the degree guess is doubled in case of another iteration
+
+            # Check if the coefficients have started converging; iterate if they have not.
+            if !startedConverging(coeffChunk, tol)
+                continue
+            end
+            # Since the coefficients have started to converge, check if they have fully converged.
+            # Degree n and 2n+1 are unlikely to have higher degree terms alias into the same spot.
+            degs[currDim] = currGuess + 1 # 2n+1
+            coeff2, supNorm2 = intervalApproximateND(f, degs, a, b, true)
+            #print("minmax coeff2, supnorm2:", np.max(np.min(abs(coeff2[:,:,:,0]),axis=2)), supNorm2)
+            tol = absApproxTol + max(supNorm, supNorm2) * relApproxTol
+            #print(tol)
+            if !hasConverged(coeff, coeff2, tol)
+                continue # Keed doubling if the coefficients have not fully converged.
+            end
+            #print("we converged")
+            # The coefficients have been shown to converge to 0. Get the exact degree where this occurs.
+            coeffChunk = reshape(mean(abs.(coeff2), dims=tupleForChunk),(:,1))
+            deg, eps, rho = getFinalDegree(coeffChunk,tol)
+            chebDegrees[currDim] = deg
+            push!(epsilons,eps)
+            push!(rhos,rho)
+            break # Finished with the current dimension
+        end
+    end
+    return chebDegrees, epsilons, rhos
 end
 
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
