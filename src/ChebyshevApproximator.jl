@@ -77,7 +77,7 @@ function transformPoints(x,a,b)
     return ((b-a).*x .+(b+a))/2
 end
 
-function getFinalDegree(coeff,tol)
+function getFinalDegree(coeff,tol,macheps = 2^-52)
     """Finalize the degree of Chebyshev approximation to use along one particular dimension.
 
     This function is called after the coefficients have started converging at degree n. A degree
@@ -105,9 +105,14 @@ function getFinalDegree(coeff,tol)
     """
 
     # Set the final degree to the position of the last coefficient greater than convergence value
-    converged_deg = Int64(div((3 * (length(coeff) - 1) / 4),1)) + 1 # Assume convergence at degree 3n/2.
-    epsval = 2*maximum(coeff[converged_deg:end]) # Set epsVal to 2x the largest coefficient past degree 3n/2
+    converged_deg = Int64(div((3 * (length(coeff) - 1) / 4),1)) # Assume convergence at degree 3n/2.
+    #println("coeffs: ", coeff)
+    #println("Size thingy: ",coeff[converged_deg+1:end])
+    epsval = 2*max(macheps,maximum(coeff[converged_deg+1:end])) # Set epsVal to 2x the largest coefficient past degree 3n/2
+    #println("e: ",epsval)
+    #println("coeffs: ",coeff)
     nonzero_coeffs_index = [i for i in 1:length(coeff) if coeff[i]>epsval]
+    #println("idxs: ",nonzero_coeffs_index)
     if isempty(nonzero_coeffs_index) 
         degree = 1
     else
@@ -466,6 +471,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     end
     # Find the degree in each dimension seperately
     for currDim in range(1,dim)
+        #println("CurrDim: ",currDim)
         if chebDegrees[currDim] == 0 # skip the guessing algorithm if f is constant in dim currDim
             push!(epsilons,0)
             push!(rhos,Inf)
@@ -481,6 +487,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
         currGuess = 8 # Take initial guess degree 8 in the current dimension
         tupleForChunk = tuple(deleteat!([i for i in range(1,dim)],dim+1-currDim)...)
         while true # Runs until the coefficients are shown to converge to 0 in this dimension
+            #println("yo ",degs)
             if currGuess > 1e5
                 #warnings.warn(f"Approximation bound exceeded!\n\nApproximation degree in dimension {currDim} "
                 #              + "has exceeded 1e5, so the process may not finish.\n\nConsider interrupting "
@@ -490,6 +497,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             #g = lambda *x: f(*x)/totSupNorm
             degs[currDim] = currGuess
             coeff, supNorm = intervalApproximateND(f, degs, a, b, true) # get approximation
+            #println("supNorm: ",supNorm)
             #totSupNorm *= supNorm
             #print("minmax coeff, supnorm:", np.max(np.min(abs(coeff[:,:,:,0]),axis=2)), supNorm)
             # Get "average" coefficients along the current dimension
@@ -507,14 +515,18 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             coeff2, supNorm2 = intervalApproximateND(f, degs, a, b, true)
             #print("minmax coeff2, supnorm2:", np.max(np.min(abs(coeff2[:,:,:,0]),axis=2)), supNorm2)
             tol = absApproxTol + max(supNorm, supNorm2) * relApproxTol
-            #print(tol)
             if !hasConverged(coeff, coeff2, tol)
                 continue # Keed doubling if the coefficients have not fully converged.
             end
             #print("we converged")
             # The coefficients have been shown to converge to 0. Get the exact degree where this occurs.
             coeffChunk = reshape(mean(abs.(coeff2), dims=tupleForChunk),(:,1))
+            #println("Final coeffChunk: ", length(coeffChunk))
+            #println("Tol: ",tol)
             deg, eps, rho = getFinalDegree(coeffChunk,tol)
+            #println("deg: ",deg)
+            #println("eps: ",eps)
+            #println("rho: ",rho)
             chebDegrees[currDim] = deg
             push!(epsilons,eps)
             push!(rhos,rho)
@@ -523,6 +535,12 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     end
     return chebDegrees, epsilons, rhos
 end
+
+#f5 = (x1,x2,x3,x4) -> 1 + 7*sin(1/(13*x2)) + 7*x3 + x4
+#a5 = [-10; 7e-5;-4.3;-2]
+#b5 = [5;2.3;11/9;1]
+#X = getChebyshevDegrees(f5,a5,b5,1e-3)
+#println(X)
 
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
     # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
