@@ -1,6 +1,7 @@
 name = "YRoots"
 version = "0.1.0"
 uuid = "1c392413-6459-4f7b-baea-9bbdff4b4c0c"
+authors = ["Tyler Jarvis https://math.byu.edu/directory/jarvis-tyler"]
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
