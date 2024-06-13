@@ -524,12 +524,6 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     return chebDegrees, epsilons, rhos
 end
 
-f = (x,y,z) -> cos(x)
-a = [-1;-1;-1]
-b = [1;1;1]
-X = getChebyshevDegrees(f,a,b,1e-10) 
-println(X)
-
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
     # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
     """
