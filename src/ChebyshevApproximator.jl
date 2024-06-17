@@ -571,5 +571,5 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
     end
     # Generate and return the approximation
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
-    return interval_approximate_nd(f, degs, a, b), getApproxError(degs, epsilons, rhos)
+    return intervalApproximateND(f, degs, a, b), getApproxError(degs, epsilons, rhos)
 end
