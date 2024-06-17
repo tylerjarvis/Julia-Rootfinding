@@ -460,7 +460,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     a = reshape(a,:,1)
     b = reshape(b,:,1)
     dim = length(a)
-    chebDegrees = (ones(Int,dim,1)*Inf) # the approximation degree in each dimension
+    chebDegrees = ones(Int64,dim,1)*Inf # the approximation degree in each dimension
     epsilons = [] # the value the approximation has converged to in each dimension
     rhos = [] # the calculated rate of convergence in each dimension
     # Check to see if f varies each input; set degree to 0 if not
@@ -533,14 +533,15 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             break # Finished with the current dimension
         end
     end
-    return chebDegrees, epsilons, rhos
+    return Int.(chebDegrees), epsilons, rhos
 end
 
-#f5 = (x1,x2,x3,x4) -> 1 + 7*sin(1/(13*x2)) + 7*x3 + x4
-#a5 = [-10; 7e-5;-4.3;-2]
-#b5 = [5;2.3;11/9;1]
-#X = getChebyshevDegrees(f5,a5,b5,1e-3)
-#println(X)
+
+f3 = (x, y, z) -> 2 * cos(2 * x) + y * sin(y) + z
+a3 = [-10; -3; -4.3]
+b3 = [5; 2.3; 11/9]
+X = getChebyshevDegrees(f3,a3,b3,1e-10)
+println(X)
 
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
     # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
@@ -589,5 +590,5 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
     end
     # Generate and return the approximation
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
-    return interval_approximate_nd(f, degs, a, b), getApproxError(degs, epsilons, rhos)
+    return intervalApproximateND(f, degs, a, b), getApproxError(degs, epsilons, rhos)
 end
