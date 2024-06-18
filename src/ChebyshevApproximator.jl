@@ -77,7 +77,7 @@ function transformPoints(x,a,b)
     return ((b-a).*x .+(b+a))/2
 end
 
-function getFinalDegree(coeff,tol)
+function getFinalDegree(coeff,tol,macheps = 2^-52)
     """Finalize the degree of Chebyshev approximation to use along one particular dimension.
 
     This function is called after the coefficients have started converging at degree n. A degree
@@ -105,8 +105,8 @@ function getFinalDegree(coeff,tol)
     """
 
     # Set the final degree to the position of the last coefficient greater than convergence value
-    converged_deg = Int64(div((3 * (length(coeff) - 1) / 4),1)) + 1 # Assume convergence at degree 3n/2.
-    epsval = 2*maximum(coeff[converged_deg:end]) # Set epsVal to 2x the largest coefficient past degree 3n/2
+    converged_deg = Int64(div((3 * (length(coeff) - 1) / 4),1)) # Assume convergence at degree 3n/2.
+    epsval = 2*max(macheps,maximum(coeff[converged_deg+1:end])) # Set epsVal to 2x the largest coefficient past degree 3n/2
     nonzero_coeffs_index = [i for i in 1:length(coeff) if coeff[i]>epsval]
     if isempty(nonzero_coeffs_index) 
         degree = 1
@@ -455,7 +455,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     a = reshape(a,:,1)
     b = reshape(b,:,1)
     dim = length(a)
-    chebDegrees = (ones(Int,dim,1)*Inf) # the approximation degree in each dimension
+    chebDegrees = ones(Int64,dim,1)*Inf # the approximation degree in each dimension
     epsilons = [] # the value the approximation has converged to in each dimension
     rhos = [] # the calculated rate of convergence in each dimension
     # Check to see if f varies each input; set degree to 0 if not
@@ -491,7 +491,6 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             degs[currDim] = currGuess
             coeff, supNorm = intervalApproximateND(f, degs, a, b, true) # get approximation
             #totSupNorm *= supNorm
-            #print("minmax coeff, supnorm:", np.max(np.min(abs(coeff[:,:,:,0]),axis=2)), supNorm)
             # Get "average" coefficients along the current dimension
             coeffChunk = mean(abs.(coeff), dims=tupleForChunk)
             tol = absApproxTol + supNorm * relApproxTol # Set tolerance for convergence from the supNorm
@@ -505,13 +504,10 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             # Degree n and 2n+1 are unlikely to have higher degree terms alias into the same spot.
             degs[currDim] = currGuess + 1 # 2n+1
             coeff2, supNorm2 = intervalApproximateND(f, degs, a, b, true)
-            #print("minmax coeff2, supnorm2:", np.max(np.min(abs(coeff2[:,:,:,0]),axis=2)), supNorm2)
             tol = absApproxTol + max(supNorm, supNorm2) * relApproxTol
-            #print(tol)
             if !hasConverged(coeff, coeff2, tol)
                 continue # Keed doubling if the coefficients have not fully converged.
             end
-            #print("we converged")
             # The coefficients have been shown to converge to 0. Get the exact degree where this occurs.
             coeffChunk = reshape(mean(abs.(coeff2), dims=tupleForChunk),(:,1))
             deg, eps, rho = getFinalDegree(coeffChunk,tol)
@@ -521,7 +517,7 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
             break # Finished with the current dimension
         end
     end
-    return chebDegrees, epsilons, rhos
+    return Int.(chebDegrees), epsilons, rhos
 end
 
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
