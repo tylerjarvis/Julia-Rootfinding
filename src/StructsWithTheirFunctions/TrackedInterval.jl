@@ -49,6 +49,10 @@ end
 
 """==============================FUNCTIONS FOR TRACKED INTERVAL=============================="""
 
+# def canThrowOut(self):
+# """Ensures that an interval that has not subdivided cannot be thrown out on the final step."""
+# return not self.finalStep or self.canThrowOutFinalStep
+
 
 function canThrowOut(trackedInterval::TrackedInterval)
     """Ensures that an interval that has not subdivided cannot be thrown out on the final step."""
@@ -218,10 +222,24 @@ end
 #             return False
 #     return True
 
+function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedInterval)
+    """Determines if the otherInterval overlaps with the current interval.
+
+    Returns True if the lower bound of one interval is less than the upper bound of the other
+        in EVERY dimension; returns False otherwise."""
+    for (a1,b1,a2,b2) in zip(getIntervalForCombining(trackedInterval), getIntervalForCombining(otherInterval))
+        if (a1 > b2) || (a2 > b1)
+            return false
+        end
+    end
+    return true
+end
+
 # def isPoint(self):
 #     """Determines if the current interval has essentially length 0 in each dimension."""
 #     return np.all(np.abs(self.interval[:,0] - self.interval[:,1]) < 1e-32)
 
+# possibly helpful:
 # result = all(((x, y) -> x + y > 5), zip(arr1, arr2)) something like this
 
 """DEFINITELY INCORRECT"""
