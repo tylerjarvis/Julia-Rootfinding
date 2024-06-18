@@ -1,7 +1,7 @@
 include("../../Julia-Rootfinding/src/ChebyshevApproximator.jl")
 using Test
 
-function test_all()
+function test_all_ChebyshevApproximator()
     @testset "All tests in ChebyshevApproximatorTest.jl" begin
         test_transformPoints()
         test_getFinalDegree()
