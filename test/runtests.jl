@@ -9,11 +9,6 @@ print("Testing...")
 include("ChebyshevApproximatorTest.jl")  
 include("ChebyshevSubdivisionSolverTest.jl") # Adjust the path as needed
 
-function test_all()
-    test_all_ChebyshevApproximator()
-    test_all_ChebyshevSubdivisionSolver()
-end
-
 # Uncomment the lines below to run specific test sets
 # 
 # ============================================ All Tests ============================================
@@ -37,3 +32,9 @@ test_all_ChebyshevSubdivisionSolver()
 # 
 # test_getLinearTerms()
 
+
+# SETUP TO TEST ALL
+function test_all()
+    test_all_ChebyshevApproximator()
+    test_all_ChebyshevSubdivisionSolver()
+end
