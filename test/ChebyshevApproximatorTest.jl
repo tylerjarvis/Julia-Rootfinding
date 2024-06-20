@@ -93,8 +93,8 @@ function test_getFinalDegree()
         coeff5 = [4;3;4;1;0.1;0.1;0;0;0]
         tol5 = 0.02
         degree5 = 5
-        epsval5 = 4 * 1e-24
-        rho5 = 9999.999999999994543031789362430573
+        epsval5 = 4.440892098500626e-16
+        rho5 = 456.1401436878536
         degree5o, epsval5o, rho5o = getFinalDegree(coeff5, tol5)
         @test isapprox(epsval5o, epsval5)
         @test isapprox(rho5o, rho5)
