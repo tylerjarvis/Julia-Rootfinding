@@ -34,3 +34,36 @@ function TwoProdWithSplit(a,b,a1,a2)
     y=a2*b2-(((x-a1*b1)-a2*b1)-a1*b2)
     return x,y
 end 
+
+function getLinearTerms(M)
+    """Gets the linear terms of the Chebyshev coefficient tensor M.
+
+    Uses the fact that the linear terms are located at
+    M[(0,0, ... ,0,1)]
+    M[(0,0, ... ,1,0)]
+    ...
+    M[(0,1, ... ,0,0)]
+    M[(1,0, ... ,0,0)]
+    which are indexes
+    1, M.shape[-1], M.shape[-1]*M.shape[-2], ... when looking at M.ravel().
+
+    Parameters
+    ----------
+    M : array
+        The coefficient array to get the linear terms from
+
+    Returns
+    -------
+    A: array
+        An array with the linear terms of M
+    """
+    A = []
+    spot = 1
+    
+    for i in size(M)
+        push!(A, (i) == 1 ? 0 : reshape(M,(1,length(M)))[spot+1])
+        spot *= (i)
+    end
+
+    return reverse(A) # Return linear terms in dimension order.
+end
