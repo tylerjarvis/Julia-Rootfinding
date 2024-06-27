@@ -67,3 +67,48 @@ function getLinearTerms(M)
 
     return reverse(A) # Return linear terms in dimension order.
 end
+
+function linearCheck1(totalErrs,A,consts)
+    """Takes A, the linear terms of each function approximation, and makes any possible reduction 
+        in the interval based on the totalErrs.
+
+
+    Parameters
+    ----------
+    totalErrs : array
+        gives bounds for the function using error in our approximation and coefficients
+    A : array 
+        each row represents a function with the linear coefficients of each dimension as the columns
+    consts : array
+        constant terms for each function
+
+    Returns
+    -------
+    a : array
+        lower bound
+    b : array
+        lower bound
+        
+    """
+    dim = length(A[1,:])
+    a = -ones(dim) * Inf
+    b = ones(dim) * Inf
+    for row in 1:dim
+        for col in 1:dim
+            if A[col,row] != 0 #Don't bother running the check if the linear term is too small.
+                v1 = totalErrs[row] / abs(A[col,row]) - 1
+                v2 = 2 * consts[row] / A[col,row]
+                if v2 >= 0
+                    c = -v1
+                    d = v1-v2
+                else
+                    c = -v2-v1
+                    d = v1
+                end
+                a[col] = max(a[col], c)
+                b[col] = min(b[col], d)
+            end
+        end
+    end
+    return a, b
+end
