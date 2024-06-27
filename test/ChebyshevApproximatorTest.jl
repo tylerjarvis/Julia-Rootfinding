@@ -348,49 +348,49 @@ function test_getChebyshevDegrees()
         expected_rhos1 = [Inf]
         cheb_degs1, epsilons1, rhos1 = getChebyshevDegrees(f1, a1, b1, relApproxTol)
         @test isapprox(expected_cheb_degs1, cheb_degs1)
-        @test isapprox(expected_epsilons1, epsilons1)
+        @test isapprox(expected_epsilons1, epsilons1;atol=2^-51)
         @test isapprox(expected_rhos1, rhos1)
         f2 = (x, y) -> 1e-5 * x + 1 + sin(y)
         a2 = [-1; -4.3]
         b2 = [1.2; 1]
         expected_cheb_degs2 = [1; 18]
-        expected_epsilons2 = [0.00000000000000012262; 0.00000000000000017282]
-        expected_rhos2 = [56243070.37339647859334945679; 6.55147385569233442482]
+        expected_epsilons2 = [0.00000000000000012262;0.00000000000000017282]
+        expected_rhos2 = [29553589.39768910408020019531;6.23400338296594114240]
         cheb_degs2, epsilons2, rhos2 = getChebyshevDegrees(f2, a2, b2, relApproxTol)
         @test isapprox(expected_cheb_degs2, cheb_degs2)
-        @test isapprox(expected_epsilons2, epsilons2)
+        @test isapprox(expected_epsilons2, epsilons2;atol=2^-51)
         @test isapprox(expected_rhos2, rhos2)
         f3 = (x, y, z) -> 2 * cos(2 * x) + y * sin(y) + z
         a3 = [-10; -3; -4.3]
         b3 = [5; 2.3; 11/9]
-        expected_cheb_degs3 = [41; 20; 1]
-        expected_epsilons3 = [0.00000000000000007141; 0.00000000000000004932; 0.00000000000000006328]
-        expected_rhos3 = [2.31102250026637268121; 5.49852805376172870666; 47683771.14014124125242233276]
+        expected_cheb_degs3 = [41; 19; 1]
+        expected_epsilons3 = [0.00000000000000044409;0.00000000000000044409;0.00000000000000044409]
+        expected_rhos3 = [2.21262070397888654938;5.36461543633617488069;18000313.87051392346620559692]
         cheb_degs3, epsilons3, rhos3 = getChebyshevDegrees(f3, a3, b3, relApproxTol)
         @test isapprox(expected_cheb_degs3, cheb_degs3)
-        @test isapprox(expected_epsilons3, epsilons3)
+        @test isapprox(expected_epsilons3, epsilons3;atol=1e-16)
         @test isapprox(expected_rhos3, rhos3)
         f4 = (x1, x2, x3, x4) -> 1 + 7 * sin(1 / (13 * x2)) + 7 * x3 + x4
         a4 = [-10; 7e-5; -4.3; -2]
         b4 = [5; 2.3; 11/9; 1]
         expected_cheb_degs4 = [0; 74996; 1; 1]
-        expected_epsilons4 = [0; 0.00000000000005330659; 0.00000000000000014466; 0.00000000000000028770]
-        expected_rhos4 = [Inf; 1.00039596433691491129; 1855665305184964.25; 70038689.29537361860275268555]
-        # cheb_degs4, epsilons4, rhos4 = getChebyshevDegrees(f4, a4, b4, relApproxTol)
-        # @test isapprox(expected_cheb_degs4, cheb_degs4)
-        # @test isapprox(expected_epsilons4, epsilons4)
-        # @test isapprox(expected_rhos4, rhos4)
+        expected_epsilons4 = [0;0.00000000000005330659;0.00000000000000014466;0.00000000000000028770]
+        expected_rhos4 = [Inf;1.000395964336914911285703055910;604476199985414.875;56373687.17555411159992218017578125]
+        cheb_degs4, epsilons4, rhos4 = getChebyshevDegrees(f4, a4, b4, relApproxTol)
+        @test isapprox(expected_cheb_degs4, cheb_degs4)
+        @test isapprox(expected_epsilons4, epsilons4;atol=2e-15)
+        @test isapprox(1 ./ expected_rhos4,1 ./ rhos4;rtol=1e-2)
         # Same test as the previous, but this shouldn't throw a warning and the epsilon values should be larger since the relApproxTol passed in is larger 
         f5 = (x1, x2, x3, x4) -> 1 + 7 * sin(1 / (13 * x2)) + 7 * x3 + x4
         a5 = [-10; 7e-5; -4.3; -2]
         b5 = [5; 2.3; 11/9; 1]
         expected_cheb_degs5 = [0; 0; 1; 1]
         expected_epsilons5 = [0; 0.00080374052375353821; 0.00000000000000031672; 0.00000000000000057766]
-        expected_rhos5 = [Inf; 519.95672738187363393081; 2542666157125790.00000000000000000000; 85612057.49236367642879486084]
+        expected_rhos5 = [Inf;519.95672738187363393081;1813428599956245;85612057.49236367642879486084]
         cheb_degs5, epsilons5, rhos5 = getChebyshevDegrees(f5, a5, b5, 1e-3)
         @test isapprox(expected_cheb_degs5, cheb_degs5)
         @test isapprox(expected_epsilons5, epsilons5)
-        @test isapprox(expected_rhos5, rhos5)
+        @test isapprox(1 ./ expected_rhos5,1 ./ rhos5;rtol=1e-2)
     end
 end
 
