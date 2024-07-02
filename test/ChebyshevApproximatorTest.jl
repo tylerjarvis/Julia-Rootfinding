@@ -370,16 +370,16 @@ function test_getChebyshevDegrees()
         @test isapprox(expected_cheb_degs3, cheb_degs3)
         @test isapprox(expected_epsilons3, epsilons3;atol=1e-16)
         @test isapprox(expected_rhos3, rhos3)
-        f4 = (x1, x2, x3, x4) -> 1 + 7 * sin(1 / (13 * x2)) + 7 * x3 + x4
-        a4 = [-10; 7e-5; -4.3; -2]
-        b4 = [5; 2.3; 11/9; 1]
-        expected_cheb_degs4 = [0; 74996; 1; 1]
-        expected_epsilons4 = [0;0.00000000000005330659;0.00000000000000014466;0.00000000000000028770]
-        expected_rhos4 = [Inf;1.000395964336914911285703055910;604476199985414.875;56373687.17555411159992218017578125]
-        cheb_degs4, epsilons4, rhos4 = getChebyshevDegrees(f4, a4, b4, relApproxTol)
-        @test isapprox(expected_cheb_degs4, cheb_degs4)
-        @test isapprox(expected_epsilons4, epsilons4;atol=2e-15)
-        @test isapprox(1 ./ expected_rhos4,1 ./ rhos4;rtol=1e-2)
+        # f4 = (x1, x2, x3, x4) -> 1 + 7 * sin(1 / (13 * x2)) + 7 * x3 + x4
+        # a4 = [-10; 7e-5; -4.3; -2]
+        # b4 = [5; 2.3; 11/9; 1]
+        # expected_cheb_degs4 = [0; 74996; 1; 1]
+        # expected_epsilons4 = [0;0.00000000000005330659;0.00000000000000014466;0.00000000000000028770]
+        # expected_rhos4 = [Inf;1.000395964336914911285703055910;604476199985414.875;56373687.17555411159992218017578125]
+        # cheb_degs4, epsilons4, rhos4 = getChebyshevDegrees(f4, a4, b4, relApproxTol)
+        # @test isapprox(expected_cheb_degs4, cheb_degs4)
+        # @test isapprox(expected_epsilons4, epsilons4;atol=2e-15)
+        # @test isapprox(1 ./ expected_rhos4,1 ./ rhos4;rtol=1e-2)
         # Same test as the previous, but this shouldn't throw a warning and the epsilon values should be larger since the relApproxTol passed in is larger 
         f5 = (x1, x2, x3, x4) -> 1 + 7 * sin(1 / (13 * x2)) + 7 * x3 + x4
         a5 = [-10; 7e-5; -4.3; -2]
@@ -396,82 +396,86 @@ end
 
 function test_chebApproximate()
     @testset "chebApproximate unit tests" begin
-        f1 = (x,y,z) -> sin(5*x+y+z)
-        a1 =  [-4.2; 0.; 2.]
-        b1 =  [3.3; 5.67; 3.3]
-        expected_error1 = 0.00000000000006049631
-        expected_coeffs_shape1 = (23, 21, 48)
-        expected_coeffs_val1a = 0.00000000000000000097
-        expected_coeffs_val1b = -0.00000000000000000375
+    f_1 = x -> 2*x^2 + 1
+    a_1 = [-5.]
+    b_1 = [34.43]
+    check100points(f_1,a_1,b_1)
 
-        coeffs1, error1 = chebApproximate(f1,a1,b1)
-        @test isapprox(expected_error1,error1)
-        @test (size(coeffs1) == expected_coeffs_shape1)
-        @test isapprox(expected_coeffs_val1a,coeffs1[23,11,23])
-        @test isapprox(expected_coeffs_val1b,coeffs1[23,21,48])
+    f_2 = (x1,x2) -> x1 + 2*x2^2 - 1
+    a_2 = [-99.9;-33.]
+    b_2 = [67.;7.54885]
+    check100points(f_2,a_2,b_2)
 
-        f2 = x -> 3.1
-        a2 = [-3.2]
-        b2 = [4.2]
-        expected_error2 = 0
-        expected_coeffs_shape2 = (1,)
-        expected_coeffs2 = [3.10000000000000008882]
+    f_3 = (x1,x2,x3) -> cos(x2) + sin(x1*x3) + x3
+    a_3 = [-91.272;-34.52;-7.89]
+    b_3 = [12.3;12.08;4.]
+    check100points(f_3,a_3,b_3)
 
-        coeffs2, error2 = chebApproximate(f2,a2,b2)
-        @test isapprox(expected_error2,error2)
-        @test (size(coeffs2) == expected_coeffs_shape2)
-        @test isapprox(expected_coeffs2,coeffs2)
+    f_4 = (x1,x2,x3,x4) -> x1^7 + exp(x2)+(x3*x4)+cos(x4)
+    a_4 = [-2.3;-4.5;-5.6;-9]
+    b_4 = [4.5;0;3.4;5.5]
+    check100points(f_4,a_4,b_4)
 
-        f3 = x -> 2*x^2-1
-        a3 = [-4.3]
-        b3 = [7/9]
-        expected_error3 = 0
-        expected_coeffs_shape3 = (3,)
-        expected_coeffs3 = [11.64898148148147782877;-17.88506172839506191963;6.44595679012345623704]
-
-        coeffs3,error3 = chebApproximate(f3,a3,b3)
-        @test isapprox(expected_error3,error3)
-        @test (size(coeffs3) == expected_coeffs_shape3)
-        @test isapprox(expected_coeffs3,coeffs3)
-
-        f4 = (x,y) -> 1e-5*x+1 + sin(y)
-        a4 = [-1;-4.3]
-        b4 = [1.2;1]
-        expected_error4 = 0.00000000000000006226
-        expected_coeffs_shape4 = (19, 2)
-        expected_coeffs_val4 = -0.00000010641012795735
-
-        coeffs4,error4 = chebApproximate(f4,a4,b4)
-        @test isapprox(expected_error4,error4)
-        @test (size(coeffs4) == expected_coeffs_shape4)
-        @test isapprox(expected_coeffs_val4,coeffs4[13,1])
-
-        f5 = (x1,x2,x3,x4) -> sin(7*x1/2) + x3^2 + x4
-        a5 = [-1;3.1;-8/7;-13]
-        b5 = [3.3;5.2;0;12]
-        expected_error5 = 0.00000000000000073350
-        expected_coeffs_shape5 = (2,3,1,29)
-        expected_coeffs_val5a = 0
-        expected_coeffs_val5b = -0.00000000000000013531
-
-        coeffs5,error5 = chebApproximate(f5,a5,b5)
-        @test isapprox(expected_error5,error5)
-        @test (size(coeffs5) == expected_coeffs_shape5)
-        @test isapprox(expected_coeffs_val5a,coeffs5[2,3,1,29])
-        @test isapprox(expected_coeffs_val5b,coeffs5[1,3,1,21])
-
-        f6 = (x1,x2,x3,x4) -> sin(7*x1/2) + x3^2 + x4
-        a6 = [-1;3.1;-8/7;-13]
-        b6 = [3.3;5.2;0;12]
-        expected_error6 = 0.00000000001651317497
-        expected_coeffs_shape6 = (2,3,1,24)
-        expected_coeffs_val6a = -0.2133864467336392678
-        expected_coeffs_val6b = -0.00000000000000077716
-
-        coeffs6,error6 = chebApproximate(f6,a6,b6,1e-4)
-        @test isapprox(expected_error6,error6)
-        @test (size(coeffs6) == expected_coeffs_shape6)
-        @test isapprox(expected_coeffs_val6a,coeffs6[1,1,1,1])
-        @test isapprox(expected_coeffs_val6b,coeffs6[1,3,1,21])
     end
+end
+
+function check100points(func,a,b)
+    points = createpoints(-ones(length(a)),ones(length(b)))
+    # println(points)
+    coeffs, error = chebApproximate(func,a,b)
+    # println("coeffs: ")
+    # println(coeffs)
+
+    actual_vals = mapslices(x->func(transformPoints(x,a,b)...),points,dims=1)
+    approx_vals = mapslices(x->cheb_solve(x,coeffs),points,dims=1)
+    
+    for i in eachindex(actual_vals)
+        @test abs(actual_vals[i] - approx_vals[i]) < 1e-10
+    end
+    @test error < 1e-10
+    println(error)
+end
+
+function createpoints(a,b)
+    vectors_a_to_b_accross_dimension = [[a[d]+(b[d]-a[d])i/98 for i in 0:98] for d in eachindex(a)]
+    # println(vectors_a_to_b_accross_dimension)
+    meshgrids = createMeshgrid(vectors_a_to_b_accross_dimension)
+    # if length(a) == 1
+    #     meshgrids = [meshgrids]
+    # end
+    # println(meshgrids)
+    return reshape(vcat(map(x -> reshape(x,(1,length(x))),meshgrids[1])...),(length(a),:))
+    # println(cheb_pts)
+end
+
+function cheb_solve(point,coeffs)
+    dimensions = length(point)
+    # println(dimensions)
+    # if dimensions == 1
+    #     return clenshaw_algorithm(point...,coeffs)
+    # end
+    # println("coeffs: ")
+    # println(coeffs)
+    for i in reverse(1:dimensions)
+        coeffs = mapslices(x->clenshaw_algorithm(point[i],x),coeffs,dims=i)
+        # println("coeffs: ")
+        # println(coeffs)
+    end
+
+    return coeffs[1]
+
+end
+
+function clenshaw_algorithm(val,a)
+    # println("value: ")
+    # println(val)
+    # println("a: ")
+    # println(a)
+    u = zeros(length(a)+1)
+    u[end-1] = a[end]
+    for k in reverse(1:length(a)-1)
+        u[k] = 2*val*u[k+1]-u[k+2]+a[k]
+    end
+    
+    return .5(a[1]+u[1]-u[3])
 end

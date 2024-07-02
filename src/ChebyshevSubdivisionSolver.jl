@@ -112,3 +112,42 @@ function linearCheck1(totalErrs,A,consts)
     end
     return a, b
 end
+
+# function ReduceSolvedDim(Ms, errors, trackedInterval, dim)
+    
+#     val = (trackedInterval.interval[dim+1,1] + trackedInterval.interval[dim+1,2]) / 2
+#     # Get the matrix of the linear terms
+#     A = [getLinearTerms(M) for M in Ms]
+#     # Figure out which linear approximation is flattest in the dimension we want to reduce
+#     dot_prods = transpose((transpose(A)/sqrt(sum(A^2, dims = 2))))[:,dim+1]
+#     func_idx = argmax(dot_prods)
+#     # Remove that polynomial from Ms and errors
+#     deleteat!(Ms,func_idx)
+#      """ HOW DO NP.DELETE """
+#     new_errors = np.delete(errors,func_idx) 
+
+#     # Evaluate other polynomials on the solved dimension
+#     # Ms are already scaled, so we just want to evaluate the T_i(x_dim)'s at x_dim = 0
+#     final_Ms = []
+#     for M in Ms:
+#         # Get the dimensions of each M
+#         degs = size(M)
+#         total_dim = len(degs)
+#         # Make array [1,0,-1,0,1,...] representing values of Chebyshev polynomials at 0
+#         x = np.zeros(degs[dim])
+#         x[::2] = [(-1)**i for i in collect(0:(degs[dim]+1)//2-1)]
+#         # Transpose M so we can use matrix multiplication to evaluate one dimension at a time
+#         idxs = np.roll(np.arange(len(degs)),total_dim-dim-1)
+#         new_M = np.transpose(M,idxs)@x
+#         # Transpose the resulting matrix back to its original order
+#         new_M = np.transpose(new_M,np.roll(np.arange(len(degs)-1),dim))
+#         final_Ms.append(new_M)
+
+#     # Remove the point dimension from the tracked interval
+#     trackedInterval.ndim -= 1
+#     trackedInterval.interval = np.delete(trackedInterval.interval,dim,axis=0)
+#     trackedInterval.reducedDims.append(dim)
+#     trackedInterval.solvedVals.append(val)
+
+#     return final_Ms,new_errors,trackedInterval
+# end

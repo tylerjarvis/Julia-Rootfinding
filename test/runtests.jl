@@ -15,7 +15,7 @@ include("ChebyshevSubdivisionSolverTest.jl") # Adjust the path as needed
 # test_all()
 #
 # ============================================ ChebyshevApproximator Tests ============================================
-# test_all_ChebyshevApproximator()
+test_all_ChebyshevApproximator()
 # 
 # test_transformPoints()
 # test_getFinalDegree()
@@ -32,7 +32,7 @@ include("ChebyshevSubdivisionSolverTest.jl") # Adjust the path as needed
 # test_all_ChebyshevSubdivisionSolver()
 # 
 # test_getLinearTerms()
-test_linearCheck1()
+# test_linearCheck1()
 
 
 # SETUP TO TEST ALL

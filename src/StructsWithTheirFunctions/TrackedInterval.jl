@@ -99,6 +99,10 @@ end
 #     """Gets the alpha and beta values of the last transformation the interval underwent."""
 #     return self.transforms[-1]
 
+function getLastTransform(trackedInterval::TrackedInterval)
+    return trackedInterval.transforms[end]
+end
+
 # def getFinalInterval(self):
 #     """Finds the interval that should be reported as containing a root.
 
