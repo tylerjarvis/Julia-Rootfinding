@@ -2,7 +2,7 @@ import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transf
 import FFTW: REDFT00 #This is the enum that represents DCT-I 
 using Statistics
 
-function getApproxError(degs, epsilons, rhos)
+function getApproxError(degs, epsilons, rhos, macheps=2^-52)
     """
     Computes an upper bound for the error of the Chebyshev approximation.
 
@@ -52,8 +52,8 @@ function getApproxError(degs, epsilons, rhos)
         # Append to the error
         approxError += s * thisEps
     end
-    
-    return approxError
+
+    return max(approxError,macheps)
 end
 
 function transformPoints(x,a,b)
