@@ -6,7 +6,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_getLinearTerms()
         test_linearCheck1()
         test_reduceSolveDim()
-        # test_transformChebInPlace1D()
+        test_transformChebInPlace1D()
     end
 end
 
@@ -176,14 +176,14 @@ function test_transformChebInPlace1D()
                             -1.20687653838567; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                             -0.018876295666785736; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
         expected_transformed_coeffs_1 = [ 1.43592664172332273864;  0.50273797111799101156;  0.00344159152615154413;;
-                                                    0.55750782907114360132;  0.;          0.;        ;
-                                                    0.01239107183457751997;  0.;          0.;        ;;
-                                                    -0.98259152221737600108;  0.;          0.;        ;
-                                                    0.;          0.;          0.;        ;
-                                                    0.;          0.;          0.;        ;;
-                                                    -0.01221146807645548740;  0.;          0.;        ;
-                                                    0.;          0.;          0.;        ;
-                                                    0.;          0.;          0.;        ]
+                                                    0.55750782907114360132;  0.;          0.;;
+                                                    0.01239107183457751997;  0.;0.;;;
+                                                    -0.98259152221737600108;  0.;0.;;
+                                                    0.;0.;0.;;
+                                                    0.;          0.;          0.;;;
+                                                    -0.01221146807645548740;  0.;          0.;;
+                                                    0.;          0.;          0.;;
+                                                    0.;          0.;          0.]
         transformed_coeffs_1 = transformChebInPlace1D(coeffs_1,alpha_1,beta_1)
         @test isapprox(expected_transformed_coeffs_1,transformed_coeffs_1)
 
@@ -193,14 +193,14 @@ function test_transformChebInPlace1D()
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
         expected_transformed_coeffs_2 = [ 1.66687648548194711218; -1.20687653838567010567; -0.01887629566678573553 ;;
-                                                0.55750782907114360132;  0.;          0.;        ;
-                                                0.01239107183457751997;  0.;          0.;        ;;
-                                                0.50273797111799101156;  0.;          0.;        ;
+                                                0.55750782907114360132;  0.;          0.;;
+                                                0.01239107183457751997;  0.;          0.;;;
+                                                0.50273797111799101156;  0.;          0.;;
                                                 0.;          0.;          0.;;
                                                 0.;          0.;          0.;;;
-                                                0.00344159152615154413;  0.;          0.;        ;
-                                                0.;          0.;          0.;        ;
-                                                0.;          0.;          0.;        ]
+                                                0.00344159152615154413;  0.;          0.;;
+                                                0.;          0.;          0.;;
+                                                0.;          0.;          0.]
         transformed_coeffs_2 = transformChebInPlace1D(coeffs_2,alpha_2,beta_2)
         @test isapprox(transformed_coeffs_2,expected_transformed_coeffs_2)
         
@@ -227,11 +227,11 @@ function test_transformChebInPlace1D()
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
         expected_transformed_coeffs_4 = [ 1.66343489395579569035; -1.20687653838567010567; -0.01887629566678573553;;
-                                                ; 0.55750782907114360132;  0.;          0.;;
+                                                 0.55750782907114360132;  0.;          0.;;
                                                  0.01239107183457751997;  0.;          0.;;;    
                                                  0.;          0.;          0.;;        
                                                  0.;          0.;          0.;;        
-                                                 0.;          0.;          0.       ]
+                                                 0.;          0.;          0.]
         transformed_coeffs_4 = transformChebInPlace1D(coeffs_4,alpha_4,beta_4)
         @test isapprox(transformed_coeffs_4,expected_transformed_coeffs_4)
         
@@ -245,7 +245,7 @@ function test_transformChebInPlace1D()
                                                      0.01239107183457751997;  0.;          0.;;;
                                                      0.;          0.;          0.;;        
                                                      0.;          0.;          0.;;        
-                                                     0.;          0.;          0.        ]
+                                                     0.;          0.;          0.]
         transformed_coeffs_5 = transformChebInPlace1D(coeffs_5,alpha_5,beta_5)
         @test isapprox(transformed_coeffs_5,expected_transformed_coeffs_5)
         
