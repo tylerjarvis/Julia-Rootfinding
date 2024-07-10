@@ -170,3 +170,99 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     return final_Ms,new_errors,trackedInterval
 end
 
+function transformChebInPlace1D(coeffs,alpha,beta)
+    """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
+
+    Recursively finds each column of the transformation matrix C from the previous two columns
+    and then performs entrywise matrix multiplication for each entry of the column, thus enabling
+    the transformation to occur while only retaining three columns of C in memory at a time.
+
+    Parameters
+    ----------
+    coeffs : array
+        The coefficient array
+    alpha : double
+        The scaler of the transformation
+    beta : double
+        The shifting of the transformation
+
+    Returns
+    -------
+    transformedCoeffs : array
+        The new coefficient array following the transformation
+    """
+    # println(size(coeffs))
+    coeffs_shape = size(coeffs)
+    last_dim_length = coeffs_shape[end]
+    transformedCoeffs = zeros(coeffs_shape)
+    # Initialize three arrays to represent subsequent columns of the transformation matrix.
+    arr1 = zeros(last_dim_length)
+    arr2 = zeros(last_dim_length)
+    arr3 = zeros(last_dim_length)
+
+    #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
+    arr1[1] = 1.
+
+    # Get the correct number of colons for indexing transformedCoeffs
+    idxs = []
+    dims = length(coeffs_shape)
+    for i in 1:dims-1
+        push!(idxs,:)
+    end
+
+    transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
+    #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
+    arr2[1] = beta
+    arr2[2] = alpha
+    transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
+    transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
+    maxRow = 2
+    for col in last_dim_length:-1:3 # For each column, calculate each entry and do matrix mult
+        thisCoeff = coeffs[idxs...,col] # the row of coeffs corresponding to the column col of C (for matrix mult)
+        # The first entry
+        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
+        transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
+        # The second entry
+        if maxRow > 2
+            println("here")
+            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
+            transformedCoeffs[idxs...,2] += thisCoeff .* arr3[2]
+        end
+
+        # All middle entries
+        for i in 3:maxRow-1
+            println(i)
+            arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
+        end
+        
+        # The second to last entry
+        i = maxRow
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
+        transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
+        println(transformedCoeffs)
+        #The last entry
+        finalVal = alpha*arr2[i]
+        println(finalVal)
+        # This final entry is typically very small. If it is essentially machine epsilon,
+        # zero it out to save calculations.
+        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+            println("now here")
+            arr3[maxRow+1] = finalVal
+            println(arr3)
+            transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
+            println(transformedCoeffs)
+            maxRow += 1 # Next column will have one more entry than the current column.
+        end
+
+        # Save the values of arr2 and arr3 to arr1 and arr2 to get ready for calculating the next column.
+        arr = arr1
+        arr1 = arr2
+        arr2 = arr3
+        arr3 = arr
+    end
+    #[:,1:maxRow]
+    println("we out")
+    println(size(transformedCoeffs[idxs...,1:maxRow]))
+    return transformedCoeffs[idxs...,1:maxRow]
+end
