@@ -41,9 +41,11 @@ mutable struct TrackedInterval
     nextTransformPoints #Random Point near 0
     preFinalInterval # = [] (by default)
     preFinalTransforms # = [] (by default)
+    reducedDims # = []
+    solvedVals # = []
     function TrackedInterval(interval)
         ndim = length(interval)
-        new(interval,interval,[],ndim,false,false,false,[],false,[0.0394555475981047]*ndim,[],[])
+        new(interval,interval,[],ndim,false,false,false,[],false,[0.0394555475981047]*ndim,[],[],[],[])
     end
 end
 
