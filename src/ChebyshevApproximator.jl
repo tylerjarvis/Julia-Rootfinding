@@ -608,19 +608,3 @@ halfspaces = [[ -1.; 1.; 0. ],
             [-1.;0.;1.],
 
             [0.;-1.;1.]]
-
-julia_halfspaces = [Polyhedra.HalfSpace(halfspace[1:end-1],halfspace[end]) for halfspace in halfspaces]
-# for halfspace in halfspaces
-#     push!(julia_halfspaces,HalfSpace(halfspace[1:end-1],halfspace[end]))
-# end
-intersections = ∩(julia_halfspaces...)
-
-println(intersections)
-
-A = low(intersections)
-
-B = high(intersections)
-
-println(A)
-
-println(B)
