@@ -33,6 +33,7 @@ test_all_ChebyshevApproximator()
 # 
 # test_getLinearTerms()
 # test_linearCheck1()
+# test_reduceSolveDim()
 
 
 # SETUP TO TEST ALL
