@@ -6,9 +6,17 @@ Pkg.activate(".") # MAKE SURE YOU ARE IN THE /Julia-Rootfinding folder when you 
 Pkg.instantiate()
 
 print("Testing...")
-include("ChebyshevApproximatorTest.jl")  # Adjust the path as needed
+include("ChebyshevApproximatorTest.jl")  
+include("ChebyshevSubdivisionSolverTest.jl") # Adjust the path as needed
 
 # Uncomment the lines below to run specific test sets
+# 
+# ============================================ All Tests ============================================
+# test_all()
+#
+# ============================================ ChebyshevApproximator Tests ============================================
+test_all_ChebyshevApproximator()
+# 
 # test_transformPoints()
 # test_getFinalDegree()
 # test_startedConverging()
@@ -18,4 +26,18 @@ include("ChebyshevApproximatorTest.jl")  # Adjust the path as needed
 # test_getApproxError()
 # test_intervalApproximateND()
 # test_getChebyshevDegrees()
-test_all()
+# test_chebApproximate()
+# 
+# ============================================ ChebyshevSubdivisionSolver Tests ============================================
+# test_all_ChebyshevSubdivisionSolver()
+# 
+# test_getLinearTerms()
+# test_linearCheck1()
+# test_reduceSolveDim()
+
+
+# SETUP TO TEST ALL
+function test_all()
+    test_all_ChebyshevApproximator()
+    test_all_ChebyshevSubdivisionSolver()
+end
