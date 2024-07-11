@@ -7,6 +7,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_linearCheck1()
         test_reduceSolveDim()
         test_transformChebInPlace1D()
+        test_transformChebInPlaceND()
     end
 end
 
@@ -525,5 +526,164 @@ function test_transformChebInPlace1D()
         @test isapprox(transformed_coeffs_10[20,1], -0.00000000000000133806,atol=2^-52)
         @test isapprox(transformed_coeffs_10[9,5], 0.00027335694312178378)
         @test isapprox(transformed_coeffs_10[10,48], 0,atol=2^-52)
+    end
+end
+
+function test_transformChebInPlaceND()
+    @testset "transformChebInPlaceND unit tests" begin
+        alpha_1 = 0.8043138619259216
+        beta_1 = 0.19568613807407842
+        dim_1 = 0
+        coeffs_1 = [1.6668764854819471; 0.502737971117991; 0.003441591526151544;;0.5575078290711436; 0; 0;; 0.01239107183457752; 0.0; 0.0;;;
+                            -1.20687653838567; 0; 0;; 0; 0; 0;;0.0; 0.0; 0.0;;;
+                            -0.018876295666785736; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_1 = [ 1.43592664172332273864;  0.50273797111799101156;  0.00344159152615154413;;
+                                                     0.55750782907114360132;  0.;          0.;;
+                                                     0.01239107183457751997;  0.;          0.;;;
+                                                    -0.98259152221737600108;  0.;          0.;;
+                                                     0.;          0.;          0.;;
+                                                     0.;          0.;          0.;;;
+                                                    -0.01221146807645548740;  0.;          0.;;
+                                                     0.;          0.;          0.;;
+                                                     0.;          0.;          0.        ]
+        transformed_coeffs_1 = TransformChebInPlaceND(coeffs_1,dim_1,alpha_1,beta_1,false)
+        @test isapprox(expected_transformed_coeffs_1,transformed_coeffs_1)
+
+        alpha_2 = 0.561531793052032
+        beta_2 = -0.43846820694796795
+        dim_2 = 0
+        coeffs_2 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
+                        0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
+                        0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_2 = [ 1.66687648548194711218; -1.20687653838567010567; -0.01887629566678573553 ;;
+                                                 0.55750782907114360132;  0.;          0.;;
+                                                 0.01239107183457751997;  0.;          0.;;;
+                                                 0.50273797111799101156;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.;;;
+                                                 0.00344159152615154413;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.        ]
+        transformed_coeffs_2 = TransformChebInPlaceND(coeffs_2,dim_2,alpha_2,beta_2,false)
+        @test isapprox(expected_transformed_coeffs_2,transformed_coeffs_2)
+        
+        alpha_3 = 0.561531793052032
+        beta_3 = 0
+        dim_3 = 0
+        coeffs_3 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
+                        0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
+                        0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_3 =  [2.06363273035505034869; -1.20687653838567010567; -0.01887629566678573553;;
+                                                 0.55750782907114360132;  0.;          0.;;
+                                                 0.01239107183457751997;  0.;          0.;;;
+                                                 0.51348734263490647400;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.;;;
+                                                 0.00344159152615154413;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.]
+        transformed_coeffs_3 = TransformChebInPlaceND(coeffs_3,dim_3,alpha_3,beta_3,false)
+        @test isapprox(expected_transformed_coeffs_3,transformed_coeffs_3)
+        
+        alpha_4 = 0
+        beta_4 = -0.43846820694796795
+        dim_4 = 0
+        coeffs_4 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
+                        0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
+                        0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_4 =  [1.66343489395579569035; -1.20687653838567010567; -0.01887629566678573553 ;;
+                                                 0.55750782907114360132;  0.;          0.;;
+                                                 0.01239107183457751997;  0.;          0.;;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.]
+        transformed_coeffs_4 = TransformChebInPlaceND(coeffs_4,dim_4,alpha_4,beta_4,false)
+        @test isapprox(expected_transformed_coeffs_4,transformed_coeffs_4)
+        
+        alpha_5 = 0
+        beta_5 = 0
+        dim_5 = 0
+        coeffs_5 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
+                        0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
+                        0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_5 =  [2.06019113882889870482; -1.20687653838567010567; -0.01887629566678573553 ;;
+                                                     0.55750782907114360132;  0.;          0.;;
+                                                     0.01239107183457751997;  0.;          0.;;;
+                                                     0.;          0.;          0.;;
+                                                     0.;          0.;          0.;;
+                                                     0.;          0.;          0.]
+        transformed_coeffs_5 = TransformChebInPlaceND(coeffs_5,dim_5,alpha_5,beta_5,false)
+        @test isapprox(expected_transformed_coeffs_5,transformed_coeffs_5)
+        
+        alpha_6 = 1.000000082740371e-10
+        beta_6 = -0.7266187050359711
+        coeffs_6 = [10.1; 13.9]
+        dim_6 = 0
+        expected_transformed_coeffs_6 = [0.00000000000000000000; 0.00000000139000011501]
+        transformed_coeffs_6 = TransformChebInPlaceND(coeffs_6,dim_6,alpha_6,beta_6,false)
+        @test isapprox(expected_transformed_coeffs_6,transformed_coeffs_6)
+
+        alpha_7 = 1
+        beta_7 = 0
+        coeffs_7 = [10.1; 13.9]
+        dim_7 = 0
+        expected_transformed_coeffs_7 = [10.1; 13.9]
+        transformed_coeffs_7 = TransformChebInPlaceND(coeffs_7,dim_7,alpha_7,beta_7,false)
+        @test isapprox(expected_transformed_coeffs_7,transformed_coeffs_7)
+
+        alpha_8 = 0.561531793052032
+        beta_8 = -0.43846820694796795
+        dim_8 = 1
+        coeffs_8 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
+                        0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
+                        0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
+        expected_transformed_coeffs_8 =  [1.82293688196746050956; -1.20687653838567010567; -0.01887629566678573553 ;;
+                                                 0.30085495746356821778;  0.;          0.;;
+                                                 0.00390712742628263315;  0.;          0.;;;
+                                                 0.91444037361447538803;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.;;;
+                                                 0.01091467033784226763;  0.;          0.;;
+                                                 0.;          0.;          0.;;
+                                                 0.;          0.;          0.]
+        transformed_coeffs_8 = TransformChebInPlaceND(coeffs_8,dim_8,alpha_8,beta_8,false)
+        @test isapprox(expected_transformed_coeffs_8,transformed_coeffs_8)
+
+        alpha_9 = 1.2837492384
+        beta_9 = .7234444321123415
+        dim_9 = 4
+        coeffs_9 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))
+        transformed_coeffs_9 = TransformChebInPlaceND(coeffs_9,dim_9,alpha_9,beta_9,false)
+        @test isapprox(transformed_coeffs_9[2,3,2,3,1,3], 2435.0950647445447)
+        @test isapprox(transformed_coeffs_9[0,0,0,0,0,0], 70.81780444042236410951)
+        @test isapprox(transformed_coeffs_9[0,1,0,0,0,0], 121.16430035593349145984)
+        @test isapprox(transformed_coeffs_9[0,1,0,0,0,1], 4601.53072119819717045175)
+        @test isapprox(transformed_coeffs_9[0,1,0,0,0,1], 4601.53072119819717045175)
+        @test isapprox(transformed_coeffs_9[0,1,0,2,1,3], 16922.53837851442222017795)
+        @test isapprox(transformed_coeffs_9[0,1,0,2,1,2], 12442.17195767216071544681)
+
+        alpha_10 = 1.2837492384
+        beta_10 = .7234444321123415
+        dim_10 = 2
+        coeffs_10 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))   
+        transformed_coeffs_10 = TransformChebInPlaceND(coeffs_10,dim_10,alpha_10,beta_10,false)
+        @test isapprox(2435.09506474454474300728,transformed_coeffs_10[2,3,2,3,1,3])
+        @test isapprox(849.81365328506842615752,transformed_coeffs_10[0,0,0,0,0,0])
+        @test isapprox(879.56123276256857934641,transformed_coeffs_10[0,1,0,0,0,0])
+        @test isapprox(3735.32886260257600952173,transformed_coeffs_10[0,1,0,0,0,1])
+        @test isapprox(9789.53127017231054196600,transformed_coeffs_10[0,1,0,2,1,3])
+        @test isapprox(7254.70410722685846849345,transformed_coeffs_10[0,1,0,2,1,2])
+        @test isapprox(8423.43048113694567291532,transformed_coeffs_10[1,1,1,1,1,1])
+        @test isapprox(5981.00850866390646842774,transformed_coeffs_10[0,1,0,1,0,1])
+        @test isapprox(2361.04786468715201408486,transformed_coeffs_10[0,0,0,3,1,3])
+        @test isapprox(7536.35156977635233488400,transformed_coeffs_10[2,3,2,2,1,2])
+
+        alpha_11 = 3.456654
+        beta_11 = .451324
+        dim_11 = 2
+        coeffs_11 = reshape(collect(0:3*2*1*2-1),(2,1,2,3))
+        expected_transformed_coeffs_11 = coeffs_11
+        transformed_coeffs_11 = TransformChebInPlaceND(coeffs_11,dim_11,alpha_11,beta_11,false)
+        @test isapprox(transformed_coeffs_11,expected_transformed_coeffs_11)
     end
 end
