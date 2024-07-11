@@ -587,24 +587,3 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
     return intervalApproximateND(f, degs, a, b), getApproxError(degs, epsilons, rhos)
 end
-
-A = [1 1;2 1;3 1]
-b = [1.,0,0]
-#import Pkg; Pkg.add("HiGHS")
-
-using LazySets
-halfspaces = [[ -1.; 1.; 0. ],
-
-            [1.; -1.; 1.],
-
-            [-1.;0.;0.],
-
-            [1.;0.;1.],
-
-            [1.;0.;1.],
-
-            [0.;1.;1.],
-
-            [-1.;0.;1.],
-
-            [0.;-1.;1.]]
