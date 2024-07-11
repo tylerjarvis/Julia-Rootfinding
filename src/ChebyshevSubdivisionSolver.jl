@@ -191,7 +191,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     transformedCoeffs : array
         The new coefficient array following the transformation
     """
-    # println(size(coeffs))
+    println(size(coeffs))
     coeffs_shape = size(coeffs)
     last_dim_length = coeffs_shape[end]
     transformedCoeffs = zeros(coeffs_shape)
@@ -199,6 +199,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     arr1 = zeros(last_dim_length)
     arr2 = zeros(last_dim_length)
     arr3 = zeros(last_dim_length)
+    println(size(arr1))
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
     arr1[1] = 1.
@@ -211,17 +212,27 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     end
 
     transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
+    println("start")
+    println(transformedCoeffs[1,1])
     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
     arr2[1] = beta
     arr2[2] = alpha
+    println(arr2)
     transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
     transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
+    println(transformedCoeffs[11,:])
     maxRow = 2
-    for col in last_dim_length:-1:3 # For each column, calculate each entry and do matrix mult
-        thisCoeff = coeffs[idxs...,col] # the row of coeffs corresponding to the column col of C (for matrix mult)
+    for col in 2:last_dim_length # For each column, calculate each entry and do matrix mult
+        # println(col)
+        # println(last_dim_length)
+        thisCoeff = coeffs[idxs...,col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+        # println(thisCoeff)
         # The first entry
         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
         transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
+        # println(arr3)
+        # println(transformedCoeffs[idxs...,1])
+        # println(maxRow)
         # The second entry
         if maxRow > 2
             println("here")
@@ -230,28 +241,32 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         end
 
         # All middle entries
-        for i in 3:maxRow-1
+        for i in 2:maxRow-2
+            println("now here")
             println(i)
-            arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
-            transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
+            arr3[i+1] = -arr1[i+1] + alpha.*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
+            transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
         end
-        
+
         # The second to last entry
-        i = maxRow
-        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
-        transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
-        println(transformedCoeffs)
+        i = maxRow -1
+        println(i)
+        arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha.*(arr2[i]) + 2*beta.*arr2[i+1]
+        transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
+        # println(arr3)
+        # println(transformedCoeffs[idxs...,i+1])
+        # println(transformedCoeffs)
         #The last entry
-        finalVal = alpha*arr2[i]
-        println(finalVal)
+        finalVal = alpha*arr2[i+1]
+        # println(finalVal)
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
-            println("now here")
+            # println("now here")
             arr3[maxRow+1] = finalVal
-            println(arr3)
+            # println(arr3)
             transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
-            println(transformedCoeffs)
+            # println(transformedCoeffs[idxs...,maxRow+1])
             maxRow += 1 # Next column will have one more entry than the current column.
         end
 
@@ -260,9 +275,12 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         arr1 = arr2
         arr2 = arr3
         arr3 = arr
+        # println(arr1)
+        # println(arr2)
+        # println(arr3)
     end
     #[:,1:maxRow]
-    println("we out")
-    println(size(transformedCoeffs[idxs...,1:maxRow]))
+    # println("we out")
+    # println(size(transformedCoeffs[idxs...,1:maxRow]))
     return transformedCoeffs[idxs...,1:maxRow]
 end
