@@ -1,6 +1,7 @@
 import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transform "kind"
 import FFTW: REDFT00 #This is the enum that represents DCT-I 
 using Statistics
+using LazySets, Polyhedra
 
 function getApproxError(degs, epsilons, rhos)
     """
@@ -537,12 +538,6 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
 end
 
 
-f3 = (x, y, z) -> 2 * cos(2 * x) + y * sin(y) + z
-a3 = [-10; -3; -4.3]
-b3 = [5; 2.3; 11/9]
-X = getChebyshevDegrees(f3,a3,b3,1e-10)
-println(X)
-
 function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
     # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
     """
@@ -592,3 +587,40 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
     return intervalApproximateND(f, degs, a, b), getApproxError(degs, epsilons, rhos)
 end
+
+A = [1 1;2 1;3 1]
+b = [1.,0,0]
+#import Pkg; Pkg.add("HiGHS")
+
+using LazySets
+halfspaces = [[ -1.; 1.; 0. ],
+
+            [1.; -1.; 1.],
+
+            [-1.;0.;0.],
+
+            [1.;0.;1.],
+
+            [1.;0.;1.],
+
+            [0.;1.;1.],
+
+            [-1.;0.;1.],
+
+            [0.;-1.;1.]]
+
+julia_halfspaces = [Polyhedra.HalfSpace(halfspace[1:end-1],halfspace[end]) for halfspace in halfspaces]
+# for halfspace in halfspaces
+#     push!(julia_halfspaces,HalfSpace(halfspace[1:end-1],halfspace[end]))
+# end
+intersections = ∩(julia_halfspaces...)
+
+println(intersections)
+
+A = low(intersections)
+
+B = high(intersections)
+
+println(A)
+
+println(B)
