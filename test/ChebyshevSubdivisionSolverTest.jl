@@ -687,3 +687,67 @@ function test_transformChebInPlaceND()
         @test isapprox(transformed_coeffs_11,expected_transformed_coeffs_11)
     end
 end
+
+function test_getTransformationError()
+    M_1 = [0; -.939093750; 0; -.0138146058; -.00106830799; -.0137307266;;
+            0; -1.05695980; 0; -.0149230031; .00237984138; -.0298460061;;
+            0; 0;  0;  0; 0; 0;;
+            0; -1.63828770; 0; -1.63828770; -.00611697632; -.00852711940;;
+            0; 0; 0; 0; 0; 0;;
+            0; 0;  0;  0.0; 0.0; 0.0]
+    dim_1a = 0
+    dim_1b = 1
+    expected_error_1a = 0.00000000000000714500
+    expected_error_1b = 0.00000000000000714500
+    @test isapprox(expected_error_1a,getTransformationError(M_1,dim_1a))
+    @test isapprox(expected_error_1b,getTransformationError(M_1,dim_1b))
+
+    M_2 = [-1.09679818; -.939093750; -.921375000; -.0138146058; -.00106830799; -.0137307266;;
+            .915137070; -1.05695980; -1.03701717; -.0149230031; .00237984138; -.0298460061;;
+            .000607404435; -.00309112001;  .000675877264;  .0750781250; -1.10873059; -.0379851973;;
+            1.42079568; -1.63828770; -1.60737661; -1.63828770; -.00611697632; -.00852711940;;
+            .901029633; -.240222558; -1.16359475; -1.12860484; -.0167700634; -1.01490072;;
+            .310991071; -1.58265345;  .346049159;  0.0; 0.0; 0.0]
+    dim_2a = 0
+    dim_2b = 1
+    expected_error_2a = 0.00000000000002703507
+    expected_error_2b = 0.00000000000002703507
+    @test isapprox(expected_error_2a,getTransformationError(M_2,dim_2a))
+    @test isapprox(expected_error_2b,getTransformationError(M_2,dim_2b))
+
+    M_3 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))
+    dim_3a = 0
+    dim_3b = 1
+    dim_3c = 2
+    dim_3d = 3
+    dim_3e = 4
+    dim_3f = 5
+    expected_error_3a = 0.00000000058884097598
+    expected_error_3b = 0.00000000029442048799
+    expected_error_3c = 0.00000000058884097598
+    expected_error_3d = 0.00000000044163073198
+    expected_error_3e = 0.00000000058884097598
+    expected_error_3f = 0.00000000044163073198
+    @test isapprox(expected_error_3a,getTransformationError(M_3,dim_3a))
+    @test isapprox(expected_error_3b,getTransformationError(M_3,dim_3b))
+    @test isapprox(expected_error_3c,getTransformationError(M_3,dim_3c))
+    @test isapprox(expected_error_3d,getTransformationError(M_3,dim_3d))
+    @test isapprox(expected_error_3e,getTransformationError(M_3,dim_3e))
+    @test isapprox(expected_error_3f,getTransformationError(M_3,dim_3f))
+
+    M_4 = [10.1; 13.9]
+    dim_4 = 0
+    expected_error_4 = 0.00000000000001065814
+    @test isapprox(expected_error_4,getTransformationError(M_4,dim_4))
+
+    M_5 = reshape(collect(0:3*2*1*2-1),(2,1,2,3))
+    dim_5a = 0
+    dim_5b = 1
+    dim_5c = 2
+    expected_error_5a = 0.00000000000004396483
+    expected_error_5b = 0.00000000000002930989
+    expected_error_5c = 0.00000000000001465494
+    @test isapprox(expected_error_5a,getTransformationError(M_5,dim_5a))
+    @test isapprox(expected_error_5b,getTransformationError(M_5,dim_5b))
+    @test isapprox(expected_error_5c,getTransformationError(M_5,dim_5c))
+end

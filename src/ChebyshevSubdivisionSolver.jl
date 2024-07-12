@@ -215,15 +215,11 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
         #The last entry
         finalVal = alpha*arr2[i+1]
-        # println(finalVal)
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
-            # println("now here")
             arr3[maxRow+1] = finalVal
-            # println(arr3)
             transformedCoeffs[maxRow+1] += thisCoeff * finalVal
-            # println(transformedCoeffs[idxs...,maxRow+1])
             maxRow += 1 # Next column will have one more entry than the current column.
         end
 
@@ -232,13 +228,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         arr1 = arr2
         arr2 = arr3
         arr3 = arr
-        # println(arr1)
-        # println(arr2)
-        # println(arr3)
     end
-    #[:,1:maxRow]
-    # println("we out")
-    # println(size(transformedCoeffs[idxs...,1:maxRow]))
     return transformedCoeffs[1:maxRow]
 end
 
