@@ -170,6 +170,79 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     return final_Ms,new_errors,trackedInterval
 end
 
+function transformChebInPlace1D1D(coeffs,alpha,beta)
+    """
+    Does the 1d coeff array case for transformChebInPlace1D
+    """
+    coeffs_shape = size(coeffs)
+    last_dim_length = coeffs_shape[end]
+    transformedCoeffs = zeros(coeffs_shape)
+    # Initialize three arrays to represent subsequent columns of the transformation matrix.
+    arr1 = zeros(last_dim_length)
+    arr2 = zeros(last_dim_length)
+    arr3 = zeros(last_dim_length)
+
+    #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
+    arr1[1] = 1.
+
+    transformedCoeffs[1] = coeffs[1] # arr1[0] * coeffs[0] (matrix multiplication step)
+    #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
+    arr2[1] = beta
+    arr2[2] = alpha
+    transformedCoeffs[1] += beta * coeffs[2] # arr2[0] * coeffs[1] (matrix muliplication)
+    transformedCoeffs[2] += alpha * coeffs[2] # arr2[1] * coeffs[1] (matrix multiplication)
+    maxRow = 2
+    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
+        thisCoeff = coeffs[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+        # The first entry
+        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta*arr2[1]
+        transformedCoeffs[1] += thisCoeff * arr3[1]
+        # The second entry
+        if maxRow > 2
+            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta*arr2[2]
+            transformedCoeffs[2] += thisCoeff * arr3[2]
+        end
+
+        # All middle entries
+        for i in 2:maxRow-2
+            arr3[i+1] = -arr1[i+1] + alpha*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
+            transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        end
+
+        # The second to last entry
+        i = maxRow -1
+        arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha*(arr2[i]) + 2*beta*arr2[i+1]
+        transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        #The last entry
+        finalVal = alpha*arr2[i+1]
+        # println(finalVal)
+        # This final entry is typically very small. If it is essentially machine epsilon,
+        # zero it out to save calculations.
+        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+            # println("now here")
+            arr3[maxRow+1] = finalVal
+            # println(arr3)
+            transformedCoeffs[maxRow+1] += thisCoeff * finalVal
+            # println(transformedCoeffs[idxs...,maxRow+1])
+            maxRow += 1 # Next column will have one more entry than the current column.
+        end
+
+        # Save the values of arr2 and arr3 to arr1 and arr2 to get ready for calculating the next column.
+        arr = arr1
+        arr1 = arr2
+        arr2 = arr3
+        arr3 = arr
+        # println(arr1)
+        # println(arr2)
+        # println(arr3)
+    end
+    #[:,1:maxRow]
+    # println("we out")
+    # println(size(transformedCoeffs[idxs...,1:maxRow]))
+    return transformedCoeffs[1:maxRow]
+end
+
+
 function transformChebInPlace1D(coeffs,alpha,beta)
     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
 
@@ -191,15 +264,16 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     transformedCoeffs : array
         The new coefficient array following the transformation
     """
-    println(size(coeffs))
     coeffs_shape = size(coeffs)
+    if length(coeffs_shape) == 1
+        return transformChebInPlace1D1D(coeffs,alpha,beta)
+    end
     last_dim_length = coeffs_shape[end]
     transformedCoeffs = zeros(coeffs_shape)
     # Initialize three arrays to represent subsequent columns of the transformation matrix.
     arr1 = zeros(last_dim_length)
     arr2 = zeros(last_dim_length)
     arr3 = zeros(last_dim_length)
-    println(size(arr1))
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
     arr1[1] = 1.
@@ -212,61 +286,40 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     end
 
     transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
-    println("start")
-    println(transformedCoeffs[1,1])
     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
     arr2[1] = beta
     arr2[2] = alpha
-    println(arr2)
     transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
     transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
-    println(transformedCoeffs[11,:])
     maxRow = 2
-    for col in 2:last_dim_length # For each column, calculate each entry and do matrix mult
-        # println(col)
-        # println(last_dim_length)
+    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
         thisCoeff = coeffs[idxs...,col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
-        # println(thisCoeff)
         # The first entry
         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
         transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
-        # println(arr3)
-        # println(transformedCoeffs[idxs...,1])
-        # println(maxRow)
         # The second entry
         if maxRow > 2
-            println("here")
             arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
             transformedCoeffs[idxs...,2] += thisCoeff .* arr3[2]
         end
 
         # All middle entries
         for i in 2:maxRow-2
-            println("now here")
-            println(i)
             arr3[i+1] = -arr1[i+1] + alpha.*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
             transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
         end
 
         # The second to last entry
         i = maxRow -1
-        println(i)
         arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha.*(arr2[i]) + 2*beta.*arr2[i+1]
         transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
-        # println(arr3)
-        # println(transformedCoeffs[idxs...,i+1])
-        # println(transformedCoeffs)
         #The last entry
         finalVal = alpha*arr2[i+1]
-        # println(finalVal)
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
-            # println("now here")
             arr3[maxRow+1] = finalVal
-            # println(arr3)
             transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
-            # println(transformedCoeffs[idxs...,maxRow+1])
             maxRow += 1 # Next column will have one more entry than the current column.
         end
 
@@ -275,12 +328,51 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         arr1 = arr2
         arr2 = arr3
         arr3 = arr
-        # println(arr1)
-        # println(arr2)
-        # println(arr3)
     end
-    #[:,1:maxRow]
-    # println("we out")
-    # println(size(transformedCoeffs[idxs...,1:maxRow]))
     return transformedCoeffs[idxs...,1:maxRow]
+end
+
+function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
+    """Transforms a single dimension of a Chebyshev approximation for a polynomial.
+
+    Parameters
+    ----------
+    coeffs : array
+        The coefficient tensor to transform
+    dim : int
+        The index of the dimension to transform (numpy index for now)
+    alpha: double
+        The scaler of the transformation
+    beta: double
+        The shifting of the transformation
+    exact: bool
+        Whether to perform the transformation with higher precision to minimize error (currently unimplemented)
+
+    Returns
+    -------
+    transformedCoeffs : array
+        The new coefficient array following the transformation
+    """
+
+    #TODO: Could we calculate the allowed error beforehand and pass it in here?
+    #TODO: Make this work for the power basis polynomials
+    if (((alpha == 1.0) && (beta == 0.0)) || (size(coeffs)[end-dim] == 1))
+        return coeffs # No need to transform if the degree of dim is 0 or transformation is the identity.
+    end
+
+    transformFunc = transformChebInPlace1D
+
+    if dim == 0
+        return transformFunc(coeffs, alpha, beta)
+    else # Need to transpose the matrix to line up the multiplication for the current dim
+        ndim = length(size(coeffs))
+        # Move the current dimension to the dim 0 spot in the np array.
+        python_order = vcat([dim+1], collect(1:dim), collect(dim+2:ndim))
+        order = (ndim+1) .- reverse(python_order)
+        # Then transpose with the inverted order after the transformation occurs.
+        python_backOrder = zeros(Int,ndim)
+        python_backOrder[python_order] = collect(1:length(size(coeffs)))
+        backOrder = (ndim+1) .- reverse(python_backOrder)
+        return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta),backOrder)
+    end
 end
