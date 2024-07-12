@@ -390,3 +390,35 @@ function getTransformationError(M,dim)
     error = reverse(size(M))[dim+1] * machEps * sum(abs.(M))
     return error #TODO: Figure out a more rigurous bound!
 end
+
+function transformCheb(M,alphas,betas,error,exact)
+    """Transforms an entire Chebyshev coefficient matrix using the transformation xHat = alpha*x + beta.
+
+    Parameters
+    ----------
+    M : array
+        The chebyshev coefficient matrix
+    alphas : iterable
+        The scalers in each dimension of the transformation.
+    betas : iterable
+        The offset in each dimension of the transformation.
+    error : float
+        A bound on the error of the chebyshev approximation
+    exact : bool
+        Whether to perform the transformation with higher precision to minimize error
+
+    Returns
+    -------
+    M : numpy array
+        The coefficient matrix transformed to the new interval
+    error : float
+        An upper bound on the error of the transformation
+    """
+    #This just does the matrix multiplication on each dimension. Except it's by a tensor.
+    ndim = length(size(M))
+    for (dim,n,alpha,beta) in zip(0:ndim-1,size(M),alphas,betas)
+        error += getTransformationError(M, dim)
+        M = TransformChebInPlaceND(M,dim,alpha,beta,exact)
+    end
+    return M, error
+end

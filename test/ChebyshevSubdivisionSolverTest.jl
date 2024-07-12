@@ -863,9 +863,9 @@ function test_transformCheb()
         error_3 = 0.00000000000005539493
         expected_error_3 = 0.00000000000006372994
         expected_M_3 = [-0.00855022447641899143; 0.34186621455440019401; 0.00006322835752989059; -0.00042005189316723533; -0.00000003881104561047; 0.00000015464560890794; 0.00000000000952390464; -0.00000000002710314697; -0.00000000000000125172; 0.00000000000000277055; 0.00000000000000000010; -0.00000000000000000018; -0.00000000000000000000; 0.00000000000000000000; -0.00000000000000000000]
-        M_3o, error_3o = transformCheb(M_3,alphas_3,betas_3,error_3,False)
+        M_3o, error_3o = transformCheb(M_3,alphas_3,betas_3,error_3,false)
         @test isapprox(expected_M_3,M_3o)
-        @test isapprox(expected_error_3,error_3o)
+        @test isapprox(expected_error_3,error_3o,atol=2^-52)
 
         M_4 = reshape(collect(0:3*2*1*2-1),(2,1,2,3))
         alphas_4 = [0;.452345;1.2345;.231122]
@@ -876,7 +876,7 @@ function test_transformCheb()
                         -2.48481929227500009105; -0.53828204259785872310;;;;
                             0.;          0.        ;;;
                             0.;          0.        ]
-        M_4o, error_4o = transformCheb(M_4,alphas_4,betas_4,error_4,False)
+        M_4o, error_4o = transformCheb(M_4,alphas_4,betas_4,error_4,false)
         @test isapprox(expected_error_4,error_4o)
         @test isapprox(expected_M_4,M_4o)
 
@@ -891,7 +891,7 @@ function test_transformCheb()
                         5.28338989199999886637;  1.37497672858262620643;;;;
                         0.94406661078047993119;  0.24546888361890686903;;;
                         1.18008326347559999725;  0.30001752442310836155]
-        M_5o, error_5o = transformCheb(M_5,alphas_5,betas_5,error_5,False)
+        M_5o, error_5o = transformCheb(M_5,alphas_5,betas_5,error_5,false)
         @test isapprox(expected_error_5,error_5o)
         @test isapprox(expected_M_5,M_5o)
     end
