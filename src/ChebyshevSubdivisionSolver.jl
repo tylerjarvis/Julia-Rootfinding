@@ -331,3 +331,48 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     end
     return transformedCoeffs[idxs...,1:maxRow]
 end
+
+function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
+    """Transforms a single dimension of a Chebyshev approximation for a polynomial.
+
+    Parameters
+    ----------
+    coeffs : array
+        The coefficient tensor to transform
+    dim : int
+        The index of the dimension to transform (numpy index for now)
+    alpha: double
+        The scaler of the transformation
+    beta: double
+        The shifting of the transformation
+    exact: bool
+        Whether to perform the transformation with higher precision to minimize error (currently unimplemented)
+
+    Returns
+    -------
+    transformedCoeffs : array
+        The new coefficient array following the transformation
+    """
+
+    #TODO: Could we calculate the allowed error beforehand and pass it in here?
+    #TODO: Make this work for the power basis polynomials
+    if (((alpha == 1.0) && (beta == 0.0)) || (size(coeffs)[end-dim] == 1))
+        return coeffs # No need to transform if the degree of dim is 0 or transformation is the identity.
+    end
+
+    transformFunc = transformChebInPlace1D
+
+    if dim == 0
+        return transformFunc(coeffs, alpha, beta)
+    else # Need to transpose the matrix to line up the multiplication for the current dim
+        ndim = length(size(coeffs))
+        # Move the current dimension to the dim 0 spot in the np array.
+        python_order = vcat([dim+1], collect(1:dim), collect(dim+2:ndim))
+        order = (ndim+1) .- reverse(python_order)
+        # Then transpose with the inverted order after the transformation occurs.
+        python_backOrder = zeros(Int,ndim)
+        python_backOrder[python_order] = collect(1:length(size(coeffs)))
+        backOrder = (ndim+1) .- reverse(python_backOrder)
+        return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta),backOrder)
+    end
+end
