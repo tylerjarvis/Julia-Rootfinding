@@ -37,7 +37,8 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_reduceSolveDim()
 # test_transformChebInPlace1D()
 # test_transformChebInPlaceND()
-test_getTransformationError()
+# test_getTransformationError()
+test_transformCheb()
 
 
 # SETUP TO TEST ALL
