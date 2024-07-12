@@ -232,7 +232,6 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     return transformedCoeffs[1:maxRow]
 end
 
-
 function transformChebInPlace1D(coeffs,alpha,beta)
     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
 
@@ -365,4 +364,29 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
         backOrder = (ndim+1) .- reverse(python_backOrder)
         return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta),backOrder)
     end
+end
+
+function getTransformationError(M,dim)
+    """Returns an upper bound on the error of transforming the Chebyshev approximation M
+
+    In the transformation of dimension dim in M, the matrix multiplication of M by the transformation
+    matrix C has each element of M involved in n element multiplications, where n is the number of rows
+    in C, which is equal to the degree of approximation of M in dimension dim, or M.shape[dim].
+
+    Parameters
+    ----------
+    M : array
+        The Chebyshev approximation coefficient tensor being transformed
+    dim : int
+        The dimension of M being transformed
+
+    Returns
+    -------
+    error : float
+        The upper bound for the error associated with the transformation of dimension dim in M
+    """
+
+    machEps = 2^-52
+    error = reverse(size(M))[dim+1] * machEps * sum(abs.(M))
+    return error #TODO: Figure out a more rigurous bound!
 end
