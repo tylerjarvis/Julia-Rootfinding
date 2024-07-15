@@ -422,3 +422,6 @@ function transformCheb(M,alphas,betas,error,exact)
     end
     return M, error
 end
+
+function transformChebToInterval()
+end
