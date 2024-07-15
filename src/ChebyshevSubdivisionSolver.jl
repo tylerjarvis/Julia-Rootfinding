@@ -423,5 +423,36 @@ function transformCheb(M,alphas,betas,error,exact)
     return M, error
 end
 
-function transformChebToInterval()
+function transformChebToInterval(Ms, alphas, betas, errors, exact)
+    """Transforms an entire list of Chebyshev approximations to a new interval xHat = alpha*x + beta.
+
+    Parameters
+    ----------
+    Ms : list of arrays
+        The chebyshev coefficient matrices
+    alphas : iterable
+        The scalers of the transformation we are doing.
+    betas : iterable
+        The offsets of the transformation we are doing.
+    errors : array
+        A bound on the error of each Chebyshev approximation
+    exact : bool
+        Whether to perform the transformation with higher precision to minimize error
+
+    Returns
+    -------
+    newMs : list of arrays
+        The coefficient matrices transformed to the new interval
+    newErrors : array
+        The new errors associated with the transformed coefficient matrices
+    """
+    #Transform the chebyshev polynomials
+    newMs = []
+    newErrors = []
+    for (M,e) in zip(Ms, errors)
+        newM, newE = transformCheb(M, alphas, betas, e, exact)
+        push!(newMs,newM)
+        push!(newErrors,(newE))
+    end
+    return newMs, newErrors
 end

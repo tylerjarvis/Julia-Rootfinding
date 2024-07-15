@@ -900,6 +900,7 @@ end
 
 function test_transformChebToInterval()
     @testset "transformChebToInterval unit tests" begin
+        macheps = 2^-52
         Ms_1 = [[ 0.87538780085034118006; 1.36733727263328685986; -0.20667177063640954082; -0.04896263625573957917; 0.00360945024389840467; 0.00050772958892000960; -0.00002481750254547087; -0.00000248561588318162; 0.00000009093565308793; 0.00000000707398165416; -0.00000000020683624682; -0.00000000001315504499; 0.00000000000032036243; 0.00000000000001723239; -0.00000000000000035961]]
         alphas_1 = [0.18998896132616549526]
         betas_1 = [-0.64021351452262786896]
@@ -907,7 +908,7 @@ function test_transformChebToInterval()
         expected_errors_1 = [0.00000000000006372994]
         expected_Ms_1 = [[-0.00855022633478066431; 0.34186621489582563749; 0.00006322836537617769; -0.00042005189300300673; -0.00000003881104085161; 0.00000015464560895305; 0.00000000000952390380; -0.00000000002710314699; -0.00000000000000125172; 0.00000000000000277055; 0.00000000000000000010; -0.00000000000000000018; -0.00000000000000000000; 0.00000000000000000000; -0.00000000000000000000]]
         Ms_1o, errors_1o = transformChebToInterval(Ms_1,alphas_1,betas_1,errors_1,false)
-        @test isapprox(expected_errors_1,errors_1o)
+        @test isapprox(expected_errors_1,errors_1o,atol=macheps)
         @test isapprox(expected_Ms_1,Ms_1o)
 
         Ms_2 = [[ 3.01924445803718777270;  4.78499999999999836575;  1.36124999999999940492;;
@@ -967,21 +968,21 @@ function test_transformChebToInterval()
         @test isapprox(expected_errors_2,errors_2o)
         @test isapprox(Ms_2o[1][1,1,1], -0.35636471344922321380)
         @test isapprox(Ms_2o[1][1,1,4], 5.89800141442508252254)
-        @test isapprox(Ms_2o[1][2,2,3], 0.00000000000000020273)
+        @test isapprox(Ms_2o[1][2,2,3], 0.00000000000000020273,atol=macheps)
         @test isapprox(Ms_2o[1][2,1,1], 4.78499999999999836575)
         @test isapprox(Ms_2o[1][1,1,3], -2.66432558431007482369)
-        @test (3,2,4) == Ms_2o[1].shape
+        @test (3,2,4) == size(Ms_2o[1])
         @test isapprox(Ms_2o[2][1,1,1], 349.72917483078248324091)
-        @test isapprox(Ms_2o[2][2,6,5], 0.00000000000000252718)
+        @test isapprox(Ms_2o[2][2,6,5], 0.00000000000000252718,atol=macheps)
         @test isapprox(Ms_2o[2][1,1,2], -120.31913788045511637392)
         @test isapprox(Ms_2o[2][2,1,1], 1.64999999999997859490)
-        @test isapprox(Ms_2o[2][2,5,3], 0.00000000000002636738)
-        @test (2,6,5) == Ms_2o[2].shape
+        @test isapprox(Ms_2o[2][2,5,3], 0.00000000000002636738,atol=macheps)
+        @test (2,6,5) == size(Ms_2o[2])
         @test isapprox(Ms_2o[3][1,1,1], 5.38786388015445449895)
         @test isapprox(Ms_2o[3][3,1,1], -1.36125000000000007105)
-        @test isapprox(Ms_2o[3][1,2,2], 0.00000000000000060986)
+        @test isapprox(Ms_2o[3][1,2,2], 0.00000000000000060986,atol=macheps)
         @test isapprox(Ms_2o[3][1,1,3], 4.11288512994231325592)
-        @test (3,3,3) == Ms_2o[3].shape
+        @test (3,3,3) == size(Ms_2o[3])
         
         Ms_3 = [[0.20653057333214039359;  0.38056300994434943963;  0.00679945356876563572;;
                     -1.15823104043916003114; -0.00000000000000000197; -0.00000000000000000017;;;
@@ -1045,20 +1046,20 @@ function test_transformChebToInterval()
         @test isapprox(Ms_3o[1][3,2,4], 0.0)
         @test isapprox(Ms_3o[1][1,1,3], -0.10832362965094881335)
         @test isapprox(Ms_3o[1][3,1,1], 0.00016120947232328597)
-        @test (3,2,4) == Ms_3o[1].shape
+        @test (3,2,4) == size(Ms_3o[1])
         @test isapprox(Ms_3o[2][1,1,1], 5.26249570529796883989)
         @test isapprox(Ms_3o[2][1,1,2], -1.83906340673611534697)
         @test isapprox(Ms_3o[2][1,1,5], 0.02041300864577325416)
         @test isapprox(Ms_3o[2][2,1,1], 0.01795602808659533395)
-        @test isapprox(Ms_3o[2][1,5,4], 0.00000000000000000007)
-        @test isapprox(Ms_3o[2][2,1,2], -0.00000000000000019348)
-        @test (2, 6, 5) == Ms_3o[2].shape
+        @test isapprox(Ms_3o[2][1,5,4], 0.00000000000000000007,atol=macheps)
+        @test isapprox(Ms_3o[2][2,1,2], -0.00000000000000019348,atol=macheps)
+        @test (2, 6, 5) == size(Ms_3o[2])
         @test isapprox(Ms_3o[3][1,1,1], -0.87751264801507178337)
         @test isapprox(Ms_3o[3][1,1,2], -0.38210716859108229126)
         @test isapprox(Ms_3o[3][2,1,1], -0.05505525357920099810)
-        @test isapprox(Ms_3o[3][2,2,3], 0.0)
-        @test isapprox(Ms_3o[3][2,2,2], -0.00000000000000000027)
-        @test (3, 3, 3) == Ms_3o[3].shape
+        @test isapprox(Ms_3o[3][2,2,3], 0.0,atol=macheps)
+        @test isapprox(Ms_3o[3][2,2,2], -0.00000000000000000027,atol=macheps)
+        @test (3, 3, 3) == size(Ms_3o[3])
 
         Ms_4 = [reshape(collect(0:3*2*2*3-1),(3,2,2,3)),reshape(collect(0:3*3*2*3-1),(3,2,3,3)),reshape(collect(1:4*2*2*2),(2,2,2,4)),reshape(collect(0:4*2*2*2-1),(2,2,2,4))]
         alphas_4 = [0.73688366977641883704; 0.95966057059377973815; 0.15397785734628577359;.293846263523452]
@@ -1103,11 +1104,11 @@ function test_transformChebToInterval()
         @test isapprox(Ms_4o[1][2,1,1,1], 3.17287986215911832488)
         @test isapprox(Ms_4o[1][2,1,2,3], -11.31328479941790376984)
         @test isapprox(Ms_4o[1][2,1,2,2], -21.92304469635405439476)
-        @test (3,2,2,3) == Ms_4o[1].shape
+        @test (3,2,2,3) == size(Ms_4o[1])
         @test isapprox(Ms_4o[2][1,1,1,1], -7.18227192058273544717)
         @test isapprox(Ms_4o[2][3,2,3,3], 0.35237708132216383206)
         @test isapprox(Ms_4o[2][3,2,1,3], 0.40800102086722889183)
-        @test (3,2,3,3) == Ms_4o[2].shape
+        @test (3,2,3,3) == size(Ms_4o[2])
         @test isapprox(Ms_4o[3], expected_Ms_4o_2)
         @test (2,2,2,4) == size(Ms_4o[3])
         @test isapprox(Ms_4o[4], expected_Ms_4o_3)
