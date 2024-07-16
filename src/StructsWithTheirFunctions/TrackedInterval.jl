@@ -44,7 +44,7 @@ mutable struct TrackedInterval
     reducedDims # = []
     solvedVals # = []
     function TrackedInterval(interval)
-        ndim = length(interval)
+        ndim = Int(length(interval)/2)
         new(interval,interval,[],ndim,false,false,false,[],false,[0.0394555475981047]*ndim,[],[],[],[])
     end
 end

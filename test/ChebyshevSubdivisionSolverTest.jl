@@ -130,24 +130,24 @@ end
 
 function test_reduceSolveDim()
     @testset "reduceSolveDim unit tests" begin 
-        # # 2d case
-        # Ms_1 = [[3.1;-2;34;.000001;.0002;;4;1;2;.0002;.0102], [9.836;3.1;-.031;.001;-.045;.00002;;15.2344;42.234;2;4;3;.0023]]
-        # errors_1 = [.00002;.0001]
-        # trackedInterval_1 = TrackedInterval([1;1;;-3;2])
-        # trackedInterval_1.reducedDims = [1]
-        # trackedInterval_1.solvedVals = [1.;2.;3.]
-        # dim_1 = 0
-        # expected_new_Ms_1 = [[3.10000000000000008882; -2.00000000000000000000; 34.00000000000000000000; 0.00000100000000000000; 0.00020000000000000001]]
-        # expected_new_errors_1 = [0.00002]
-        # expected_new_trackedInterval_1 = [-3;2]
+        # 2d case
+        Ms_1 = [[3.1;-2;34;.000001;.0002;;4;1;2;.0002;.0102], [9.836;3.1;-.031;.001;-.045;.00002;;15.2344;42.234;2;4;3;.0023]]
+        errors_1 = [.00002;.0001]
+        trackedInterval_1 = TrackedInterval([1;1;;-3;2])
+        trackedInterval_1.reducedDims = [1]
+        trackedInterval_1.solvedVals = [1.;2.;3.]
+        dim_1 = 0
+        expected_new_Ms_1 = [[3.10000000000000008882; -2.00000000000000000000; 34.00000000000000000000; 0.00000100000000000000; 0.00020000000000000001]]
+        expected_new_errors_1 = [0.00002]
+        expected_new_trackedInterval_1 = [-3;2]
 
-        # new_Ms_1, new_errors_1, new_trackedInterval_1 = reduceSolvedDim(Ms_1,errors_1,trackedInterval_1,dim_1)
-        # @test isapprox(expected_new_Ms_1[1],new_Ms_1[1])
-        # @test isapprox(expected_new_errors_1,new_errors_1)
-        # @test isapprox(expected_new_trackedInterval_1,new_trackedInterval_1.interval)
-        # @test (1 == new_trackedInterval_1.ndim)
-        # @test ([1;0] == new_trackedInterval_1.reducedDims)
-        # @test ([1.; 2.; 3.; 1.0] == new_trackedInterval_1.solvedVals)
+        new_Ms_1, new_errors_1, new_trackedInterval_1 = reduceSolvedDim(Ms_1,errors_1,trackedInterval_1,dim_1)
+        @test isapprox(expected_new_Ms_1[1],new_Ms_1[1])
+        @test isapprox(expected_new_errors_1,new_errors_1)
+        @test isapprox(expected_new_trackedInterval_1,new_trackedInterval_1.interval)
+        @test (1 == new_trackedInterval_1.ndim)
+        @test ([1;0] == new_trackedInterval_1.reducedDims)
+        @test ([1.; 2.; 3.; 1.0] == new_trackedInterval_1.solvedVals)
 
         # 3d case
         Ms_2 = [[5.1;-2;2.4;.000001;.0002;.001001;;18;4;2.12;.0002;.0102;.045;;5;3.2;4.2;11;.0002;.0909;;;8.12;3.332;4.1232;11;.012002;.091239;;45.23;34;7.23;2.0;.0002;.011239;;8.127;3.2;4.3;11;.012002;.093309;;;54.1;13.332;6.1232;12.1;.12;.12239;;4.2343;5.433;94.3;8.340;.012302;.11239;;77.127;81.2;5.3;1;.02;.03], [5.836;3.122;-.031;;13.234344;42.001;.0012;;5.9;13.0022333;.0056;;;3.2;12;.0023;;56.2;1;.00233;;5.2;4.5;.013;;;5.2;4.5;.013;;3.2;12;.0023;;5.2;4.5;.013],[2;2;.002;.001;;2.1;2.1;.0021;.001;;6.23;125;.004;.0021;;;8.23453;25;.004;.0021;;2;15;.0344;.00221;;14;1.9;.004;.023021;;;8;1.9;.004;.023021;;1;1.9;.004;.023021;;4;1.9;.004;.023021]]
