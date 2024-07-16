@@ -215,15 +215,11 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
         #The last entry
         finalVal = alpha*arr2[i+1]
-        # println(finalVal)
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
-            # println("now here")
             arr3[maxRow+1] = finalVal
-            # println(arr3)
             transformedCoeffs[maxRow+1] += thisCoeff * finalVal
-            # println(transformedCoeffs[idxs...,maxRow+1])
             maxRow += 1 # Next column will have one more entry than the current column.
         end
 
@@ -232,16 +228,9 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         arr1 = arr2
         arr2 = arr3
         arr3 = arr
-        # println(arr1)
-        # println(arr2)
-        # println(arr3)
     end
-    #[:,1:maxRow]
-    # println("we out")
-    # println(size(transformedCoeffs[idxs...,1:maxRow]))
     return transformedCoeffs[1:maxRow]
 end
-
 
 function transformChebInPlace1D(coeffs,alpha,beta)
     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
@@ -375,4 +364,95 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
         backOrder = (ndim+1) .- reverse(python_backOrder)
         return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta),backOrder)
     end
+end
+
+function getTransformationError(M,dim)
+    """Returns an upper bound on the error of transforming the Chebyshev approximation M
+
+    In the transformation of dimension dim in M, the matrix multiplication of M by the transformation
+    matrix C has each element of M involved in n element multiplications, where n is the number of rows
+    in C, which is equal to the degree of approximation of M in dimension dim, or M.shape[dim].
+
+    Parameters
+    ----------
+    M : array
+        The Chebyshev approximation coefficient tensor being transformed
+    dim : int
+        The dimension of M being transformed
+
+    Returns
+    -------
+    error : float
+        The upper bound for the error associated with the transformation of dimension dim in M
+    """
+
+    machEps = 2^-52
+    error = reverse(size(M))[dim+1] * machEps * sum(abs.(M))
+    return error #TODO: Figure out a more rigurous bound!
+end
+
+function transformCheb(M,alphas,betas,error,exact)
+    """Transforms an entire Chebyshev coefficient matrix using the transformation xHat = alpha*x + beta.
+
+    Parameters
+    ----------
+    M : array
+        The chebyshev coefficient matrix
+    alphas : iterable
+        The scalers in each dimension of the transformation.
+    betas : iterable
+        The offset in each dimension of the transformation.
+    error : float
+        A bound on the error of the chebyshev approximation
+    exact : bool
+        Whether to perform the transformation with higher precision to minimize error
+
+    Returns
+    -------
+    M : numpy array
+        The coefficient matrix transformed to the new interval
+    error : float
+        An upper bound on the error of the transformation
+    """
+    #This just does the matrix multiplication on each dimension. Except it's by a tensor.
+    ndim = length(size(M))
+    for (dim,n,alpha,beta) in zip(0:ndim-1,size(M),alphas,betas)
+        error += getTransformationError(M, dim)
+        M = TransformChebInPlaceND(M,dim,alpha,beta,exact)
+    end
+    return M, error
+end
+
+function transformChebToInterval(Ms, alphas, betas, errors, exact)
+    """Transforms an entire list of Chebyshev approximations to a new interval xHat = alpha*x + beta.
+
+    Parameters
+    ----------
+    Ms : list of arrays
+        The chebyshev coefficient matrices
+    alphas : iterable
+        The scalers of the transformation we are doing.
+    betas : iterable
+        The offsets of the transformation we are doing.
+    errors : array
+        A bound on the error of each Chebyshev approximation
+    exact : bool
+        Whether to perform the transformation with higher precision to minimize error
+
+    Returns
+    -------
+    newMs : list of arrays
+        The coefficient matrices transformed to the new interval
+    newErrors : array
+        The new errors associated with the transformed coefficient matrices
+    """
+    #Transform the chebyshev polynomials
+    newMs = []
+    newErrors = []
+    for (M,e) in zip(Ms, errors)
+        newM, newE = transformCheb(M, alphas, betas, e, exact)
+        push!(newMs,newM)
+        push!(newErrors,(newE))
+    end
+    return newMs, newErrors
 end

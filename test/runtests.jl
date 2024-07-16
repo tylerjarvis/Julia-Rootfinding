@@ -37,7 +37,9 @@ test_all_ChebyshevSubdivisionSolver()
 # test_reduceSolveDim()
 # test_transformChebInPlace1D()
 # test_transformChebInPlaceND()
-
+# test_getTransformationError()
+# test_transformCheb()
+# test_transformChebToInterval()
 
 # SETUP TO TEST ALL
 function test_all()
