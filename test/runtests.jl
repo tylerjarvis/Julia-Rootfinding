@@ -30,13 +30,16 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_chebApproximate()
 # 
 # ============================================ ChebyshevSubdivisionSolver Tests ============================================
-# test_all_ChebyshevSubdivisionSolver()
+test_all_ChebyshevSubdivisionSolver()
 # 
 # test_getLinearTerms()
 # test_linearCheck1()
-test_reduceSolveDim()
+# test_reduceSolveDim()
 # test_transformChebInPlace1D()
-
+# test_transformChebInPlaceND()
+# test_getTransformationError()
+# test_transformCheb()
+# test_transformChebToInterval()
 
 # SETUP TO TEST ALL
 function test_all()
