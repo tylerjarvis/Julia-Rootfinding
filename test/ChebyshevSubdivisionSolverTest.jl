@@ -162,8 +162,6 @@ function test_reduceSolveDim()
         expected_new_trackedInterval_2 = [-3.;4.;;4.;19.]
 
         new_Ms_2, new_errors_2, new_trackedInterval_2 = reduceSolvedDim(Ms_2,errors_2,trackedInterval_2,dim_2)
-        println()
-        println(new_Ms_2)
         @test isapprox(expected_new_Ms_2[1],new_Ms_2[1])
         @test isapprox(expected_new_Ms_2[2],new_Ms_2[2])
         @test isapprox(expected_new_errors_2,new_errors_2)
