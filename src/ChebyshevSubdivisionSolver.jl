@@ -143,7 +143,7 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
         total_dim = length(degs)
         x = zeros(degs[dim+1])
         x[1:2:end] = [(-1)^i for i in collect(0:(degs[dim+1]+1)//2-1)]
-        new_M = reshape(mapslices(v->sum(x.*v),M,dims=total_dim-dim),degs[1:end .!= dim+1])
+        new_M = reshape(mapslices(v->sum(x.*v),M,dims=total_dim-dim),reverse(degs[1:end .!= dim+1]))
         push!(final_Ms,new_M)
     end
 
