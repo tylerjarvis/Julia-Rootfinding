@@ -114,7 +114,8 @@ function linearCheck1(totalErrs,A,consts)
 end
 
 function reduceSolvedDim(Ms, errors, trackedInterval, dim)
-    
+    # dim is python dim (starting from 0)
+
     val = (trackedInterval.interval[1,dim+1] + trackedInterval.interval[2,dim+1]) / 2
     # Get the matrix of the linear terms
     A = []
@@ -139,30 +140,16 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     for M in Ms
         # Get the dimensions of each M
         degs = reverse(size(M))
-        println(degs)
         total_dim = length(degs)
-        println(total_dim)
-        # Make array [1,0,-1,0,1,...] representing values of Chebyshev polynomials at 0
         x = zeros(degs[dim+1])
-        println(x)
         x[1:2:end] = [(-1)^i for i in collect(0:(degs[dim+1]+1)//2-1)]
-        println(x)
-        # Transpose M so we can use matrix multiplication to evaluate one dimension at a time
-        idxs = Base.circshift(collect(1:length(degs)),total_dim-dim-1)
-        println(idxs)
-        # println(M)
-        println(permutedims(M,reverse(idxs)))
-        new_M = sum((permutedims(M,reverse(idxs)).*x),dims=1)
-        println("completed")
-        println(new_M)
-        # # Transpose the resulting matrix back to its original order
-
-        new_M = permutedims(new_M,reverse(Base.circshift(0:length(degs)-2,dim)))
+        new_M = reshape(mapslices(v->sum(x.*v),M,dims=total_dim-dim),degs[1:end .!= dim+1])
         push!(final_Ms,new_M)
     end
 
     # Remove the point dimension from the tracked interval
     trackedInterval.ndim -= 1
+    trackedInterval.interval = trackedInterval.interval[:,1:end .!=dim+1]
     # trackedInterval.interval = np.delete(trackedInterval.interval,dim,axis=0)
     push!(trackedInterval.reducedDims,dim)
     push!(trackedInterval.solvedVals,val)
