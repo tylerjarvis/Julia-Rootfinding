@@ -128,8 +128,8 @@ function test_linearCheck1()
     end
 end
 
-function test_reduceSolveDim()
-    @testset "reduceSolveDim unit tests" begin 
+function test_reduceSolvedDim()
+    @testset "reduceSolvedDim unit tests" begin 
         # 2d case
         Ms_1 = [[3.1;-2;34;.000001;.0002;;4;1;2;.0002;.0102], [9.836;3.1;-.031;.001;-.045;.00002;;15.2344;42.234;2;4;3;.0023]]
         errors_1 = [.00002;.0001]
@@ -162,8 +162,6 @@ function test_reduceSolveDim()
         expected_new_trackedInterval_2 = [-3.;4.;;4.;19.]
 
         new_Ms_2, new_errors_2, new_trackedInterval_2 = reduceSolvedDim(Ms_2,errors_2,trackedInterval_2,dim_2)
-        println()
-        println(new_Ms_2)
         @test isapprox(expected_new_Ms_2[1],new_Ms_2[1])
         @test isapprox(expected_new_Ms_2[2],new_Ms_2[2])
         @test isapprox(expected_new_errors_2,new_errors_2)
@@ -171,6 +169,64 @@ function test_reduceSolveDim()
         @test (2 == new_trackedInterval_2.ndim)
         @test ([2] == new_trackedInterval_2.reducedDims)
         @test ([-0.00000000000000015000] == new_trackedInterval_2.solvedVals)
+
+        # 5d case 
+        Ms_3 = [reshape(collect(0:2*3*3*2*1-1),(1,2,3,3,2)),reshape(collect(0:3*2*2*2*2-1),(2,2,2,2,3)),reshape(collect(0:4*1*2*2*3-1),(3,2,2,1,4)),reshape(collect(0:5*4*2*1*1-1),(1,1,2,4,5)),reshape(collect(0:3*3*3*3*3-1),(3,3,3,3,3))]
+        errors_3 = [.00014122;.000121;.0007310102;.00839;.00004173]
+        trackedInterval_3 = TrackedInterval([4;19;;-2e-16;-1e-16;;-3;-1e-16;;-4;5;;2;3])
+        trackedInterval_3.reducedDims = [5]
+        trackedInterval_3.solvedVals = [4.123123123;.20039994]
+        dim_3 = 1
+
+        expected_new_Ms_3 = [[-12.;;   -12.;;;  -12.;;   -12.;;;  -12.;;   -12.;;;; -12.;;   -12.;;;  -12.;;   -12.;;;  -12.;;   -12.],
+                             [0.;  1.;  2.;;    3.;  4.;  5.;;;   6.;  7.;  8.;;    9.; 10.; 11.;;;; 12.; 13.; 14.;;   15.; 16.; 17.;;;  18.; 19.; 20.;;   21.; 22.; 23.;;;; 24.; 25.; 26.;;   27.; 28.; 29.;;;  30.; 31.; 32.;;   33.; 34.; 35.;;;; 36.; 37.; 38.;;   39.; 40.; 41.;;;  42.; 43.; 44.;;   45.; 46.; 47.],
+                             [-4.;;;  -4.;;;; -4.;;;  -4.;;;; -4.;;;  -4.;;;; -4.;;;  -4.;;;; -4.;;;  -4.],
+                             [-54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;; -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;; -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.;;;  -54.; -54.; -54.;;   -54.; -54.; -54.;;   -54.; -54.; -54.]]
+        expected_new_errors_3 = [0.00014122000000000001; 0.00073101020000000000; 0.00838999999999999989; 0.00004173000000000000]
+        expected_new_trackedInterval_3 =  [ 4.0;  19;;
+                                            -3.0; -1.0e-16;;
+                                            -4.0;  5.0;;
+                                             2.0;  3.0]
+        new_Ms_3, new_errors_3, new_trackedInterval_3 = reduceSolvedDim(Ms_3,errors_3,trackedInterval_3,dim_3)
+        @test isapprox(expected_new_Ms_3[1],new_Ms_3[1])
+        @test isapprox(expected_new_Ms_3[2],new_Ms_3[2])
+        @test isapprox(expected_new_Ms_3[3],new_Ms_3[3])
+        @test isapprox(expected_new_Ms_3[4],new_Ms_3[4])
+        @test isapprox(expected_new_errors_3,new_errors_3)
+        @test isapprox(expected_new_trackedInterval_3,new_trackedInterval_3.interval)
+        @test (4 == new_trackedInterval_3.ndim)
+        @test ([5;1] == new_trackedInterval_3.reducedDims)
+        @test ([4.123123123;.20039994;-1.5e-16] == new_trackedInterval_3.solvedVals)
+        
+        # 5d pt.2
+        Ms_4 = [reshape(collect(0:2*3*3*2*1-1),(1,2,3,3,2)).^2,reshape(collect(0:3*2*2*2*2-1),(2,2,2,2,3)).^2,reshape(collect(0:4*1*2*2*3-1),(3,2,2,1,4)).^2,reshape(collect(0:5*4*2*1*1-1),(1,1,2,4,5)).^2,reshape(collect(0:3*3*3*3*3-1),(3,3,3,3,3)).^2]
+        errors_4 = [.00014122;.000121;.0007310102;.00839;.00004173]
+        trackedInterval_4 = TrackedInterval([4;19;;-2e-16;-1e-16;;-3;-1e-16;;-4;5;;2;3])
+        trackedInterval_4.reducedDims = [5]
+        trackedInterval_4.solvedVals = [4.123123123;.20039994]
+        dim_4 = 1
+
+        expected_new_Ms_4 = [[-144.;;   -168.;;;  -192.;;   -216.;;;  -240.;;   -264.;;;; -576.;;   -600.;;;  -624.;;   -648.;;;  -672.;;   -696.],
+                            [0.000e+00; 1.000e+00; 4.000e+00;;   9.000e+00; 1.600e+01; 2.500e+01;;;  3.600e+01; 4.900e+01; 6.400e+01;;   8.100e+01; 1.000e+02; 1.210e+02;;;; 1.440e+02; 1.690e+02; 1.960e+02;;   2.250e+02; 2.560e+02; 2.890e+02;;;  3.240e+02; 3.610e+02; 4.000e+02;;   4.410e+02; 4.840e+02; 5.290e+02;;;; 5.760e+02; 6.250e+02; 6.760e+02;;   7.290e+02; 7.840e+02; 8.410e+02;;;  9.000e+02; 9.610e+02; 1.024e+03;;   1.089e+03; 1.156e+03; 1.225e+03;;;; 1.296e+03; 1.369e+03; 1.444e+03;;   1.521e+03; 1.600e+03; 1.681e+03;;;  1.764e+03; 1.849e+03; 1.936e+03;;   2.025e+03; 2.116e+03; 2.209e+03],
+                            [-16.;;;   -24.;;;;  -80.;;;   -88.;;;; -144.;;;  -152.;;;; -208.;;;  -216.;;;; -272.;;;  -280.],
+                            [-2916.;  -3024.;  -3132.;;    -3240.;  -3348.;  -3456.;;    -3564.;  -3672.;  -3780.;;;   -3888.;  -3996.;  -4104.;;    -4212.;  -4320.;  -4428.;;    -4536.;  -4644.;  -4752.;;;   -4860.;  -4968.;  -5076.;;    -5184.;  -5292.;  -5400.;;    -5508.;  -5616.;  -5724.;;;; -11664.; -11772.; -11880.;;   -11988.; -12096.; -12204.;;   -12312.; -12420.; -12528.;;;  -12636.; -12744.; -12852.;;   -12960.; -13068.; -13176.;;   -13284.; -13392.; -13500.;;;  -13608.; -13716.; -13824.;;   -13932.; -14040.; -14148.;;   -14256.; -14364.; -14472.;;;; -20412.; -20520.; -20628.;;   -20736.; -20844.; -20952.;;   -21060.; -21168.; -21276.;;;  -21384.; -21492.; -21600.;;   -21708.; -21816.; -21924.;;   -22032.; -22140.; -22248.;;;  -22356.; -22464.; -22572.;;   -22680.; -22788.; -22896.;;   -23004.; -23112.; -23220.]]
+        expected_new_errors_4 = [0.00014122000000000001; 0.00073101020000000000; 0.00838999999999999989; 0.00004173000000000000]
+        expected_new_trackedInterval_4 = [4.0e+00;  1.9e+01;;
+                                            -3.0e+00; -1.0e-16;;
+                                            -4.0e+00;  5.0e+00;;
+                                             2.0e+00;  3.0e+00]
+
+        new_Ms_4, new_errors_4, new_trackedInterval_4 = reduceSolvedDim(Ms_4,errors_4,trackedInterval_4,dim_4)
+        @test isapprox(expected_new_Ms_4[1],new_Ms_4[1])
+        @test isapprox(expected_new_Ms_4[2],new_Ms_4[2])
+        @test isapprox(expected_new_Ms_4[3],new_Ms_4[3])
+        @test isapprox(expected_new_Ms_4[4],new_Ms_4[4])
+        @test isapprox(expected_new_errors_4,new_errors_4)
+        @test isapprox(expected_new_trackedInterval_4,new_trackedInterval_4.interval)
+        @test (4 == new_trackedInterval_4.ndim)
+        @test ([5;1] == new_trackedInterval_4.reducedDims)
+        @test ([4.123123123;.20039994;-1.5e-16] == new_trackedInterval_4.solvedVals)
+        
     end
 end
 
