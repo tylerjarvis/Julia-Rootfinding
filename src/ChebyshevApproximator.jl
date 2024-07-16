@@ -2,6 +2,8 @@ import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transf
 import FFTW: REDFT00 #This is the enum that represents DCT-I 
 using Statistics
 using LazySets, Polyhedra
+import Pkg; Pkg.add("RowEchelon")
+using RowEchelon
 
 function getApproxError(degs, epsilons, rhos, macheps=2^-52)
     """

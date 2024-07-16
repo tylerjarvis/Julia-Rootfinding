@@ -443,3 +443,7 @@ function transformChebToInterval(Ms, alphas, betas, errors, exact)
     end
     return newMs, newErrors
 end
+
+function findVertices()
+    return 0
+end
