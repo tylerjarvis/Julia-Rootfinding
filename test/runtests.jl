@@ -40,7 +40,8 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_getTransformationError()
 # test_transformCheb()
 # test_transformChebToInterval()
-test_getSubdivisionDims()
+# test_getSubdivisionDims()
+test_getInverseOrder()
 
 # SETUP TO TEST ALL
 function test_all()

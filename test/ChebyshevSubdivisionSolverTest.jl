@@ -12,6 +12,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_transformCheb()
         test_transformChebToInterval()
         test_getSubdivisionDims()
+        test_getInverseOrder()
     end
 end
 
