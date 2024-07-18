@@ -443,3 +443,58 @@ function transformChebToInterval(Ms, alphas, betas, errors, exact)
     end
     return newMs, newErrors
 end
+
+function getSubdivisionDims(Ms,trackedInterval,level)
+    """Decides which dimensions to subdivide in and in what order.
+
+    Parameters
+    ----------
+    Ms : list of numpy arrays
+        The chebyshev coefficient matrices
+    trackedInterval : trackedInterval
+        The interval to be subdivided
+    level : int
+        The current depth of subdivision from the original interval
+
+    Returns
+    -------
+    allDims : numpy array
+        The ith row gives the dimensions in which Ms[i] should be subdivided, in order.
+    """
+    dim = length(Ms)
+    dims_to_consider = collect(0:dim-1)
+    for i in 0:dim-1
+        if isapprox(trackedInterval.interval[1,i+1], trackedInterval.interval[2,i+1],rtol=1e-5,atol=1e-8)
+            if length(dims_to_consider) != 1
+                dims_to_consider = deleteat!(dims_to_consider, findall(x->x==i,dims_to_consider))
+            end
+        end
+    end
+    if level > 5
+        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M))[(1 .+ dims_to_consider)]))]) for M in Ms]
+        return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
+    else
+        dim_lengths = dimSize(trackedInterval)
+        max_length = maximum([dim_lengths[i] for i in (1 .+ dims_to_consider)])
+        dims_to_consider = filter(x -> dim_lengths[(1 + x)] > max_length/5,dims_to_consider)
+        if length(dims_to_consider) > 1
+            shapes = reverse(reduce(hcat,[collect(size(M)) for M in Ms]))
+            # shapes_list = [reverse(collect(size(M))) for M in Ms]
+            # shapes = reshape([item for sublist in shapes_list for item in sublist],(dim,dim))
+            degree_sums = sum(shapes,dims=2)
+            total_sum = sum(shapes)
+            for i in Base.copy(dims_to_consider)
+                if length(dims_to_consider) > 1 && (degree_sums[i+1] < floor(total_sum/(dim+1)))
+                    dims_to_consider = deleteat!(dims_to_consider, findall(x->x==i,dims_to_consider))
+                end
+            end
+        end
+        if length(dims_to_consider) == 0
+            dims_to_consider = [0]
+        end
+        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(1 .+ dims_to_consider)])]) for M in Ms]
+        for M in Ms
+        end
+        return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
+    end
+end

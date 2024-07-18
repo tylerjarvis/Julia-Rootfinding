@@ -165,9 +165,10 @@ end
 #     """Gets the volume of the current interval."""
 #     return np.product(self.interval[:,1] - self.interval[:,0])
 
-# def dimSize(self):
-#     """Gets the lengths along each dimension of the current interval."""
-#     return self.interval[:,1] - self.interval[:,0]
+function dimSize(trackedInterval)
+    """Gets the lengths along each dimension of the current interval."""
+    return trackedInterval.interval[2,:] - trackedInterval.interval[1,:]
+end
 
 # def finalDimSize(self):
 #     """Gets the lengths along each dimension of the final interval."""
