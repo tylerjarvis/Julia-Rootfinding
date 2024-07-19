@@ -530,6 +530,5 @@ function getInverseOrder(order)
     newOrder = reshape(newOrder_matrix,(1,length(newOrder_matrix)))
     invOrder = zeros(length(newOrder))
     invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
-    println(Int.(invOrder))
     return Tuple(Int.(invOrder))
 end
