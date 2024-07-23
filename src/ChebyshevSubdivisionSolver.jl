@@ -1,4 +1,4 @@
-#using LinearAlgebra
+using LinearAlgebra
 
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
@@ -459,7 +459,7 @@ function findVertices(A,b,errors)
     return as,bs
 end
 
-function BoundingIntervalLinearSystem(Ms, errors, finalStep)
+function boundingIntervalLinearSystem(Ms, errors, finalStep)
     """Finds a smaller region in which any root must be.
 
     Parameters
@@ -534,7 +534,6 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
     a_orig = a0
     b_orig = b0
     for i = 0:1
-        println(err)
         #Now do the linear solve check
         U,S,Vh = svd(A')
         wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
@@ -548,6 +547,9 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
             b1 = center + width
             a = mapslices(x->maximum(x),hcat(a0,a1),dims = 2)
             b = mapslices(x->minimum(x),hcat(b0,b1),dims = 2)
+        else
+            a = a0
+            b = b0
         end
         #Undo the column preconditioning
         a .*= colScaler
@@ -560,10 +562,6 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
         b[b .< -1] .= -1
         a[a .> 1] .= 1
         b[b .> 1] .= 1
-
-        println(a)
-        println(b)
-        println(throwOut)
 
         forceShouldStop = finalStep && !wellConditioned
         # Calculate the "changed" variable
@@ -579,28 +577,24 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
 
         if i == 0 && changed
             #If it is the first time through the loop and there was a change, return the interval it shrunk down to and set "is_done" to false
-            println("1")
-            return hcat(a,b), changed, forceShouldStop, throwOut
+            return hcat(a,b)', changed, forceShouldStop, throwOut
         elseif i == 0 && !changed
             #If it is the first time through the loop and there was not a change, save the a and b as the original values to return,
             #and then try running through the loop again with a tighter error to see if we shrink then
             a_orig = a
             b_orig = b
             err = errors
-            println("2")
         elseif changed
             #If it is the second time through the loop and it did change, it means we didn't change on the first time,
             #but that the interval did shrink with tighter errors. So return the original interval with changed = False and is_done = False
             #print("subdivide")
-            println("3")
-            return hcat(a_orig, b_orig), false, forceShouldStop, false
+            return hcat(a_orig, b_orig)', false, forceShouldStop, false
         else
             #If it is the second time through the loop and it did NOT change, it means we will not shrink the interval even if we subdivide,
             #so return the original interval with changed = False and is_done = wellConditioned
             #print("done")
             #print("throwout:",throwOut)
-            println("4")
-            return hcat(a_orig,b_orig), false, wellConditioned || forceShouldStop, false
+            return hcat(a_orig,b_orig)', false, wellConditioned || forceShouldStop, false
         end
     end
 end
