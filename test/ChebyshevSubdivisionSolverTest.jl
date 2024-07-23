@@ -4266,3 +4266,25 @@ function test_getSubdivisionDims()
         @test isapprox(expected_allDims_15, getSubdivisionDims(Ms_15,trackedInterval_15,level_15))
     end
 end
+
+function test_getInverseOrder()
+    @testset "getInverseOrder unit tests" begin
+        @test (0, 2, 1, 3, 4, 6, 5, 7) == getInverseOrder([0; 2; 1])
+        @test getInverseOrder([1; 0; 2]) == (0, 1, 4, 5, 2, 3, 6, 7)
+        @test getInverseOrder([2; 1; 0]) == (0, 4, 2, 6, 1, 5, 3, 7)
+        @test getInverseOrder([2; 0]) == (0, 2, 1, 3)
+        @test getInverseOrder([0; 2]) == (0, 1, 2, 3)
+        @test getInverseOrder([0]) == (0, 1)
+        @test getInverseOrder([2]) == (0, 1)
+        @test getInverseOrder([4;0;2;3;1]) == (0, 16, 2, 18, 4, 20, 6, 22, 1, 17, 3, 19, 5, 21, 7, 23, 8, 24, 10, 26, 12, 28, 14, 30, 9, 25, 11, 27, 13, 29, 15, 31)
+        @test getInverseOrder([0;4;1;3;2]) == (0, 8, 2, 10, 1, 9, 3, 11, 4, 12, 6, 14, 5, 13, 7, 15, 16, 24, 18, 26, 17, 25, 19, 27, 20, 28, 22, 30, 21, 29, 23, 31)
+        @test getInverseOrder([0;4;5;1;3;6;2]) == (0, 2, 16, 18, 32, 34, 48, 50, 4, 6, 20, 22, 36, 38, 52, 54, 1, 3, 17, 19, 33, 35, 49, 51, 5, 7, 21, 23, 37, 39, 53, 55, 8, 10, 24, 26, 40, 42, 56, 58, 12, 14, 28, 30, 44, 46, 60, 62, 9, 11, 25, 27, 41, 43, 57, 59, 13, 15, 29, 31, 45, 47, 61, 63, 64, 66, 80, 82, 96, 98, 112, 114, 68, 70, 84, 86, 100, 102, 116, 118, 65, 67, 81, 83, 97, 99, 113, 115, 69, 71, 85, 87, 101, 103, 117, 119, 72, 74, 88, 90, 104, 106, 120, 122, 76, 78, 92, 94, 108, 110, 124, 126, 73, 75, 89, 91, 105, 107, 121, 123, 77, 79, 93, 95, 109, 111, 125, 127)
+        @test getInverseOrder([1]) == (0,1)
+        @test getInverseOrder([0;3;1]) == (0, 2, 1, 3, 4, 6, 5, 7)
+        @test getInverseOrder([0;3;4]) == (0, 1, 2, 3, 4, 5, 6, 7)
+        @test getInverseOrder([4]) == (0, 1)
+        @test getInverseOrder([0;5;4]) == (0, 2, 1, 3, 4, 6, 5, 7)
+        @test getInverseOrder([3;5;4]) == (0, 2, 1, 3, 4, 6, 5, 7)
+        @test getInverseOrder([5;3]) == (0, 2, 1, 3)
+    end
+end
