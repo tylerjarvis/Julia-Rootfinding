@@ -498,3 +498,37 @@ function getSubdivisionDims(Ms,trackedInterval,level)
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
     end
 end
+
+function getInverseOrder(order)
+    """Gets a particular order of matrices needed in getSubdivisionIntervals (helper function).
+
+    Takes the order of dimensions in which a Chebyshev coefficient tensor M was subdivided and gets
+    the order of the indexes that will arrange the list of resulting transformed matrices as if the
+    dimensions had bee subdivided in standard index order. For example, if dimensions 0, 3, 1 were
+    subdivided in that order, this function returns the order [0,2,1,3,4,6,5,7] corresponding to the
+    indices of currMs such that when arranged in this order, it appears as if the dimensions were
+    subdivided in order 0, 1, 3.
+
+    Parameters
+    ----------
+    order : array
+        The order of dimensions along which a coefficient tensor was subdivided
+
+    Returns
+    -------
+    invOrder : array
+        The order of indices of currMs (in the function getSubdivisionIntervals) that arranges the
+        matrices resulting from the subdivision as if the original matrix had been subdivided in
+        numerical order
+    """
+    t = zeros(length(order))
+    t[sortperm(order)] = collect(0:length(t)-1)
+    order = t
+    order = Int.(2 .^(length(order)-1 .- order))
+    combinations = Iterators.product([[0,1] for i in 1:length(order)]...)
+    newOrder_matrix = [collect(reverse(i))'*order for i in combinations]
+    newOrder = reshape(newOrder_matrix,(1,length(newOrder_matrix)))
+    invOrder = zeros(length(newOrder))
+    invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
+    return Tuple(Int.(invOrder))
+end
