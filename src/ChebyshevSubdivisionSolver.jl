@@ -607,6 +607,9 @@ end
 
 function getSubdivisionDims(Ms,trackedInterval,level)
     """Decides which dimensions to subdivide in and in what order.
+    
+    Parameters
+    ----------
     Ms : list of arrays
         The chebyshev coefficient matrices
     trackedInterval : trackedInterval
