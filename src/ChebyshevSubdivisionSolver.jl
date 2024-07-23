@@ -1,4 +1,4 @@
-using RowEchelon
+#using LinearAlgebra
 
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
@@ -492,25 +492,19 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
     minZoomForChange = 0.99 #If the volume doesn't shrink by this amount say that it hasn't changed
     minZoomForBaseCaseEnd = 0.4^dim #If the volume doesn't change by at least this amount when running with no error, stop
     #Get the matrix of the linear terms
-    A = reduce(hcat,[getLinearTerms(M) for M in Ms])
-    println(A)
+    A = Matrix{Float64}(reduce(hcat,[getLinearTerms(M) for M in Ms]))
     #Get the Vector of the constant terms
     consts = [M[1] for M in Ms]'
-    println(consts)
     #Get the Error of everything else combined.
     totalErrs = [sum(abs.(Ms[i])) + errors[i] for i = 1:dim]'
-    println(totalErrs)
     linear_sums = sum(abs.(A),dims=1)
-    println(linear_sums)
     err = totalErrs - abs.(consts) - linear_sums
-    println(err)
 
     #Scale all the polynomials relative to one another
-    errors = Base.copy(errors)
+    errors = Base.copy(errors')
     errors_0 = Base.copy(errors)
     for i in 1:dim
         scaleVal = maximum(abs.(A[:,i]))
-        println(scaleVal)
         if scaleVal > 0
             s = 2. ^Int(floor(log2(abs(scaleVal))))
             A[:,i] /= s
@@ -521,10 +515,8 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
             errors[i] /= s
         end
     end
-    println(A)
-    println(err)
     #Precondition the columns. (AP)X = B -> A(PX) = B. So scale columns, solve, then scale the solution.
-    colScaler = ones(dim)'
+    colScaler = ones(dim)
     for i in 1:dim
         scaleVal = maximum(abs.(A[i,:]))
         if scaleVal > 0
@@ -534,87 +526,84 @@ function BoundingIntervalLinearSystem(Ms, errors, finalStep)
             A[i,:] *= s
         end
     end
-    println(A)
-    println(totalErrs)
-    println(colScaler)
 
     #Run linear algorithm for shrinking or deciding whether to subdivide.
     #This loop will only execute the second time if the interval was not changed on the first iteration and it needs to run again with tighter errors
-    for i = 1:2
-        #Use the other interval shrinking method
-        a, b = linearCheck1(totalErrs, A, consts)
+    #Use the other interval shrinking method
+    a0, b0 = linearCheck1(totalErrs, A, consts)
+    a_orig = a0
+    b_orig = b0
+    for i = 0:1
+        println(err)
+        #Now do the linear solve check
+        U,S,Vh = svd(A')
+        wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
+        #We use the matrix inverse to find the width, so might as well use it both spots. Should be fine as dim is small.
+        if wellConditioned #Make sure conditioning is ok.
+            Ainv = ((1 ./ S).*Vh')' * (U')
+
+            center = -Ainv*consts'
+            width = abs.(Ainv)*err'
+            a1 = center-width
+            b1 = center + width
+            a = mapslices(x->maximum(x),hcat(a0,a1),dims = 2)
+            b = mapslices(x->minimum(x),hcat(b0,b1),dims = 2)
+        end
+        #Undo the column preconditioning
+        a .*= colScaler
+        b .*= colScaler
+        #Add error and bound
+        a .-= widthToAdd
+        b .+= widthToAdd
+        throwOut = any(a .> b) || any(a .> 1) || any(b .< -1)
+        a[a .< -1] .= -1
+        b[b .< -1] .= -1
+        a[a .> 1] .= 1
+        b[b .> 1] .= 1
+
         println(a)
         println(b)
-        #Now do the linear solve check
-        U, S, Vh = svd(A')
-        println(U)
-#         wellConditioned = S[0] > 0 and S[-1]/S[0] > 1e-10
-#         #We use the matrix inverse to find the width, so might as well use it both spots. Should be fine as dim is small.
-#         if wellConditioned: #Make sure conditioning is ok.
-#             Ainv = (1/S * Vh.T) @ U.T
-#             center = -Ainv@consts
+        println(throwOut)
 
-#             #Ainv transforms the hyperrectangle of side lengths err into a parallelogram with these as the principal direction
-#             #So summing over them gets the farthest the parallelogram can reach in each dimension.
-#             width = np.sum(np.abs(Ainv*err),axis=1)
-#             #Bound with previous result
-        #     a = np.maximum(center - width, a)
-        #     b = np.minimum(center + width, b)
-        # #Undo the column preconditioning
-        # a *= colScaler
-        # b *= colScaler
-        # #Add error and bound
-        # a -= widthToAdd
-        # b += widthToAdd
-        # throwOut = np.any(a > b) or np.any(a > 1) or np.any(b < -1)
-        # a[a < -1] = -1
-        # b[b < -1] = -1
-        # a[a > 1] = 1
-        # b[b > 1] = 1
+        forceShouldStop = finalStep && !wellConditioned
+        # Calculate the "changed" variable
+        newRatio = prod(b - a) ./ 2^dim
+        changed = false
+        if throwOut
+            changed = true
+        elseif i == 0
+            changed = newRatio < minZoomForChange
+        else
+            changed = newRatio < minZoomForBaseCaseEnd
+        end
 
-        # forceShouldStop = finalStep and not wellConditioned
-        # # Calculate the "changed" variable
-        # newRatio = np.product(b - a) / 2**dim
-        # if throwOut:
-        #     changed = True
-        # elif i == 0:
-        #     changed = newRatio < minZoomForChange
-        # else:
-        #     changed = newRatio < minZoomForBaseCaseEnd
-
-        # if i == 0 and changed:
-        #     #If it is the first time through the loop and there was a change, return the interval it shrunk down to and set "is_done" to false
-        #     #print("shrink")
-        #     #print("changed:",changed)
-        #     #print("forceShouldStop:",forceShouldStop)
-        #     #print("ThrowOut:",throwOut)
-        #     ##print("well conditioned:",wellConditioned)
-        #     return np.vstack([a,b]).T, changed, forceShouldStop, throwOut
-        # elif i == 0 and not changed:
-        #     #If it is the first time through the loop and there was not a change, save the a and b as the original values to return,
-        #     #and then try running through the loop again with a tighter error to see if we shrink then
-        #     a_orig = a
-        #     b_orig = b
-        #     err = errors
-        # elif changed:
-        #     #If it is the second time through the loop and it did change, it means we didn't change on the first time,
-        #     #but that the interval did shrink with tighter errors. So return the original interval with changed = False and is_done = False
-        #     #print("subdivide")
-        #     return np.vstack([a_orig, b_orig]).T, False, forceShouldStop, False
-        # else:
-        #     #If it is the second time through the loop and it did NOT change, it means we will not shrink the interval even if we subdivide,
-        #     #so return the original interval with changed = False and is_done = wellConditioned
-        #     #print("done")
-        #     #print("throwout:",throwOut)
-        #     return np.vstack([a_orig,b_orig]).T, False, wellConditioned or forceShouldStop, False
+        if i == 0 && changed
+            #If it is the first time through the loop and there was a change, return the interval it shrunk down to and set "is_done" to false
+            println("1")
+            return hcat(a,b), changed, forceShouldStop, throwOut
+        elseif i == 0 && !changed
+            #If it is the first time through the loop and there was not a change, save the a and b as the original values to return,
+            #and then try running through the loop again with a tighter error to see if we shrink then
+            a_orig = a
+            b_orig = b
+            err = errors
+            println("2")
+        elseif changed
+            #If it is the second time through the loop and it did change, it means we didn't change on the first time,
+            #but that the interval did shrink with tighter errors. So return the original interval with changed = False and is_done = False
+            #print("subdivide")
+            println("3")
+            return hcat(a_orig, b_orig), false, forceShouldStop, false
+        else
+            #If it is the second time through the loop and it did NOT change, it means we will not shrink the interval even if we subdivide,
+            #so return the original interval with changed = False and is_done = wellConditioned
+            #print("done")
+            #print("throwout:",throwOut)
+            println("4")
+            return hcat(a_orig,b_orig), false, wellConditioned || forceShouldStop, false
+        end
     end
 end
-
-
-
-Ms = [[1.;2;3;;4;5;6],[-1;0;;6;7;;8;9]]
-errors = [10.;15]
-finalStep = false
 
 function getSubdivisionDims(Ms,trackedInterval,level)
     """Decides which dimensions to subdivide in and in what order.

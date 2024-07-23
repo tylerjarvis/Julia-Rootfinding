@@ -1,8 +1,6 @@
 import FFTW: r2r #This is the DCT-I function that takes in a matrix and a transform "kind"
 import FFTW: REDFT00 #This is the enum that represents DCT-I 
 using Statistics
-import Pkg; Pkg.add("AffineSpaces")
-using AffineSpaces
 
 function getApproxError(degs, epsilons, rhos, macheps=2^-52)
     """
