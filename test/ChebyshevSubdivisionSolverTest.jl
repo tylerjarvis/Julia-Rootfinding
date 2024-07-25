@@ -14,6 +14,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_getSubdivisionDims()
         test_getInverseOrder()
         test_getSubdivisionIntervals()
+        test_boundingIntervalLinearSystem()
     end
 end
 
