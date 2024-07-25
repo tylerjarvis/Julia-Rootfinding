@@ -107,11 +107,9 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
     """
     #Ensure the interval has non zero size; mark it empty if it doesn't
     if any(subInterval[1,:] > subInterval[2,:]) && canThrowOut(trackedInterval)
-        println("here")
         trackedInterval.empty = true
         return
     elseif any(subInterval[1,:] > subInterval[2,:])
-        println("now here")
         #If we can't throw the interval out, it should be bounded by [-1,1].
         subInterval[1,:] = min.(subInterval[1,:], ones(length(subInterval[1,:])))
         subInterval[1,:] = max.(subInterval[1,:], -ones(length(subInterval[1,:])))
@@ -316,7 +314,7 @@ end
 
 function getIntervalForCombining(trackedInterval::TrackedInterval)
     """Returns the interval to be used in combining intervals to report at the end."""
-    return (trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval)
+    return trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval
 end
 
 # def __repr__(self):

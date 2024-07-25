@@ -45,7 +45,8 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_getInverseOrder()
 # test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
-test_isPoint()
+# test_isPoint()
+# test_isExteriorInterval()
 
 # ============================================ TrackedInterval Tests ============================================
 
@@ -53,6 +54,7 @@ test_isPoint()
 
 # test_intervalCopy()
 # test_addTransform()
+# test_getIntervalForCombining()
 
 # ============================================ SETUP TO TEST ALL ============================================
 function test_all()
