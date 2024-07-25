@@ -1,7 +1,7 @@
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
 using Test
 
-function tests_all_TrackedInterval()
+function test_all_TrackedInterval()
     @testset "All tests in TrackedIntervalTest.jl" begin
         test_intervalCopy()
         test_addTransform()
@@ -75,6 +75,37 @@ function test_addTransform()
         @test trackedInterval_3.empty == false
         @test isapprox(trackedInterval_3.interval,[ 0.5;  0.5;;-1.;   1. ])
     
+        trackedInterval_4 = TrackedInterval([-1.;2;;-1;1])
+        trackedInterval_4.finalStep = true
+        subInterval_4 = [.0001;0;;-1;1]
+        addTransform(trackedInterval_4,subInterval_4)
+        @test trackedInterval_4.empty == false
+        @test isapprox(trackedInterval_4.interval,[ 0.50015;  0.50015;;-1.;       1.     ])
+        @test isapprox(trackedInterval_4.transforms[1],[0.e+00; 1.e+00;;1.e-04; 0.e+00])
+
+        trackedInterval_5 = TrackedInterval([-1.;2;;-1;1;;-1;.9])
+        trackedInterval_5.finalStep = true
+        subInterval_5 = [.0001;0;;-1;1;;-1;1]
+        addTransform(trackedInterval_5,subInterval_5)
+        @test trackedInterval_5.empty == false
+        @test isapprox(trackedInterval_5.interval,[ 0.50015;  0.50015;;-1.;       1.     ;;-1.;       0.9    ])
+        @test isapprox(trackedInterval_5.transforms[1],[0.e+00; 1.e+00; 1.e+00;;1.e-04; 0.e+00; 0.e+00])
+
+        trackedInterval_6 = TrackedInterval([-1.;2;;-1;1;;-1;.9])
+        trackedInterval_6.finalStep = true
+        subInterval_6 = [-18;-18.01;;-3;1;;-3;1]
+        addTransform(trackedInterval_6,subInterval_6)
+        @test trackedInterval_6.empty == false
+        @test isapprox(trackedInterval_6.interval,[-1.;  -1. ;;-1.;   1. ;;-1.;   0.9])
+        @test isapprox(trackedInterval_6.transforms[1],[ 0.;  1.;  1.;;-1.;  0.;  0.])
+
+        trackedInterval_7 = TrackedInterval([-1.;2;;-1;1;;-1;.9])
+        trackedInterval_7.finalStep = true
+        subInterval_7 = [3;-3.01;;3;1;;3;1]
+        addTransform(trackedInterval_7,subInterval_7)
+        @test trackedInterval_7.empty == false
+        @test isapprox(trackedInterval_7.interval,[2.;  2. ;;1.;  1. ;;0.9; 0.9])
+        @test isapprox(trackedInterval_7.transforms[1],[0.; 0.; 0.;;1.; 1.; 1.])
 
     end
 end
