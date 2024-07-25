@@ -5825,8 +5825,7 @@ function test_getSubdivisionIntervals()
         @test all(isapprox(transforms,exp) for (transforms,exp) in zip(allTransforms_18,expected_transforms_18))
     end
 end                                          
-                                            
-                                            
+
 function test_boundingIntervalLinearSystem()
     @testset "BoundingIntervalLinearSystem unit tests" begin
         Ms_1 = [[ 1.07142165e+00;  1.61772562e-01;;

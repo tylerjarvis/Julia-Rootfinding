@@ -5,6 +5,7 @@ function test_all_TrackedInterval()
     @testset "All tests in TrackedIntervalTest.jl" begin
         test_intervalCopy()
         test_addTransform()
+        test_getIntervalForCombining()
     end
 end
 
@@ -107,5 +108,18 @@ function test_addTransform()
         @test isapprox(trackedInterval_7.interval,[2.;  2. ;;1.;  1. ;;0.9; 0.9])
         @test isapprox(trackedInterval_7.transforms[1],[0.; 0.; 0.;;1.; 1.; 1.])
 
+    end
+end
+
+function test_getIntervalForCombining()
+    @testset "getIntervalForCombining unit tests" begin
+        trackedInterval = TrackedInterval([-1;1;;-1.2332;1.2134;;-5;1])
+        @test isapprox(getIntervalForCombining(trackedInterval),[-1;1;;-1.2332;1.2134;;-5;1])
+        @test trackedInterval.preFinalInterval == []
+        trackedInterval.preFinalInterval = [-5;5;;-1;1;;500;1]
+        trackedInterval.finalStep = true
+        @test isapprox(getIntervalForCombining(trackedInterval),[-5;5;;-1;1;;500;1])
+        trackedInterval.finalStep = false
+        @test isapprox(getIntervalForCombining(trackedInterval),[-1;1;;-1.2332;1.2134;;-5;1])
     end
 end

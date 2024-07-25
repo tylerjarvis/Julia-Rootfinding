@@ -321,7 +321,7 @@ end
 
 function getIntervalForCombining(trackedInterval::TrackedInterval)
     """Returns the interval to be used in combining intervals to report at the end."""
-    return (trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval)
+    return trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval
 end
 
 # def __repr__(self):
