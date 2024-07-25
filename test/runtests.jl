@@ -8,6 +8,7 @@ Pkg.instantiate()
 print("Testing...")
 include("ChebyshevApproximatorTest.jl")
 include("ChebyshevSubdivisionSolverTest.jl")
+include("TrackedIntervalTest.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
 
 # Uncomment the lines below to run specific test sets
@@ -41,11 +42,20 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_transformCheb()
 # test_transformChebToInterval()
 # test_getSubdivisionDims()
-test_boundingIntervalLinearSystem()
 # test_getInverseOrder()
+test_getSubdivisionIntervals()
+# test_boundingIntervalLinearSystem()
 
-# SETUP TO TEST ALL
+# ============================================ TrackedInterval Tests ============================================
+
+# test_all_TrackedInterval()
+
+# test_intervalCopy()
+# test_addTransform()
+
+# ============================================ SETUP TO TEST ALL ============================================
 function test_all()
     test_all_ChebyshevApproximator()
     test_all_ChebyshevSubdivisionSolver()
+    test_all_TrackedInterval()
 end
