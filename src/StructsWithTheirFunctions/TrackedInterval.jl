@@ -45,7 +45,7 @@ mutable struct TrackedInterval
     solvedVals # = []
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,[0.0394555475981047]*ndim,[],[],[],[])
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[])
     end
 end
 
@@ -96,6 +96,53 @@ end
 #                 self.interval[dim][i] = self.interval[dim][1]
 #             else:
 #                 self.interval[dim][i] = alpha2[dim]*x+beta2[dim]
+
+function addTransform(trackedInterval::TrackedInterval, subInterval)
+    """Adds the next alpha and beta values to the list transforms and updates the current interval.
+
+    Parameters:
+    -----------
+    subInterval : array
+        The subinterval to which the current interval is being reduced
+    """
+    #Ensure the interval has non zero size; mark it empty if it doesn't
+    if any(subInterval[1,:] > subInterval[2,:]) && canThrowOut(trackedInterval)
+        println("here")
+        trackedInterval.empty = true
+        return
+    elseif any(subInterval[1,:] > subInterval[2,:])
+        println("now here")
+        #If we can't throw the interval out, it should be bounded by [-1,1].
+        subInterval[1,:] = min.(subInterval[1,:], ones(length(subInterval[1,:])))
+        subInterval[1,:] = max.(subInterval[1,:], -ones(length(subInterval[1,:])))
+        subInterval[2,:] = min.(subInterval[2,:], ones(length(subInterval[1,:])))
+        subInterval[2,:] = max.(subInterval[2,:], subInterval[1,:])
+    end
+    # Get the alpha and beta associated with the transformation in each dimension
+    a1 = subInterval[1,:]
+    b1 = subInterval[2,:] # all the lower bounds and upper bounds of the new interval, respectively
+    a2 = trackedInterval.interval[1,:]
+    b2 = trackedInterval.interval[2,:] # all the lower bounds and upper bounds of the original interval
+    # println(a1,b1,a2,b2)
+    alpha1, beta1 = (b1-a1)/2, (b1+a1)/2
+    alpha2, beta2 = (b2-a2)/2, (b2+a2)/2
+    # println(alpha1,beta1,alpha2,beta2) 
+    push!(trackedInterval.transforms,hcat(alpha1, beta1))
+    #Update the lower and upper bounds of the current interval
+    for dim in 0:trackedInterval.ndim-1
+        for i in 0:1
+            x = subInterval[i+1,dim+1]
+            #Be exact if x = +-1
+            if x == -1.0
+                trackedInterval.interval[i+1,dim+1] = trackedInterval.interval[1,dim+1]
+            elseif x == 1.0
+                trackedInterval.interval[i+1,dim+1] = trackedInterval.interval[2,dim+1]
+            else
+                trackedInterval.interval[i+1,dim+1] = alpha2[dim+1]*x+beta2[dim+1]
+            end
+        end
+    end
+end
 
 # def getLastTransform(self):
 #     """Gets the alpha and beta values of the last transformation the interval underwent."""
@@ -191,7 +238,7 @@ end
 #     return newone
 
 
-function copy(trackedInterval::TrackedInterval)
+function intervalCopy(trackedInterval::TrackedInterval)
     """Returns a deep copy of the current interval with all changes and properties preserved."""
     newone = TrackedInterval(trackedInterval.topInterval)
     newone.interval = copy(trackedInterval.interval)

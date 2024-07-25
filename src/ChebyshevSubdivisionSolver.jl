@@ -532,3 +532,97 @@ function getInverseOrder(order)
     invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
     return Tuple(Int.(invOrder))
 end
+
+function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
+    """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
+
+    Parameters
+    ----------
+    Ms : list of arrays
+        The chebyshev coefficient matrices
+    errors : array
+        An upper bound on the error of each Chebyshev approximation
+    trackedInterval : trackedInterval
+        The interval to be subdivided
+    exact : bool
+        Whether transformations should be completed with higher precision to minimize error
+    level : int
+        The current depth of subdivision from the original interval
+
+    Returns
+    -------
+    allMs : list of arrays
+        The transformed coefficient matrices associated with each new interval
+    allErrors : array
+        A list of upper bounds for the errors associated with each transformed coefficient matrix
+    allIntervals : list of TrackedIntervals
+        The intervals from the subdivision (corresponding one to one with the matrices in allMs)
+    """
+    subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+    dimSet = Set(reshape(subdivisionDims,(1,length(subdivisionDims))))
+    dimSet = sort!(collect(dimSet))
+    if length(dimSet) != size(subdivisionDims)[end-1]
+        println("Subdivision Dimensions are invalid! Each Polynomial must subdivide in the same dimensions!")
+    end
+    allMs = []
+    allErrors = []
+    idx = 0
+    num_subdivisions = length(subdivisionDims[1,:])
+    for (M,error,order_num) in zip(Ms, errors, collect(1:num_subdivisions))
+        order = subdivisionDims[:,order_num]
+        idx += 1
+        #Iterate through the dimensions, highest degree first.
+        currMs, currErrs = [M],[error]
+        for thisDim in order
+            newMidpoint = trackedInterval.nextTransformPoints[thisDim+1]
+            alpha, beta = (newMidpoint+1)/2, (newMidpoint-1)/2
+            tempMs = []
+            tempErrs = []
+            for (T,E) in zip(currMs, currErrs)
+                #Transform the polys
+                P1, P2 = TransformChebInPlaceND(T, thisDim, alpha, beta, thisDim), TransformChebInPlaceND(T, thisDim, -beta, alpha, exact)
+                E1 = getTransformationError(T, thisDim)
+                push!(tempMs,P1)
+                push!(tempMs,P2)
+                push!(tempErrs,E1+E)
+                push!(tempErrs,E1+E)
+            end
+            currMs = tempMs
+            currErrs = tempErrs
+        end
+        if ndims(M) == 1
+            push!(allMs,currMs) #Already ordered because there's only 1.
+            push!(allErrors,currErrs) #Already ordered because there's only 1.
+        else
+            #Order the polynomials so they match the intervals in subdivideInterval
+            invOrder = getInverseOrder(order)
+            push!(allMs,[currMs[i+1] for i in invOrder])
+            push!(allErrors,([currErrs[i+1] for i in invOrder]))
+        end
+    end
+    allMs = [[allMs[i][j] for i in eachindex(allMs)] for j in eachindex(allMs[1])]
+    allErrors = [[allErrors[i][j] for i in eachindex(allErrors)] for j in eachindex(allErrors[1])]
+    #Get the intervals
+    allIntervals = [trackedInterval]
+    
+    for thisDim in dimSet
+        newMidpoint = trackedInterval.nextTransformPoints[thisDim+1]
+        newSubinterval = ones(size(trackedInterval.interval)) #TODO: Make this outside for loop
+        newSubinterval[1,:] .= -1.
+        newIntervals = []
+        for oldInterval in allIntervals
+            newInterval1 = intervalCopy(oldInterval)
+            newInterval2 = intervalCopy(oldInterval)
+            newSubinterval[:,thisDim+1] = [-1.; newMidpoint]
+            addTransform(newInterval1,newSubinterval)
+            newSubinterval[:,thisDim+1] = [newMidpoint; 1.]
+            addTransform(newInterval2,newSubinterval)
+            newInterval1.nextTransformPoints[thisDim+1] = 0
+            newInterval2.nextTransformPoints[thisDim+1] = 0
+            push!(newIntervals,newInterval1)
+            push!(newIntervals,newInterval2)
+        end
+        allIntervals = newIntervals
+    end
+    return allMs, allErrors, allIntervals
+end
