@@ -599,73 +599,74 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     end
 end
 
-# function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
-#     """One iteration of shrinking an interval that may contain roots.
+function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
+    """One iteration of shrinking an interval that may contain roots.
 
-#     Calls BoundingIntervaLinearSystem which determines a smaller interval in which any roots are
-#     bound to lie. Then calls transformChebToInterval to transform the current coefficient
-#     approximations to the new interval.
+    Calls BoundingIntervaLinearSystem which determines a smaller interval in which any roots are
+    bound to lie. Then calls transformChebToInterval to transform the current coefficient
+    approximations to the new interval.
 
-#     Parameters
-#     ----------
-#     Ms : list of arrays
-#         The Chebyshev coefficient tensors of each approximation
-#     errors : array
-#         An upper bound on the error of each Chebyshev approximation
-#     trackedInterval : TrackedInterval
-#         The current interval for which the Chebyshev approximations are valid
-#     exact : bool
-#         Whether the transformation should be done with higher precision to minimize error
+    Parameters
+    ----------
+    Ms : list of arrays
+        The Chebyshev coefficient tensors of each approximation
+    errors : array
+        An upper bound on the error of each Chebyshev approximation
+    trackedInterval : TrackedInterval
+        The current interval for which the Chebyshev approximations are valid
+    exact : bool
+        Whether the transformation should be done with higher precision to minimize error
 
-#     Returns
-#     -------
-#     Ms : list of arrays
-#         The chebyshev coefficient matrices transformed to the new interval
-#     errors : array
-#         The new errors associated with the transformed coefficient matrices
-#     trackedInterval : TrackedInterval
-#         The new interval that the transformed coefficient matrices are valid for
-#     changed : bool
-#         Whether or not the interval shrunk significantly during the iteration
-#     should_stop : bool
-#         Whether or not to continue subdiviing after the iteration of shrinking is completed
-#     """
+    Returns
+    -------
+    Ms : list of arrays
+        The chebyshev coefficient matrices transformed to the new interval
+    errors : array
+        The new errors associated with the transformed coefficient matrices
+    trackedInterval : TrackedInterval
+        The new interval that the transformed coefficient matrices are valid for
+    changed : bool
+        Whether or not the interval shrunk significantly during the iteration
+    should_stop : bool
+        Whether or not to continue subdiviing after the iteration of shrinking is completed
+    """
 
-#     dim = length(Ms)
-#     #Zoom in on the current interval
-#     interval, changed, should_stop, throwOut = boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
-#     #Don't zoom in if we're already at a point
-#     for curr_dim in 1:dim
-#         if trackedInterval.interval[1,curr_dim] == trackedInterval.interval[2,curr_dim]
-#             interval[1,curr_dim] = -1.
-#             interval[2,curr_dim] = 1.
-#         end
-#     end
-#     #We can't throw out on the final step
-#     if throwOut &&  ! canThrowOut(trackedInterval)
-#         throwOut = false
-#         should_stop = true
-#         changed = true
-#     end
-#     #Check if we can throw out the whole thing
-#     if throwOut
-#         trackedInterval.empty = true
-#         return Ms, errors, trackedInterval, true, true
-#     end
-#     #Check if we are done iterating
-#     if !changed
-#         return Ms, errors, trackedInterval, changed, should_stop
-#     end
-#     #Transform the chebyshev polynomials
-#     addTransform(trackedInterval,interval)
-#     Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)..., errors, exact)
-#     #We should stop in the final step once the interval has become a point
-#     if trackedInterval.finalStep and isPoint(trackedInterval)
-#         should_stop = true
-#         changed = false
-#     end
+    dim = length(Ms)
+    #Zoom in on the current interval
+    interval, changed, should_stop, throwOut = boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
+    #Don't zoom in if we're already at a point
+    for curr_dim in 1:dim
+        if trackedInterval.interval[1,curr_dim] == trackedInterval.interval[2,curr_dim]
+            interval[1,curr_dim] = -1.
+            interval[2,curr_dim] = 1.
+        end
+    end
+    #We can't throw out on the final step
+    if throwOut &&  ! canThrowOut(trackedInterval)
+        throwOut = false
+        should_stop = true
+        changed = true
+    end
+    #Check if we can throw out the whole thing
+    if throwOut
+        trackedInterval.empty = true
+        return Ms, errors, trackedInterval, true, true
+    end
+    #Check if we are done iterating
+    if !changed
+        return Ms, errors, trackedInterval, changed, should_stop
+    end
+    #Transform the chebyshev polynomials
+    addTransform(trackedInterval,interval)
+    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)..., errors, exact)
+    #We should stop in the final step once the interval has become a point
+    if trackedInterval.finalStep && isPoint(trackedInterval)
+        should_stop = true
+        changed = false
+    end
 
-#     return Ms, errors, trackedInterval, changed, should_stop
+    return Ms, errors, trackedInterval, changed, should_stop
+end
 
 function getSubdivisionDims(Ms,trackedInterval,level)
     """Decides which dimensions to subdivide in and in what order.

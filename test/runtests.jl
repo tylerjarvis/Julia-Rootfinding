@@ -43,9 +43,10 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_transformChebToInterval()
 # test_getSubdivisionDims()
 # test_getInverseOrder()
-#test_getSubdivisionIntervals()
+# test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
-test_isExteriorInterval()
+# test_isPoint()
+# test_isExteriorInterval()
 
 # ============================================ TrackedInterval Tests ============================================
 

@@ -287,17 +287,10 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     return true
 end
 
-# def isPoint(self):
-#     """Determines if the current interval has essentially length 0 in each dimension."""
-#     return np.all(np.abs(self.interval[:,0] - self.interval[:,1]) < 1e-32)
 
-# possibly helpful:
-# result = all(((x, y) -> x + y > 5), zip(arr1, arr2)) something like this
-
-"""DEFINITELY INCORRECT"""
-function isPoint(trackedInterval::TrackedInterval)
+function isPoint(trackedInterval::TrackedInterval, macheps = 2^-52)
     """Determines if the current interval has essentially length 0 in each dimension."""
-    return all(abs(trackedInterval.interval[:,0] - trackedInterval.interval[:,1]) < 1e-32)
+    return all(abs.(trackedInterval.interval[1,:] - trackedInterval.interval[2,:]) .< macheps)
 end
 
 

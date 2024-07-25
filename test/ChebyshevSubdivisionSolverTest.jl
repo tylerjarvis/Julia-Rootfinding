@@ -9,6 +9,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_transformChebInPlace1D()
         test_transformChebInPlaceND()
         test_getTransformationError()
+        test_isPoint()
         test_transformCheb()
         test_transformChebToInterval()
         test_getSubdivisionDims()
@@ -820,6 +821,34 @@ function test_getTransformationError()
     end
 end
 
+function test_isPoint()
+    @testset "test_isPoint unit tests" begin
+        trackedInterval_1 = TrackedInterval([1;2;;3;4])
+        @test !isPoint(trackedInterval_1)
+
+        trackedInterval_2 = TrackedInterval([1;1;;3;4])
+        @test !isPoint(trackedInterval_2)
+
+        trackedInterval_3 = TrackedInterval([1;2;;3;3])
+        @test !isPoint(trackedInterval_3)
+
+        trackedInterval_4 = TrackedInterval([1;2;;1;2])
+        @test !isPoint(trackedInterval_4)
+
+        trackedInterval_5 = TrackedInterval([1;1;;3;3])
+        @test isPoint(trackedInterval_5)
+
+        trackedInterval_6 = TrackedInterval([2;2;;3;4;;5;5;;7;7])
+        @test !isPoint(trackedInterval_6)
+
+        trackedInterval_7 = TrackedInterval([1;1;;pi;pi;;5;5;;7;7])
+        @test isPoint(trackedInterval_7)
+
+        trackedInterval_8 = TrackedInterval([1+10^-20;1;;3-10^-20;3])
+        @test isPoint(trackedInterval_8)
+    end
+end
+
 function test_transformCheb()
     @testset "test_transformCheb unit tests" begin
         M_1 = [-4.51013026e-01;  9.19663154e-02;  3.28195239e-03; -1.11200236e-04;
@@ -1409,7 +1438,6 @@ function test_getInverseOrder()
         @test getInverseOrder([5;3]) == (0, 2, 1, 3)
     end
 end
-
 
 function test_getSubdivisionIntervals()
     @testset "getSubdivision Intervals unit tests" begin
@@ -5825,8 +5853,8 @@ function test_getSubdivisionIntervals()
         @test all(isapprox(interval.interval,exp) for (interval,exp) in zip(allIntervals_18,expected_allIntervals_18))
         @test all(isapprox(transforms,exp) for (transforms,exp) in zip(allTransforms_18,expected_transforms_18))
     end
-end                                          
-
+end
+                                                
 function test_boundingIntervalLinearSystem()
     @testset "BoundingIntervalLinearSystem unit tests" begin
         Ms_1 = [[ 1.07142165e+00;  1.61772562e-01;;
