@@ -1,3 +1,6 @@
+using LinearAlgebra
+
+
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
 function twoSum(a,b)
     """Returns x,y such that a+b=x+y exactly, and a+b=x in floating point."""
@@ -444,12 +447,164 @@ function transformChebToInterval(Ms, alphas, betas, errors, exact)
     return newMs, newErrors
 end
 
-function getSubdivisionDims(Ms,trackedInterval,level)
-    """Decides which dimensions to subdivide in and in what order.
+function findVertices(A,b,errors)
+    dim = length(b)
+    V = reshape([(-1)^div(2^j*(i-1),2^(dim)) for i=1:2^dim for j=1:dim],(dim,2^dim))
+    W = V .* e .+ z
+    A = hcat(A',W)
+    B = rref(A)
+    verts = B[:,dim+1:end]
+    bs = maximum(verts,dims=2)
+    as = minimum(verts,dims=2)
+    return as,bs
+end
+
+function boundingIntervalLinearSystem(Ms, errors, finalStep)
+    """Finds a smaller region in which any root must be.
 
     Parameters
     ----------
     Ms : list of numpy arrays
+        Each numpy array is the coefficient tensor of a chebyshev polynomials
+    errors : iterable of floats
+        The maximum error of chebyshev approximations
+    finalStep : bool
+        Whether we are in the final step of the algorithm
+
+    Returns
+    -------
+    newInterval : numpy array
+        The smaller interval where any root must be
+    changed : bool
+        Whether the interval has shrunk at all
+    should_stop : bool
+        Whether we should stop subdividing
+    throwout :
+        Whether we should throw out the interval entirely
+    """
+    if finalStep
+        errors = zeros(size(errors))
+    end
+    s=1
+    dim = length(Ms)
+    #Some constants we use here
+    widthToAdd = 1e-10 #Add this width to the new intervals we find to avoid rounding error throwing out roots
+    minZoomForChange = 0.99 #If the volume doesn't shrink by this amount say that it hasn't changed
+    minZoomForBaseCaseEnd = 0.4^dim #If the volume doesn't change by at least this amount when running with no error, stop
+    #Get the matrix of the linear terms
+    A = Matrix{Float64}(reduce(hcat,[getLinearTerms(M) for M in Ms]))
+    #Get the Vector of the constant terms
+    consts = [M[1] for M in Ms]'
+    #Get the Error of everything else combined.
+    totalErrs = [sum(abs.(Ms[i])) + errors[i] for i = 1:dim]'
+    linear_sums = sum(abs.(A),dims=1)
+    err = totalErrs - abs.(consts) - linear_sums
+
+    #Scale all the polynomials relative to one another
+    errors = Base.copy(errors')
+    errors_0 = Base.copy(errors)
+    for i in 1:dim
+        scaleVal = maximum(abs.(A[:,i]))
+        if scaleVal > 0
+            s = 2. ^Int(floor(log2(abs(scaleVal))))
+            A[:,i] /= s
+            consts[i] /= s
+            totalErrs[i] /= s
+            linear_sums[i] /= s
+            err[i] /= s
+            errors[i] /= s
+        end
+    end
+    #Precondition the columns. (AP)X = B -> A(PX) = B. So scale columns, solve, then scale the solution.
+    colScaler = ones(dim)
+    for i in 1:dim
+        scaleVal = maximum(abs.(A[i,:]))
+        if scaleVal > 0
+            s = 2^(-floor(log2(abs(scaleVal))))
+            colScaler[i] = s
+            totalErrs += abs.(A[i,:])' * (s - 1)
+            A[i,:] *= s
+        end
+    end
+
+    #Run linear algorithm for shrinking or deciding whether to subdivide.
+    #This loop will only execute the second time if the interval was not changed on the first iteration and it needs to run again with tighter errors
+    #Use the other interval shrinking method
+    a0, b0 = linearCheck1(totalErrs, A, consts)
+    a_orig = a0
+    b_orig = b0
+    for i = 0:1
+        #Now do the linear solve check
+        U,S,Vh = svd(A')
+        wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
+        #We use the matrix inverse to find the width, so might as well use it both spots. Should be fine as dim is small.
+        if wellConditioned #Make sure conditioning is ok.
+            Ainv = ((1 ./ S).*Vh')' * (U')
+
+            center = -Ainv*consts'
+            width = abs.(Ainv)*err'
+            a1 = center-width
+            b1 = center + width
+            a = mapslices(x->maximum(x),hcat(a0,a1),dims = 2)
+            b = mapslices(x->minimum(x),hcat(b0,b1),dims = 2)
+        else
+            a = a0
+            b = b0
+        end
+        #Undo the column preconditioning
+        a .*= colScaler
+        b .*= colScaler
+        #Add error and bound
+        a .-= widthToAdd
+        b .+= widthToAdd
+        throwOut = any(a .> b) || any(a .> 1) || any(b .< -1)
+        a[a .< -1] .= -1
+        b[b .< -1] .= -1
+        a[a .> 1] .= 1
+        b[b .> 1] .= 1
+
+        forceShouldStop = finalStep && !wellConditioned
+        # Calculate the "changed" variable
+        newRatio = prod(b - a) ./ 2^dim
+        changed = false
+        if throwOut
+            changed = true
+        elseif i == 0
+            changed = newRatio < minZoomForChange
+        else
+            changed = newRatio < minZoomForBaseCaseEnd
+        end
+
+        if i == 0 && changed
+            #If it is the first time through the loop and there was a change, return the interval it shrunk down to and set "is_done" to false
+            return hcat(a,b)', changed, forceShouldStop, throwOut
+        elseif i == 0 && !changed
+            #If it is the first time through the loop and there was not a change, save the a and b as the original values to return,
+            #and then try running through the loop again with a tighter error to see if we shrink then
+            a_orig = a
+            b_orig = b
+            err = errors
+        elseif changed
+            #If it is the second time through the loop and it did change, it means we didn't change on the first time,
+            #but that the interval did shrink with tighter errors. So return the original interval with changed = False and is_done = False
+            #print("subdivide")
+            return hcat(a_orig, b_orig)', false, forceShouldStop, false
+        else
+            #If it is the second time through the loop and it did NOT change, it means we will not shrink the interval even if we subdivide,
+            #so return the original interval with changed = False and is_done = wellConditioned
+            #print("done")
+            #print("throwout:",throwOut)
+            return hcat(a_orig,b_orig)', false, wellConditioned || forceShouldStop, false
+        end
+    end
+end
+
+function getSubdivisionDims(Ms,trackedInterval,level)
+    """Decides which dimensions to subdivide in and in what order.
+    
+    Parameters
+    ----------
+    Ms : list of arrays
         The chebyshev coefficient matrices
     trackedInterval : trackedInterval
         The interval to be subdivided
@@ -532,6 +687,7 @@ function getInverseOrder(order)
     invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
     return Tuple(Int.(invOrder))
 end
+
 
 function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
