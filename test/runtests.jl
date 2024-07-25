@@ -31,7 +31,7 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_chebApproximate()
 # 
 # ============================================ ChebyshevSubdivisionSolver Tests ============================================
-#test_all_ChebyshevSubdivisionSolver()
+test_all_ChebyshevSubdivisionSolver()
 # 
 # test_getLinearTerms()
 # test_linearCheck1()
@@ -43,7 +43,7 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 # test_transformChebToInterval()
 # test_getSubdivisionDims()
 # test_getInverseOrder()
-test_getSubdivisionIntervals()
+#test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
 
 # ============================================ TrackedInterval Tests ============================================
