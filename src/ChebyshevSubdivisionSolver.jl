@@ -850,3 +850,8 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
     end
     return allMs, allErrors, allIntervals
 end
+
+function isExteriorInterval(originalInterval,trackedInterval)
+    """Determines if the current interval is exterior to its original interval."""
+    return any(getIntervalForCombining(trackedInterval) .== getIntervalForCombining(originalInterval))
+end

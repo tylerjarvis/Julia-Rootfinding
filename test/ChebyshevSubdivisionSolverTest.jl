@@ -15,6 +15,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_getInverseOrder()
         test_getSubdivisionIntervals()
         test_boundingIntervalLinearSystem()
+        test_isExteriorInterval()
     end
 end
 
@@ -5825,8 +5826,7 @@ function test_getSubdivisionIntervals()
         @test all(isapprox(transforms,exp) for (transforms,exp) in zip(allTransforms_18,expected_transforms_18))
     end
 end                                          
-                                            
-                                            
+
 function test_boundingIntervalLinearSystem()
     @testset "BoundingIntervalLinearSystem unit tests" begin
         Ms_1 = [[ 1.07142165e+00;  1.61772562e-01;;
@@ -7859,5 +7859,16 @@ function test_boundingIntervalLinearSystem()
         @test isapprox(result_7[1],expected_bounds_7)
         @test result_7[2:end] == expected_vals_7
         
+    end
+end
+
+function test_isExteriorInterval()
+    @testset "isExteriorInterval unit tests" begin
+        trackedInterval_1 = TrackedInterval([-.31111222222;-.3;;3;4;;3;4])
+        trackedInterval_2 = TrackedInterval([-.31111222222;-.2;;4;5;;4;5])
+        trackedInterval_3 = TrackedInterval([-.311112222221;-.2;;4;5;;4;5])
+        @test isExteriorInterval(trackedInterval_1,trackedInterval_2) == true
+        @test isExteriorInterval(trackedInterval_1,trackedInterval_3) == false
+        @test isExteriorInterval(trackedInterval_2,trackedInterval_3) == true
     end
 end
