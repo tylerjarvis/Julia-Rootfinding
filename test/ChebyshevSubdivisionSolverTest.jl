@@ -5852,7 +5852,13 @@ function test_getSubdivisionIntervals()
         @test all(isapprox(interval.interval,exp) for (interval,exp) in zip(allIntervals_18,expected_allIntervals_18))
         @test all(isapprox(transforms,exp) for (transforms,exp) in zip(allTransforms_18,expected_transforms_18))
     end
-end                                          s                                          
+end                                                                                    
+
+function test_zoomInOnIntervalIter()
+    @testset "getSubdivision Intervals unit tests" begin
+    end
+end
+        
 
 function test_boundingIntervalLinearSystem()
     @testset "BoundingIntervalLinearSystem unit tests" begin
