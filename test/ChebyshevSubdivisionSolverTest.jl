@@ -5,7 +5,7 @@ function test_all_ChebyshevSubdivisionSolver()
     @testset "All tests in ChebyshevSubdivisionSolverTest.jl" begin
         test_getLinearTerms()
         test_linearCheck1()
-        test_reduceSolveDim()
+        test_reduceSolvedDim()
         test_transformChebInPlace1D()
         test_transformChebInPlaceND()
         test_getTransformationError()
