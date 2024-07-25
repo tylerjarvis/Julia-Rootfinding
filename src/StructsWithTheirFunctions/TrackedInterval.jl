@@ -308,20 +308,10 @@ function startFinalStep(trackedInterval::TrackedInterval)
     trackedInterval.preFinalTransforms = copy(trackedInterval.transforms)
 end
 
-# def getIntervalForCombining(self):
-#     """Returns the interval to be used in combining intervals to report at the end."""
-#     return self.preFinalInterval if self.finalStep else self.interval
-
 function getIntervalForCombining(trackedInterval::TrackedInterval)
     """Returns the interval to be used in combining intervals to report at the end."""
     return trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval
 end
-
-# def __repr__(self):
-#     return str(self)
-
-# def __str__(self):
-#   return str(self.interval)
 
 function toStr(trackedInterval::TrackedInterval)
     return string(trackedInterval.interval)
