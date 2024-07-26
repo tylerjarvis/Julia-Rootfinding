@@ -3,17 +3,17 @@ using Test
 
 function test_all_TrackedInterval()
     @testset "All tests in TrackedIntervalTest.jl" begin
-        test_intervalCopy()
+        test_copyInterval()
         test_addTransform()
         test_getIntervalForCombining()
         test_isPoint()
     end
 end
 
-function test_intervalCopy()
-    @testset "intervalCopy unit tests" begin
+function test_copyInterval()
+    @testset "copyInterval unit tests" begin
         trackedInterval_1 = TrackedInterval([1;2;;-1;1;;-3;2])
-        copiedInterval_1 = intervalCopy(trackedInterval_1)
+        copiedInterval_1 = copyInterval(trackedInterval_1)
         # BASIC INTERVAL COPYING
         @test copiedInterval_1.interval == trackedInterval_1.interval
         @test copiedInterval_1.empty == false
@@ -21,7 +21,7 @@ function test_intervalCopy()
         trackedInterval_1.empty = true
         trackedInterval_1.transforms = [[2;3;;4;5;;1.234234;1.3212331]]
         trackedInterval_1.nextTransformPoints[2] = 4
-        copiedInterval_2 = intervalCopy(trackedInterval_1)
+        copiedInterval_2 = copyInterval(trackedInterval_1)
         # TEST OTHER ATTRIBUTES COPIED
         @test copiedInterval_2.empty == true
         @test copiedInterval_2.transforms == [[2;3;;4;5;;1.234234;1.3212331]]
@@ -39,7 +39,7 @@ function test_intervalCopy()
         trackedInterval_1.possibleExtraRoot = true
         trackedInterval_1.preFinalInterval = [1;2;;-1;1;;-3;2]
         trackedInterval_1.preFinalTransforms = [[1;2;;-1;1;;-3;2]]
-        copiedInterval_3 = intervalCopy(trackedInterval_1)
+        copiedInterval_3 = copyInterval(trackedInterval_1)
         @test copiedInterval_3.finalStep == true
         @test copiedInterval_3.possibleDuplicateRoots == [3,1,2]
         @test copiedInterval_3.possibleExtraRoot == true

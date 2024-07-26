@@ -51,8 +51,7 @@ end
 # test_getInverseOrder()
 # test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
-test_zoomInOnIntervalIter()
-# test_isPoint()
+# test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
 
@@ -60,7 +59,7 @@ test_zoomInOnIntervalIter()
 
 # test_all_TrackedInterval()
 
-# test_intervalCopy()
+test_copyInterval()
 # test_addTransform()
 # test_getIntervalForCombining()
 # test_isPoint()

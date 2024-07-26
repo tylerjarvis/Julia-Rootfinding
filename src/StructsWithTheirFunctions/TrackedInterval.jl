@@ -197,7 +197,7 @@ end
 #     return newone
 
 
-function intervalCopy(trackedInterval::TrackedInterval)
+function copyInterval(trackedInterval::TrackedInterval)
     """Returns a deep copy of the current interval with all changes and properties preserved."""
     newone = TrackedInterval(trackedInterval.topInterval)
     newone.interval = copy(trackedInterval.interval)

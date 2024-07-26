@@ -836,8 +836,8 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
         newSubinterval[1,:] .= -1.
         newIntervals = []
         for oldInterval in allIntervals
-            newInterval1 = intervalCopy(oldInterval)
-            newInterval2 = intervalCopy(oldInterval)
+            newInterval1 = copyInterval(oldInterval)
+            newInterval2 = copyInterval(oldInterval)
             newSubinterval[:,thisDim+1] = [-1.; newMidpoint]
             addTransform(newInterval1,newSubinterval)
             newSubinterval[:,thisDim+1] = [newMidpoint; 1.]
