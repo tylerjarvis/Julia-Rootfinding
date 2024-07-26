@@ -53,7 +53,7 @@ end
 # test_boundingIntervalLinearSystem()
 # test_isPoint()
 # test_isExteriorInterval()
-test_trimMs()
+# test_trimMs()
 
 # ============================================ TrackedInterval Tests ============================================
 
@@ -62,3 +62,4 @@ test_trimMs()
 # test_intervalCopy()
 # test_addTransform()
 # test_getIntervalForCombining()
+# test_isPoint()

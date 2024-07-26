@@ -6,6 +6,7 @@ function test_all_TrackedInterval()
         test_intervalCopy()
         test_addTransform()
         test_getIntervalForCombining()
+        test_isPoint()
     end
 end
 
@@ -121,5 +122,33 @@ function test_getIntervalForCombining()
         @test isapprox(getIntervalForCombining(trackedInterval),[-5;5;;-1;1;;500;1])
         trackedInterval.finalStep = false
         @test isapprox(getIntervalForCombining(trackedInterval),[-1;1;;-1.2332;1.2134;;-5;1])
+    end
+end
+
+function test_isPoint()
+    @testset "test_isPoint unit tests" begin
+        trackedInterval_1 = TrackedInterval([1;2;;3;4])
+        @test !isPoint(trackedInterval_1)
+
+        trackedInterval_2 = TrackedInterval([1;1;;3;4])
+        @test !isPoint(trackedInterval_2)
+
+        trackedInterval_3 = TrackedInterval([1;2;;3;3])
+        @test !isPoint(trackedInterval_3)
+
+        trackedInterval_4 = TrackedInterval([1;2;;1;2])
+        @test !isPoint(trackedInterval_4)
+
+        trackedInterval_5 = TrackedInterval([1;1;;3;3])
+        @test isPoint(trackedInterval_5)
+
+        trackedInterval_6 = TrackedInterval([2;2;;3;4;;5;5;;7;7])
+        @test !isPoint(trackedInterval_6)
+
+        trackedInterval_7 = TrackedInterval([1;1;;pi;pi;;5;5;;7;7])
+        @test isPoint(trackedInterval_7)
+
+        trackedInterval_8 = TrackedInterval([1+10^-20;1;;3-10^-20;3])
+        @test isPoint(trackedInterval_8)
     end
 end

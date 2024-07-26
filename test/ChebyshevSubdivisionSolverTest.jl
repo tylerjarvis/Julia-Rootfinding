@@ -9,7 +9,6 @@ function test_all_ChebyshevSubdivisionSolver()
         test_transformChebInPlace1D()
         test_transformChebInPlaceND()
         test_getTransformationError()
-        test_isPoint()
         test_transformCheb()
         test_transformChebToInterval()
         test_getSubdivisionDims()
@@ -819,34 +818,6 @@ function test_getTransformationError()
         @test isapprox(expected_error_5a,getTransformationError(M_5,dim_5a),atol = 2^-52)
         @test isapprox(expected_error_5b,getTransformationError(M_5,dim_5b),atol = 2^-52)
         @test isapprox(expected_error_5c,getTransformationError(M_5,dim_5c),atol = 2^-52)
-    end
-end
-
-function test_isPoint()
-    @testset "test_isPoint unit tests" begin
-        trackedInterval_1 = TrackedInterval([1;2;;3;4])
-        @test !isPoint(trackedInterval_1)
-
-        trackedInterval_2 = TrackedInterval([1;1;;3;4])
-        @test !isPoint(trackedInterval_2)
-
-        trackedInterval_3 = TrackedInterval([1;2;;3;3])
-        @test !isPoint(trackedInterval_3)
-
-        trackedInterval_4 = TrackedInterval([1;2;;1;2])
-        @test !isPoint(trackedInterval_4)
-
-        trackedInterval_5 = TrackedInterval([1;1;;3;3])
-        @test isPoint(trackedInterval_5)
-
-        trackedInterval_6 = TrackedInterval([2;2;;3;4;;5;5;;7;7])
-        @test !isPoint(trackedInterval_6)
-
-        trackedInterval_7 = TrackedInterval([1;1;;pi;pi;;5;5;;7;7])
-        @test isPoint(trackedInterval_7)
-
-        trackedInterval_8 = TrackedInterval([1+10^-20;1;;3-10^-20;3])
-        @test isPoint(trackedInterval_8)
     end
 end
 
