@@ -856,3 +856,52 @@ function isExteriorInterval(originalInterval,trackedInterval)
     """Determines if the current interval is exterior to its original interval."""
     return any(getIntervalForCombining(trackedInterval) .== getIntervalForCombining(originalInterval))
 end
+
+function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
+    """Reduces the degree of each chebyshev approximation M when doing so has negligible error.
+
+    The coefficient matrices are trimmed in place. This function iteratively looks at the highest
+    degree coefficient row of each M along each dimension and trims it as long as the error introduced
+    is less than the allowed error increase for that dimension.
+
+    Parameters
+    ----------
+    Ms : list of arrays
+        The chebyshev approximations of the functions
+    errors : array
+        The max error of the chebyshev approximation from the function on the interval
+    relApproxTol : double
+        The relative error increase allowed
+    absApproxTol : double
+        The absolute error increase allowed
+    """
+    dim = ndims(Ms[1])
+    for polyNum in eachindex(Ms) #Loop through the polynomials
+        allowedErrorIncrease = absApproxTol + errors[polyNum] * relApproxTol
+        #Use slicing to look at a slice of the highest degree in the dimension we want to trim
+        slices = []
+        for i in 1:dim
+            push!(slices,:)
+        end
+        # [: for i in 1:dim] # equivalent to selecting everything
+        for currDim in 1:dim
+            slices[currDim] = reverse(size(Ms[polyNum]))[currDim] # Now look at just the last row of the current dimension's approximation
+            lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+            # Iteratively eliminate the highest degree row of the current dimension if
+            # the sum of its approximation coefficients is of low error, but keep deg at least 2
+            while (lastSum < allowedErrorIncrease) && (reverse(size(Ms[polyNum]))[currDim] > 3)
+                # Trim the polynomial
+                slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]-1
+                Ms[polyNum] = Ms[polyNum][reverse(slices)...]
+                # Update the remaining error increase allowed an the error of the approximation.
+                allowedErrorIncrease -= lastSum
+                errors[polyNum] += lastSum
+                # Reset for the next iteration with the next highest degree of the current dimension.
+                slices[currDim] = reverse(size(Ms[polyNum]))[currDim]
+                lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+            end
+            # Reset to select all of the current dimension when looking at the next dimension.
+            slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]
+        end
+    end
+end
