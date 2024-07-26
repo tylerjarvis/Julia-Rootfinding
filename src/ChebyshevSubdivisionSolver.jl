@@ -658,7 +658,7 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
     end
     #Transform the chebyshev polynomials
     addTransform(trackedInterval,interval)
-    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)..., errors, exact)
+    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)[:,1],getLastTransform(trackedInterval)[:,2], errors, exact)
     #We should stop in the final step once the interval has become a point
     if trackedInterval.finalStep && isPoint(trackedInterval)
         should_stop = true
