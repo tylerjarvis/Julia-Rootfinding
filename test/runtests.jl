@@ -11,6 +11,12 @@ include("ChebyshevSubdivisionSolverTest.jl")
 include("TrackedIntervalTest.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
 
+function test_all()
+    test_all_ChebyshevApproximator()
+    test_all_ChebyshevSubdivisionSolver()
+    test_all_TrackedInterval()
+end
+
 # Uncomment the lines below to run specific test sets
 # 
 # ============================================ All Tests ============================================
@@ -48,6 +54,7 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 test_zoomInOnIntervalIter()
 # test_isPoint()
 # test_isExteriorInterval()
+# test_trimMs()
 
 # ============================================ TrackedInterval Tests ============================================
 
@@ -56,10 +63,4 @@ test_zoomInOnIntervalIter()
 # test_intervalCopy()
 # test_addTransform()
 # test_getIntervalForCombining()
-
-# ============================================ SETUP TO TEST ALL ============================================
-function test_all()
-    test_all_ChebyshevApproximator()
-    test_all_ChebyshevSubdivisionSolver()
-    test_all_TrackedInterval()
-end
+# test_isPoint()

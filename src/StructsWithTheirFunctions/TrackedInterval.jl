@@ -41,61 +41,21 @@ mutable struct TrackedInterval
     nextTransformPoints #Random Point near 0
     preFinalInterval # = [] (by default)
     preFinalTransforms # = [] (by default)
-    reducedDims # = []
-    solvedVals # = []
+    reducedDims # = [] (by default)
+    solvedVals # = [] (by default)
+    finalInterval # = [] (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[])
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[])
     end
 end
 
 """==============================FUNCTIONS FOR TRACKED INTERVAL=============================="""
 
-# def canThrowOut(self):
-# """Ensures that an interval that has not subdivided cannot be thrown out on the final step."""
-# return not self.finalStep or self.canThrowOutFinalStep
-
-
 function canThrowOut(trackedInterval::TrackedInterval)
     """Ensures that an interval that has not subdivided cannot be thrown out on the final step."""
     return !trackedInterval.finalStep || trackedInterval.canThrowOutFinalStep
 end
-
-# def addTransform(self, subInterval):
-#     """Adds the next alpha and beta values to the list transforms and updates the current interval.
-
-#     Parameters:
-#     -----------
-#     subInterval : numpy array
-#         The subinterval to which the current interval is being reduced
-#     """
-#     #Ensure the interval has non zero size; mark it empty if it doesn't
-#     if np.any(subInterval[:,0] > subInterval[:,1]) and self.canThrowOut():
-#         self.empty = True
-#         return
-#     elif np.any(subInterval[:,0] > subInterval[:,1]):
-#         #If we can't throw the interval out, it should be bounded by [-1,1].
-#         subInterval[:,0] = np.minimum(subInterval[:,0], np.ones_like(subInterval[:,0]))
-#         subInterval[:,0] = np.maximum(subInterval[:,0], -np.ones_like(subInterval[:,0]))
-#         subInterval[:,1] = np.minimum(subInterval[:,1], np.ones_like(subInterval[:,0]))
-#         subInterval[:,1] = np.maximum(subInterval[:,1], subInterval[:,0])
-#     # Get the alpha and beta associated with the transformation in each dimension
-#     a1,b1 = subInterval.T # all the lower bounds and upper bounds of the new interval, respectively
-#     a2,b2 = self.interval.T # all the lower bounds and upper bounds of the original interval
-#     alpha1, beta1 = (b1-a1)/2, (b1+a1)/2
-#     alpha2, beta2 = (b2-a2)/2, (b2+a2)/2
-#     self.transforms.append(np.array([alpha1, beta1]))
-#     #Update the lower and upper bounds of the current interval
-#     for dim in range(self.ndim):
-#         for i in range(2):
-#             x = subInterval[dim][i]
-#             #Be exact if x = +-1
-#             if x == -1.0:
-#                 self.interval[dim][i] = self.interval[dim][0]
-#             elif x == 1.0:
-#                 self.interval[dim][i] = self.interval[dim][1]
-#             else:
-#                 self.interval[dim][i] = alpha2[dim]*x+beta2[dim]
 
 function addTransform(trackedInterval::TrackedInterval, subInterval)
     """Adds the next alpha and beta values to the list transforms and updates the current interval.
@@ -141,10 +101,6 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
         end
     end
 end
-
-# def getLastTransform(self):
-#     """Gets the alpha and beta values of the last transformation the interval underwent."""
-#     return self.transforms[-1]
 
 function getLastTransform(trackedInterval::TrackedInterval)
     return trackedInterval.transforms[end]
@@ -213,6 +169,11 @@ end
 function dimSize(trackedInterval)
     """Gets the lengths along each dimension of the current interval."""
     return trackedInterval.interval[2,:] - trackedInterval.interval[1,:]
+end
+
+function finalDimSize(trackedInterval)
+    """Gets the lengths along each dimension of the current interval."""
+    return trackedInterval.finalInterval[2,:] - trackedInterval.finalInterval[1,:]
 end
 
 # def finalDimSize(self):
@@ -308,20 +269,10 @@ function startFinalStep(trackedInterval::TrackedInterval)
     trackedInterval.preFinalTransforms = copy(trackedInterval.transforms)
 end
 
-# def getIntervalForCombining(self):
-#     """Returns the interval to be used in combining intervals to report at the end."""
-#     return self.preFinalInterval if self.finalStep else self.interval
-
 function getIntervalForCombining(trackedInterval::TrackedInterval)
     """Returns the interval to be used in combining intervals to report at the end."""
     return trackedInterval.finalStep ? trackedInterval.preFinalInterval : trackedInterval.interval
 end
-
-# def __repr__(self):
-#     return str(self)
-
-# def __str__(self):
-#   return str(self.interval)
 
 function toStr(trackedInterval::TrackedInterval)
     return string(trackedInterval.interval)
