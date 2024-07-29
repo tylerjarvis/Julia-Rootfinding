@@ -12,7 +12,7 @@ function test_quadraticCheck2D()
         def_tol = 0.
 
         # ==== TRUE ====
-        coeff_1 = [1;-1;;1;-1]
+        coeff_1 = [1.;-1;;1;-1]
         @test quadraticCheck2D(coeff_1,def_tol) == true
 
         # ==== 5 ====
@@ -36,11 +36,11 @@ function test_quadraticCheck2D()
         @test quadraticCheck2D(coeff_6,def_tol) == false
 
         # ==== 4 ====
-        coeff_7 = [0;0;0;0;;1e-4;1e-4;0;0;;0;0;0;0;;0;0;0;0]
+        coeff_7 = [0.;0;0;0;;1e-4;1e-4;0;0;;0;0;0;0;;0;0;0;0]
         @test quadraticCheck2D(coeff_7,def_tol) == false
 
         # ==== 8 ====
-        coeff_8 = [1;-1e-4;1e-1;;0;1e-4;1e-1;;1;1e-8;1e-8]
+        coeff_8 = [1.;-1e-4;1e-1;;0;1e-4;1e-1;;1;1e-8;1e-8]
         @test quadraticCheck2D(coeff_8,def_tol) == false
 
         # ==== TRUE ====
@@ -430,11 +430,11 @@ function test_quadraticCheck2D()
         @test quadraticCheck2D(coeff_11,tol_11) == false
 
         # ==== 2D CHECK (early) ====
-        coeff_12 = [1;2;3;;1;2;3;;;4;3;2;;1;2;3;;;2345;52;34;;1;2;3]
+        coeff_12 = [1.;2;3;;1;2;3;;;4;3;2;;1;2;3;;;2345;52;34;;1;2;3]
         @test quadraticCheck2D(coeff_12,def_tol) == false
 
         # ==== SMALL ARRAY CHECK (2) ====
-        coeff_13 = [1;2;;-1;1]
+        coeff_13 = [1.;2;;-1;1]
         @test quadraticCheck2D(coeff_13,def_tol) == false
 
         # ==== SMALL ARRAY CHECK (TRUE) ====
