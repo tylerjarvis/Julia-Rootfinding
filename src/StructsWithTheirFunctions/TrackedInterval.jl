@@ -176,28 +176,7 @@ function finalDimSize(trackedInterval)
     return trackedInterval.finalInterval[2,:] - trackedInterval.finalInterval[1,:]
 end
 
-# def finalDimSize(self):
-#     """Gets the lengths along each dimension of the final interval."""
-#     return self.finalInterval[:,1] - self.finalInterval[:,0]
-
-# def copy(self):
-#     """Returns a deep copy of the current interval with all changes and properties preserved."""
-#     newone = TrackedInterval(self.topInterval)
-#     newone.interval = self.interval.copy()
-#     newone.transforms = self.transforms.copy()
-#     newone.empty = self.empty
-#     newone.nextTransformPoints = self.nextTransformPoints.copy()
-#     if self.finalStep:
-#         newone.finalStep = True
-#         newone.canThrowOutFinalStep = self.canThrowOutFinalStep
-#         newone.possibleDuplicateRoots = self.possibleDuplicateRoots.copy()
-#         newone.possibleExtraRoot = self.possibleExtraRoot
-#         newone.preFinalInterval = self.preFinalInterval.copy()
-#         newone.preFinalTransforms = self.preFinalTransforms.copy()
-#     return newone
-
-
-function intervalCopy(trackedInterval::TrackedInterval)
+function copyInterval(trackedInterval::TrackedInterval)
     """Returns a deep copy of the current interval with all changes and properties preserved."""
     newone = TrackedInterval(trackedInterval.topInterval)
     newone.interval = copy(trackedInterval.interval)
@@ -219,7 +198,6 @@ end
 #     """Determines if point is contained in the current interval."""
 #     return np.all(point >= self.interval[:,0]) and np.all(point <= self.interval[:,1])
 
-"""DEFINITELY INCORRECT"""
 function contains(trackedInterval::TrackedInterval, point)
     """Determines if point is contained in the current interval."""
     return all(x -> x >= point,tracked.interval[:,0]) && all(x -> x <= point, trackedInterval.interval[:,1])

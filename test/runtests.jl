@@ -9,12 +9,14 @@ print("Testing...")
 include("ChebyshevApproximatorTest.jl")
 include("ChebyshevSubdivisionSolverTest.jl")
 include("TrackedIntervalTest.jl")
+include("QuadraticCheckTest.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
 
 function test_all()
     test_all_ChebyshevApproximator()
     test_all_ChebyshevSubdivisionSolver()
     test_all_TrackedInterval()
+    test_all_QuadraticCheck()
 end
 
 # Uncomment the lines below to run specific test sets
@@ -51,8 +53,7 @@ end
 # test_getInverseOrder()
 # test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
-test_zoomInOnIntervalIter()
-# test_isPoint()
+# test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
 
@@ -60,7 +61,13 @@ test_zoomInOnIntervalIter()
 
 # test_all_TrackedInterval()
 
-# test_intervalCopy()
+# test_copyInterval()
 # test_addTransform()
 # test_getIntervalForCombining()
 # test_isPoint()
+
+# ============================================ QuadraticCheck Tests ============================================
+
+# test_all_QuadraticCheck()
+
+test_quadraticCheck2D()
