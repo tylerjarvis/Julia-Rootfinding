@@ -7,6 +7,7 @@ function test_all_QuadraticCheck()
         test_quadraticCheck2D()
         test_quadraticCheck3D()
         test_quadraticCheckND()
+        test_quadraticCheck()
     end
 end
 
