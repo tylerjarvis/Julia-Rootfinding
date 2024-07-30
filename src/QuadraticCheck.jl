@@ -1,3 +1,14 @@
+using IterTools
+
+function get_fixed_vars(dim)
+    " Returns Julia indicies of fixed vars "
+    if dim < 2
+        return []
+    end
+    return reduce(vcat,[collect(IterTools.subsets(1:dim,Val{i}())) for i in dim-1:-1:1])
+end
+
+
 function quadraticCheck2D(test_coeff,tol)
     if ndims(test_coeff) != 2
         return false
