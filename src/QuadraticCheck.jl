@@ -160,7 +160,6 @@ function quadraticCheck3D(test_coeff,tol)
         in the unit box, true otherwise
     """
     if ndims(test_coeff) != 3
-        println("dim check")
         return false
     end
 
@@ -198,7 +197,7 @@ function quadraticCheck3D(test_coeff,tol)
 
     #The sum of the absolute values of everything else
     other_sum = sum(abs.(test_coeff)) - sum(abs.(c)) + tol
-    
+
     #function for evaluating c0 + c1x + c2y +c3z + c4xy + c5xz + c6yz + c7T_2(x) + c8T_2(y) + c9T_2(z)
     # Use the Horner form because it is much faster, also do any repeated computatons in advance
     k0 = c[1]-c[8]-c[9]-c[10]
@@ -250,56 +249,48 @@ function quadraticCheck3D(test_coeff,tol)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("1")
         return false
     end
     eval = eval_func(x1, y0, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("2")
         return false
     end
     eval = eval_func(x0, y1, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("3")
         return false
     end
     eval = eval_func(x0, y0, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("4")
         return false
     end
     eval = eval_func(x1, y1, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("5")
         return false
     end
     eval = eval_func(x1, y0, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("6")
         return false
     end
     eval = eval_func(x0, y1, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("7")
         return false
     end
     eval = eval_func(x1, y1, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
-        println("8")
         return false
     end
     #Adds the x and y constant boundaries
@@ -314,7 +305,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("9")
                 return false
             end
         end
@@ -325,7 +315,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("10")
                 return false
             end
         end
@@ -336,7 +325,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("11")
                 return false
             end
         end
@@ -346,7 +334,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("12")
                 return false
             end
         end
@@ -364,7 +351,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("13")
                 return false
             end
         end
@@ -375,7 +361,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("14")
                 return false
             end
         end
@@ -386,7 +371,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("15")
                 return false
             end
         end
@@ -396,7 +380,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("16")
                 return false
             end
         end
@@ -414,7 +397,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("17")
                 return false
             end
         end
@@ -425,7 +407,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("18")
                 return false
             end
         end
@@ -436,7 +417,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("19")
                 return false
             end
         end
@@ -446,7 +426,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("20")
                 return false
             end
         end
@@ -466,7 +445,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("21")
                 return false
             end
         end
@@ -479,7 +457,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("22")
                 return false
             end
         end
@@ -499,7 +476,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("23")
                 return false
             end
         end
@@ -512,7 +488,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("24")
                 return false
             end
         end
@@ -532,7 +507,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("25")
                 return false
             end
         end
@@ -545,7 +519,6 @@ function quadraticCheck3D(test_coeff,tol)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
-                println("26")
                 return false
             end
         end
@@ -557,13 +530,11 @@ function quadraticCheck3D(test_coeff,tol)
         min_satisfied = min_satisfied || eval < other_sum
         max_satisfied = max_satisfied || eval > -other_sum
         if min_satisfied && max_satisfied
-            println("27")
             return false
         end
     end
 
     # No root possible
-    println("TRUE")
     return true
 
 end
