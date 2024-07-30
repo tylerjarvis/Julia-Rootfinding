@@ -70,4 +70,5 @@ end
 
 # test_all_QuadraticCheck()
 
-test_quadraticCheck2D()
+# test_quadraticCheck2D()
+test_quadraticCheck3D()
