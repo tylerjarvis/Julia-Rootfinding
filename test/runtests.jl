@@ -70,4 +70,5 @@ end
 
 # test_all_QuadraticCheck()
 
-test_quadraticCheck2D()
+test_get_fixed_vars()
+# test_quadraticCheck2D()

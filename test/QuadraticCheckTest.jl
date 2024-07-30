@@ -3,7 +3,24 @@ using Test
 
 function test_all_QuadraticCheck()
     @testset "All tests in QuadraticCheckTest.jl" begin
+        test_get_fixed_vars()
         test_quadraticCheck2D()
+    end
+end
+
+function test_get_fixed_vars()
+    @testset "get_fixed_vars unit tests" begin
+        dim_1 = 1
+        @test get_fixed_vars(dim_1) == []
+
+        dim_2 = 2
+        @test get_fixed_vars(dim_2) == [(1,),(2,)]
+
+        dim_3 = 3
+        @test get_fixed_vars(dim_3) == [(1, 2), (1, 3), (2, 3), (1,), (2,), (3,)]
+
+        dim_4 = 5
+        @test get_fixed_vars(dim_4) == [(1, 2, 3, 4), (1, 2, 3, 5), (1, 2, 4, 5), (1, 3, 4, 5), (2, 3, 4, 5), (1, 2, 3), (1, 2, 4), (1, 2, 5), (1, 3, 4), (1, 3, 5), (1, 4, 5), (2, 3, 4), (2, 3, 5), (2, 4, 5), (3, 4, 5), (1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5), (1,), (2,), (3,), (4,), (5,)]
     end
 end
 
