@@ -3,6 +3,7 @@ using Test
 
 function test_all_QuadraticCheck()
     @testset "All tests in QuadraticCheckTest.jl" begin
+        test_get_fixed_vars()
         test_quadraticCheck2D()
     end
 end
