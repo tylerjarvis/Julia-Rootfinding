@@ -166,6 +166,11 @@ end
 #     """Gets the volume of the current interval."""
 #     return np.product(self.interval[:,1] - self.interval[:,0])
 
+function sizeOfInterval(trackedInterval)
+    """Gets the volume of the current interval."""
+    return prod(trackedInterval.interval[2,:] - trackedInterval.interval[1,:])
+end
+
 function dimSize(trackedInterval)
     """Gets the lengths along each dimension of the current interval."""
     return trackedInterval.interval[2,:] - trackedInterval.interval[1,:]
@@ -200,7 +205,7 @@ end
 
 function contains(trackedInterval::TrackedInterval, point)
     """Determines if point is contained in the current interval."""
-    return all(x -> x >= point,tracked.interval[:,0]) && all(x -> x <= point, trackedInterval.interval[:,1])
+    return all(point >= trackedInterval.interval[1,:]) && all(point <= trackedInterval.interval[2,:])
 end
 
 # def overlapsWith(self, otherInterval):
@@ -218,8 +223,19 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
 
     Returns True if the lower bound of one interval is less than the upper bound of the other
         in EVERY dimension; returns False otherwise."""
-    for (a1,b1,a2,b2) in zip(getIntervalForCombining(trackedInterval), getIntervalForCombining(otherInterval))
-        if (a1 > b2) || (a2 > b1)
+    currentInterval = getIntervalForCombining(trackedInterval)
+    otherInterval = getIntervalForCombining(otherInterval)
+    size_arr = size(currentInterval)
+    dim = size_arr[2]
+
+    arr1_1 = currentInterval[1,:]
+    arr1_2 = currentInterval[2,:]
+    arr2_1 = otherInterval[1,:]
+    arr2_2 = otherInterval[2,:]
+
+    for i in 1:dim
+        println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
+        if arr1_1[i] > arr1_2[i] || arr2_1[i] > arr2_2[i]
             return false
         end
     end
