@@ -8,7 +8,6 @@ function get_fixed_vars(dim)
     return reduce(vcat,[collect(IterTools.subsets(1:dim,Val{i}())) for i in dim-1:-1:1])
 end
 
-
 function quadraticCheck2D(test_coeff,tol)
     if ndims(test_coeff) != 2
         return false
@@ -548,4 +547,14 @@ function quadraticCheck3D(test_coeff,tol)
     # No root possible
     return true
 
+end
+
+function quadraticCheck(test_coeff,tol,nd_check=false)
+    if ndims(test_coeff) == 2 && !nd_check
+        return quadraticCheck2D(test_coeff, tol)
+    elseif ndims(test_coeff) == 3 && !nd_check
+        return quadraticCheck3D(test_coeff, tol)
+    else
+        return quadraticCheckND(test_coeff, tol)
+    end
 end
