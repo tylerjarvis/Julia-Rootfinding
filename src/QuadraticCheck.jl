@@ -549,6 +549,211 @@ function quadraticCheck3D(test_coeff,tol)
 
 end
 
+function quadraticCheckND(test_coeff, tol)
+    """One of subinterval_checks
+
+    Finds the min of the absolute value of the quadratic part, and compares to the sum of the
+    rest of the terms. There can't be a root if min(extreme_values) > other_sum	or if
+    max(extreme_values) < -other_sum. We can short circuit and finish
+    faster as soon as we find one value that is < other_sum and one value that > -other_sum.
+
+    Parameters
+    ----------
+    test_coeff_in : numpy array
+        The coefficient matrix of the polynomial to check
+    tol: float
+        The bound of the sup norm error of the chebyshev approximation.
+
+    Returns
+    -------
+    True if there is guaranteed to be no root in the interval, False otherwise
+    """
+    #get the dimension and make sure the coeff tensor has all the right
+    # quadratic coeff spots, set to zero if necessary
+    dim = ndims(test_coeff)
+    init_dims = size(test_coeff)
+    dims = max.(init_dims,3)
+    new_coeff = zeros(dims)
+    new_coeff[[1:init_dims[i] for i in 1:dim]...] = test_coeff
+    test_coeff = new_coeff
+    interval = hcat(fill(-1,dim),fill(1,dim))
+
+    quad_coeff = zeros(tuple(3*Int.(ones(dim))...))
+    #A and B are arrays for slicing
+    A = zeros((dim,dim))
+    B = zeros(dim)
+    pure_quad_coeff = zeros(dim)
+    const1=0
+    for spot in IterTools.product([1:3 for i in 1:dim]...)
+        spot_deg = sum(spot)-dim
+        if spot_deg == 1
+            #coeff of linear terms
+            i = [idx for idx in 1:dim if reverse(spot)[idx]!= 1][1]
+            B[i] = copy(test_coeff[spot...])
+            quad_coeff[spot...] = test_coeff[spot...]
+            test_coeff[spot...] = 0
+        elseif spot_deg == 0
+            #constant term
+            const1 = copy(test_coeff[spot...])
+            quad_coeff[spot...] = const1
+            test_coeff[spot...] = 0
+        elseif spot_deg < 3
+            where_nonzero = [idx for idx in 1:dim if reverse(spot)[idx]!= 1]
+            if length(where_nonzero) == 2
+                #coeff of cross terms
+                i,j = where_nonzero
+                #with symmetric matrices, we only need to store the lower part
+                A[i,j] = copy(test_coeff[spot...])
+                A[j,i] = A[i,j]
+                #todo: see if we can store this in only one half of A
+
+            else
+                #coeff of pure quadratic terms
+                i = where_nonzero[1]
+                pure_quad_coeff[i] = copy(test_coeff[spot...])
+            end
+        quad_coeff[spot...] = test_coeff[spot...]
+        test_coeff[spot...] = 0
+        end
+    end
+    pure_quad_coeff_doubled = [p*2 for p in pure_quad_coeff]
+    A[diagind(A)] = [p*2 for p in pure_quad_coeff_doubled]
+
+    #create a poly object for evals
+    k0 = const1 - sum(pure_quad_coeff)
+
+    function eval_func(point)
+        "fast evaluation of quadratic chebyshev polynomials using horner's algorithm"
+        _sum = k0
+        for i in 1:dim
+            coord = point[i]
+            _sum += (B[i] + pure_quad_coeff_doubled[i]*coord + (i<dim ? sum([A[j,i]*point[j] for j=i+1:dim]) : 0)) * coord
+        end
+        return _sum
+    end
+
+    #The sum of the absolute values of everything else
+    other_sum = sum(abs.(test_coeff)) .+ tol
+
+    #iterator for sides
+    fixed_vars = get_fixed_vars(dim)
+
+
+    Done = false
+    min_satisfied, max_satisfied = false,false
+    #fix all variables--> corners
+    for corner in IterTools.product([1:2 for i in 1:dim]...)
+        #j picks if upper/lower bound. i is which var
+        eval = eval_func([interval[i,corner[i]] for i in 1:dim])
+        min_satisfied = min_satisfied || eval < other_sum
+        max_satisfied = max_satisfied || eval > -other_sum
+    
+        if min_satisfied && max_satisfied
+            Done = true
+            break
+        end
+    end
+    if !Done
+        X = zeros(dim)
+        for fixed in fixed_vars
+            #fixed some variables --> "sides"
+            #we only care about the equations from the unfixed variables
+            unfixed = deleteat!(collect(1:dim), fixed)
+            fixed_args = [item for item in fixed]
+            A_ = A[:,unfixed][unfixed,:]
+
+            #if diagonal entries change sign, can't be definite
+            diag_vals = diag(A_)
+            len = length(diag_vals)
+            sign_change = false
+            for i in 1:len-1
+                c = diag_vals[i]
+                #sign change?
+                if c*diag_vals[i+1]<0
+                    sign_change = true
+                    break
+                end
+            end
+            #if no sign change, can find extrema
+            if !sign_change
+                #not full rank --> no soln
+                if rank(A_) == size(A_)[1]
+                    fixed_A = A[:,unfixed][fixed_args,:]
+                    B_ = B[unfixed]
+                    for side in IterTools.product([1:2 for i in 1:length(fixed)]...)
+                        X0 = [interval[i,side[i]] for i in 1:length(side)]
+                        X_ = A_\(-B_-(fixed_A')*X0)
+                        #make sure it's in the domain
+                        do_next = true
+                        for i in 1:length(unfixed)
+                            var = unfixed[i]
+                            if interval[var,1] <= X_[i] <= interval[var,2]
+                                continue
+                            else
+                                do_next = false
+                                break
+                            end
+                        end
+                        if do_next
+                            X[fixed_args] = X0
+                            X[unfixed] = X_
+                            eval = eval_func(X)
+                            min_satisfied = min_satisfied || eval < other_sum
+                            max_satisfied = max_satisfied || eval > -other_sum
+                            if min_satisfied && max_satisfied
+                                Done = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+            if Done
+                break
+            end
+        end
+        if !Done
+            #fix no vars--> interior
+            #if diagonal entries change sign, can't be definite
+            should_next = true
+            for i in 1:length(pure_quad_coeff)-1
+                c = pure_quad_coeff[i]
+                #sign change?
+                if c*pure_quad_coeff[i+1]<0
+                    should_next = false
+                    break
+                end
+            end
+            #if no sign change, can find extrema
+            if should_next
+                #not full rank --> no soln
+                if rank(A) == size(A)[1]
+                    X = A\-B
+                    #make sure it's in the domain
+                    do_next = true
+                    for i in 1:dim
+                        if interval[i,1] <= X[i] <= interval[i,2]
+                            continue
+                        else
+                            do_next = false
+                            break
+                        end
+                    end
+                    if do_next
+                        curr_eval = eval_func(X)
+                        min_satisfied = min_satisfied || curr_eval < other_sum
+                        max_satisfied = max_satisfied || curr_eval > -other_sum
+                        if min_satisfied && max_satisfied
+                            Done = true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return !Done
+end
+
 function quadraticCheck(test_coeff,tol,nd_check=false)
     if ndims(test_coeff) == 2 && !nd_check
         return quadraticCheck2D(test_coeff, tol)
