@@ -25,8 +25,9 @@ mutable struct SolverOptions
     all_dim_quadratic_check # = true (by default)
     maxZoomCount # = 25 (by default)
     level # = 0 (by default)
+    useFinalStep # = true (by default)
     function SolverOptions()
         #Init all the Options to default value
-        new(false,false,true,true,true,25,0)
+        new(false,false,true,true,true,25,0,true)
     end
 end
