@@ -77,7 +77,3 @@ test_solvePolyRecursive()
 # test_get_fixed_vars()
 # test_quadraticCheckND()
 # test_quadraticCheck()
-<<<<<<< HEAD
-test_solvePolyRecursive()
-=======
->>>>>>> 103b6514ca626db5461c5673359e709467fac269
