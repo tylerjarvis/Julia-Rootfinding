@@ -975,4 +975,28 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     zoomCount = 0
     #Zoom in while we can
 
+
+    if should_stop
+        #Start the final step if the is in the options and we aren't already in it.
+        if trackedInterval.finalStep || not solverOptions.useFinalStep
+            ##print(trackedInterval.interval)
+            ##print("Root obtained with finalstep", trackedInterval.finalStep)
+            if solverOptions.verbose
+                println("*",end="")
+            end
+            if isExteriorInterval(originalInterval, trackedInterval)
+                #print("exterior")
+                #input("val:")
+                return [], [trackedInterval]
+            else
+                #print("interior")
+                #input("val:")
+                return [trackedInterval], []
+            end
+        else
+            #print("Starting final step on interval:",trackedInterval.interval)
+            startFinalStep(trackedInterval)
+            return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
+        end
+    end
 end
