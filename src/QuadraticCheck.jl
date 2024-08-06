@@ -670,7 +670,6 @@ function quadraticCheckND(test_coeff, tol)
                 c = diag_vals[i]
                 #sign change?
                 if c*diag_vals[i+1]<0
-                    println("6")
                     sign_change = true
                     break
                 end
@@ -702,7 +701,6 @@ function quadraticCheckND(test_coeff, tol)
                             min_satisfied = min_satisfied || eval < other_sum
                             max_satisfied = max_satisfied || eval > -other_sum
                             if min_satisfied && max_satisfied
-                                println("9")
                                 Done = true
                                 break
                             end
@@ -723,7 +721,6 @@ function quadraticCheckND(test_coeff, tol)
                 #sign change?
                 if c*pure_quad_coeff[i+1]<0
                     should_next = false
-                    println("10")
                     break
                 end
             end
@@ -748,7 +745,6 @@ function quadraticCheckND(test_coeff, tol)
                         max_satisfied = max_satisfied || curr_eval > -other_sum
                         if min_satisfied && max_satisfied
                             Done = true
-                            println("13")
                         end
                     end
                 end
@@ -760,13 +756,10 @@ end
 
 function quadraticCheck(test_coeff,tol,nd_check=false)
     if ndims(test_coeff) == 2 && !nd_check
-        println("here")
         return quadraticCheck2D(test_coeff, tol)
     elseif ndims(test_coeff) == 3 && !nd_check
-        println("now here")
         return quadraticCheck3D(test_coeff, tol)
     else
-        println("finally here")
         return quadraticCheckND(test_coeff, tol)
     end
 end
