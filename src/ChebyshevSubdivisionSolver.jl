@@ -973,8 +973,25 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     dim = ndims(Ms[1])
     changed = true
     zoomCount = 0
+    originalInterval = copyInterval(trackedInterval)
+    originalIntervalSize = size(trackedInterval)
     #Zoom in while we can
+    lastSizes = dimSize(trackedInterval)
+    while changed && zoomCount <= solverOptions.maxZoomCount
+        #Zoom in until we stop changing or we hit machine epsilon
+        Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
+        if trackedInterval.empty #Throw out the interval
+            return [], []
+        end
+        #Only count in towards the max is we don't cut the interval in half
+        newSizes = dimSize(trackedInterval)
+        if all(newSizes >= (lastSizes ./ 2)) #Check all dims and use >= to account for a dimension being 0.
+            zoomCount += 1
+        end
+        lastSizes = newSizes
+    end
 
+<<<<<<< HEAD
     if True #replace with should_stop if statement
 
     else 
@@ -1003,5 +1020,73 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         #TODO: Make the combining intervals it's own function!!!
         for tempInterval in resultExterior
             tempInterval.reRun = false
+=======
+    if should_stop
+        #Start the final step if the is in the options and we aren't already in it.
+        if trackedInterval.finalStep || not solverOptions.useFinalStep
+            ##print(trackedInterval.interval)
+            ##print("Root obtained with finalstep", trackedInterval.finalStep)
+            if solverOptions.verbose
+                print("*")
+            end
+            if isExteriorInterval(originalInterval, trackedInterval)
+                #print("exterior")
+                #input("val:")
+                return [], [trackedInterval]
+            else
+                #print("interior")
+                #input("val:")
+                return [trackedInterval], []
+            end
+        else
+            #print("Starting final step on interval:",trackedInterval.interval)
+            startFinalStep(trackedInterval)
+            return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
+        end
+
+    elseif trackedInterval.finalStep
+    trackedInterval.canThrowOutFinalStep = true
+    allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+    resultsAll = []
+    for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
+        newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+        append!(resultsAll, newInterior)
+        append!(resultsAll,newExterior)
+    end
+    if length(resultsAll) == 0
+        #Can't throw out final step! This might not actually be a root though!
+        trackedInterval.possibleExtraRoot = true
+        if isExteriorInterval(originalInterval, trackedInterval)
+            return [], [trackedInterval]
+        else
+            return [trackedInterval], []
+        end
+    else
+        #Combine all roots that converged to the same point.
+        allFoundRoots = Set([])
+        tempResults = []
+        for result in resultsAll
+            point = Tuple(result.interval[1,:])
+            if point in allFoundRoots
+                continue
+            end
+            push!(allFoundRoots,point)
+            push!(tempResults,result)
+        end
+        for result in tempResults
+            if length(result.possibleDuplicateRoots) > 0
+                append!(trackedInterval.possibleDuplicateRoots,result.possibleDuplicateRoots)
+            else
+                push!(trackedInterval.possibleDuplicateRoots,getFinalPoint(result))
+            end
+        end
+        if isExteriorInterval(originalInterval, trackedInterval)
+            return [], [trackedInterval]
+        else
+            return [trackedInterval], []
+        end
+        #TODO: Don't subdivide in the final step in dimensions that are already points!
+    else
+>>>>>>> 103b6514ca626db5461c5673359e709467fac269
     end
 end
