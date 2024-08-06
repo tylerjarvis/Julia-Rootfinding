@@ -11,7 +11,7 @@ include("ChebyshevSubdivisionSolverTest.jl")
 include("TrackedIntervalTest.jl")
 include("QuadraticCheckTest.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
-
+include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/SolverOptions.jl")
 function test_all()
     test_all_ChebyshevApproximator()
     test_all_ChebyshevSubdivisionSolver()
