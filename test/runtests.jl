@@ -56,6 +56,7 @@ end
 # test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
+test_solvePolyRecursive()
 
 # ============================================ TrackedInterval Tests ============================================
 
@@ -75,4 +76,4 @@ end
 # test_quadraticCheck3D()
 # test_get_fixed_vars()
 # test_quadraticCheckND()
-test_quadraticCheck()
+# test_quadraticCheck()
