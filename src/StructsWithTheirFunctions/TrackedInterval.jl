@@ -44,9 +44,11 @@ mutable struct TrackedInterval
     reducedDims # = [] (by default)
     solvedVals # = [] (by default)
     finalInterval # = [] (by default)
+    finalAlpha # = 0 (by default)
+    finalBeta # = 0 (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[])
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0)
     end
 end
 
@@ -137,6 +139,33 @@ end
 #     self.finalBeta += betaError + (finalIntervalError[:,1] + finalIntervalError[:,0])/2
 #     return self.finalInterval
 
+function getFinalInterval(trackedInterval::TrackedInterval)
+    """Finds the point that should be reported as the root (midpoint of the final step interval).
+
+    Returns
+    -------
+    root: numpy array
+        The final point to be reported as the root of the interval
+    """
+    finalInterval = trackedInterval.topInterval'
+    finalIntervalError = zeros(size(finalInterval))
+    transformsToUse = trackedInterval.finalStep ? trackedInterval.preFinalTransforms : trackedInterval.transforms
+    for (alpha, beta) in reverse(transformsToUse) # Iteratively apply each saved transform
+        finalInterval, temp = twoProd(finalInterval, alpha)
+        finalIntervalError = alpha * finalIntervalError + temp
+        finalInterval, temp = twoSum(finalInterval,beta)
+        finalIntervalError += temp
+    end
+    finalInterval = finalInterval'
+    finalIntervalError = finalIntervalError'
+    trackedInterval.finalInterval = finalInterval + finalIntervalError # Add the error and save the result.
+    trackedInterval.finalAlpha, alphaError = twoSum(-finalInterval[:, 1] ./ 2, finalInterval[:, 2] ./ 2)
+    trackedInterval.finalAlpha += alphaError + (finalIntervalError[:, 2] - finalIntervalError[:, 1]) ./ 2
+    trackedInterval.finalBeta, betaError = twoSum(finalInterval[:, 1] ./ 2, finalInterval[:, 2] ./ 2)
+    trackedInterval.finalBeta += betaError + (finalIntervalError[:, 2] + finalIntervalError[:, 1]) ./ 2
+    return trackedInterval.finalInterval
+end
+
 # def getFinalPoint(self):
 #     """Finds the point that should be reported as the root (midpoint of the final step interval).
 
@@ -162,6 +191,31 @@ end
 #         self.root = (finalInterval[:,0] + finalInterval[:,1]) / 2 # Return the midpoint
 #     return self.root
 
+function getFinalPoint(trackedInterval::TrackedInterval)
+    """Finds the point that should be reported as the root (midpoint of the final step interval).
+
+    Returns
+    -------
+    root: numpy array
+        The final point to be reported as the root of the interval
+    """
+    if !trackedInterval.finalStep  # If no final step, use the midpoint of the calculated final interval.
+        trackedInterval.root = (trackedInterval.finalInterval[:, 1] .+ trackedInterval.finalInterval[:, 2]) ./ 2
+    else  # If using the final step, recalculate the final interval using post-final transforms.
+        finalInterval = trackedInterval.topInterval'
+        finalIntervalError = zeros(size(finalInterval))
+        transformsToUse = trackedInterval.transforms
+        for (alpha, beta) in reverse(transformsToUse)
+            finalInterval, temp = twoProd(finalInterval, alpha)
+            finalIntervalError = alpha * finalIntervalError + temp
+            finalInterval, temp = twoSum(finalInterval, beta)
+            finalIntervalError += temp
+        end
+        finalInterval = finalInterval' .+ finalIntervalError'
+        trackedInterval.root = (finalInterval[:,1] .+ finalInterval[:,2]) ./ 2  # Return the midpoint
+    end
+    return trackedInterval.root
+end
 # def size(self):
 #     """Gets the volume of the current interval."""
 #     return np.product(self.interval[:,1] - self.interval[:,0])
