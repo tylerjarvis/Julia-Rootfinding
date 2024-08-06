@@ -905,3 +905,74 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
         end
     end
 end
+
+function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
+    """Recursively shrinks and subdivides the given interval to find the locations of all roots.
+
+    Parameters
+    ----------
+    Ms : list of arrays
+        The chebyshev approximations of the functions
+    trackedInterval : TrackedInterval
+        The information about the interval we are solving on.
+    errors : array
+        An upper bound for the error of the Chebyshev approximation of the function on the interval
+    solverOptions : SolverOptions
+        Desired settings for running interval checks, transformations, and subdivision.
+
+    Returns
+    -------
+    boundingBoxesInterior : list of arrays (optional)
+        Each element of the list is an interval in which there may be a root. The interval is on the interior of the current
+        interval
+    boundingBoxesExterior : list of arrays (optional)
+        Each element of the list is an interval in which there may be a root. The interval is on the exterior of the current
+        interval
+    """
+
+    #TODO: Check if trackedInterval.interval has width 0 in some dimension, in which case we should get rid of that dimension.
+    #If the interval is a point, return it
+    if isPoint(trackedInterval)
+        return [], [trackedInterval]
+    end
+
+    #If we ever change the options in this function, we will need to do a copy here.
+    #Should be cheap, but as we never change them for now just avoid the copy
+    solverOptions = copy(solverOptions)
+    solverOptions.level += 1
+
+    #Constant term check, runs at the beginning of the solve and before each subdivision
+    #If the absolute value of the constant term for any of the chebyshev polynomials is greater than the sum of the
+    #absoulte values of any of the other terms, it will return that there are no zeros on that interval
+    if solverOptions.constant_check
+        consts = [M[1] for M in Ms]
+        err = [sum(abs.(M))-abs(c)+e for (M,e,c) in zip(Ms,errors,consts)]
+        if any(abs.(consts) > err)
+            return [], []
+        end
+    end
+
+    #Runs quadratic check after constant check, only for dimensions 2 and 3 by default
+    #More expensive than constant term check, but testing show it saves time in lower dimensions
+    if (solverOptions.low_dim_quadratic_check && ndims(Ms[1]) <= 3) || solverOptions.all_dim_quadratic_check
+        for i in eachindex(Ms)
+            if quadratic_check(Ms[i], errors[i])
+                return [], []
+            end
+        end
+    end
+
+    #Trim
+    Ms = copy(Ms)
+    originalMs = copy(Ms)
+    trackedInterval = copyInterval(trackedInterval)
+    errors = deepcopy(errors)
+    trimMs(Ms, errors)
+
+    #Solve
+    dim = ndims(Ms[1])
+    changed = true
+    zoomCount = 0
+    #Zoom in while we can
+
+end
