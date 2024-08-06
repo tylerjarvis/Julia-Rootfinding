@@ -74,6 +74,6 @@ end
 # test_quadraticCheck2D()
 # test_quadraticCheck3D()
 # test_get_fixed_vars()
-test_quadraticCheckND()
+# test_quadraticCheckND()
 # test_quadraticCheck()
-# test_solvePolyRecursive()
+test_solvePolyRecursive()

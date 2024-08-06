@@ -1,5 +1,5 @@
 using LinearAlgebra
-
+using Logging
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
 function twoSum(a,b)
@@ -975,4 +975,33 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     zoomCount = 0
     #Zoom in while we can
 
+    if True #replace with should_stop if statement
+
+    else 
+        #Otherwise, Subdivide
+        if solverOptions.level == 15
+            @warn "HIGH SUBDIVISION DEPTH!\nSubdivision on the search interval has now reached recursion depth 15. Runtime may be long."
+        elseif solverOptions.level == 25
+            @warn "HIGH SUBDIVISION DEPTH!\nExtreme subdivision depth!\nSubdivision on the search interval has now reached" *
+                        " at least depth 25, which is unusual. The solver may not finish running." *
+                        "Ensure the input functions meet the requirements of being continuous, smooth," *
+                        "and having only finitely many simple roots on the search interval."
+        resultInterior, resultExterior = [], []
+        #Get the new intervals and polynomials
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+        #Run each interval
+        for (newMs, newErrs, newInt) in (allMs, allErrors, allIntervals)
+            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+            append!(resultInterior, newInterior)
+            append!(resultExterior, newExterior)
+        end
+        #Rerun the touching intervals
+        idx1 = 0
+        idx2 = 1
+        #Combine any touching intervals and throw them at the end. Flip a bool saying rerun them
+        #If changing this code, test it by defaulting the nextTransformationsInterals to 0, so roots lie on the boundary more.
+        #TODO: Make the combining intervals it's own function!!!
+        for tempInterval in resultExterior
+            tempInterval.reRun = false
+    end
 end
