@@ -756,13 +756,10 @@ end
 
 function quadraticCheck(test_coeff,tol,nd_check=false)
     if ndims(test_coeff) == 2 && !nd_check
-        println("here")
         return quadraticCheck2D(test_coeff, tol)
     elseif ndims(test_coeff) == 3 && !nd_check
-        println("now here")
         return quadraticCheck3D(test_coeff, tol)
     else
-        println("finally here")
         return quadraticCheckND(test_coeff, tol)
     end
 end
