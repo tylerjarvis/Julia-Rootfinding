@@ -990,7 +990,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         lastSizes = newSizes
     end
-    
+
     if should_stop
         #Start the final step if the is in the options and we aren't already in it.
         if trackedInterval.finalStep || not solverOptions.useFinalStep
@@ -1057,7 +1057,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             end
             #TODO: Don't subdivide in the final step in dimensions that are already points!
         end
-    else
+    else 
         #Otherwise, Subdivide
         if solverOptions.level == 15
             @warn "HIGH SUBDIVISION DEPTH!\nSubdivision on the search interval has now reached recursion depth 15. Runtime may be long."
@@ -1085,5 +1085,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         for tempInterval in resultExterior
             tempInterval.reRun = false
         end
+        # while idx1 < etc...
+        # for tempInterior etc...
+        # return resultInterior, newResultExterior
     end
 end
