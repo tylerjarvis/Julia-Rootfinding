@@ -938,7 +938,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
 
     #If we ever change the options in this function, we will need to do a copy here.
     #Should be cheap, but as we never change them for now just avoid the copy
-    solverOptions = copy(solverOptions)
+    solverOptions = deepcopy(solverOptions)
     solverOptions.level += 1
 
     #Constant term check, runs at the beginning of the solve and before each subdivision
@@ -956,7 +956,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     #More expensive than constant term check, but testing show it saves time in lower dimensions
     if (solverOptions.low_dim_quadratic_check && ndims(Ms[1]) <= 3) || solverOptions.all_dim_quadratic_check
         for i in eachindex(Ms)
-            if quadratic_check(Ms[i], errors[i])
+            if quadraticCheck(Ms[i], errors[i])
                 return [], []
             end
         end
@@ -974,8 +974,9 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     changed = true
     zoomCount = 0
     originalInterval = copyInterval(trackedInterval)
-    originalIntervalSize = size(trackedInterval)
+    originalIntervalSize = sizeOfInterval(trackedInterval)
     #Zoom in while we can
+    global should_stop = false
     lastSizes = dimSize(trackedInterval)
     while changed && zoomCount <= solverOptions.maxZoomCount
         #Zoom in until we stop changing or we hit machine epsilon
@@ -1085,5 +1086,72 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         for tempInterval in resultExterior
             tempInterval.reRun = false
         end
+        while idx1 < length(resultExterior)
+            while idx2 < length(resultExterior)
+                if overlapsWith(resultExterior[idx1+1],resultExterior[idx2+1])
+                    #Combine, throw at the back. Set reRun to true.
+                    combinedInterval = copyInterval(originalInterval)
+                    if combinedInterval.finalStep
+                        combinedInterval.interval = copyInterval(combinedInterval.preFinalInterval)
+                        combinedInterval.transforms = copyInterval(combinedInterval.preFinalTransforms)
+                    end
+                    newAs = minimum([getIntervalForCombining(resultExterior[idx1+1])[1,:], getIntervalForCombining(resultExterior[idx2+1])[1,:]])
+                    newBs = maximum([getIntervalForCombining(resultExterior[idx1+1])[2,:], getIntervalForCombining(resultExterior[idx2+1])[2,:]])
+                    final1 = getFinalInterval(resultExterior[idx1+1])
+                    final2 = getFinalInterval(resultExterior[idx2+1])
+                    newAsFinal = minimum([final1[1,:], final2[1,:]])
+                    newBsFinal = maximum([final1[2,:], final2[2,:]])
+                    oldAs = originalInterval.interval[1,:]
+                    oldBs = originalInterval.interval[2,:]
+                    oldAsFinal, oldBsFinal = getFinalInterval(originalInterval)[1,:],getFinalInterval(originalInterval)[2,:]
+                    #Find the final A and B values exactly. Then do the currSubinterval calculation exactly.
+                    #Look at what was done on the example that's failing and see why.
+                    equalMask = oldBsFinal == oldAsFinal
+                    oldBsFinal[equalMask] = oldBsFinal[equalMask] + 1 #Avoid a divide by zero on the next line
+                    currSubinterval = ((2 .* vstack([newAsFinal, newBsFinal]) - oldAsFinal - oldBsFinal)/(oldBsFinal - oldAsFinal))'
+                    #If the interval is exactly -1 or 1, make sure that shows up as exact.
+                    currSubinterval[equalMask,1] = -1
+                    currSubinterval[equalMask,2] = 1
+                    currSubinterval[1,:][oldAs == newAs] = -1
+                    currSubinterval[2,:][oldBs == newBs] = 1
+                    #Update the current subinterval. Use the best transform we can get here, but use the exact combined
+                    #interval for tracking
+                    addTransform(combinedInterval,currSubinterval)
+                    combinedInterval.interval = vstack([newAs, newBs])'
+                    combinedInterval.reRun = true
+                    deleteat!(resultExterior,idx2+1)
+                    deleteat!(resultExterior,idx1+1)
+                    push!(resultExterior,combinedInterval)
+                    idx2 = idx1 + 1
+                else
+                    idx2 += 1
+                end
+            end
+            idx1 += 1
+            idx2 = idx1 + 1
+        end
+        #Rerun, check if still on exterior
+        newResultExterior = []
+        for tempInterval in resultExterior
+            if tempInterval.reRun
+                if all(tempInterval.interval == originalInterval.interval)
+                    push!(newResultExterior,tempInterval)
+                else
+                    #Project the MS onto the interval, then recall the function.
+                    #TODO: Instead of using the originalMs, use Ms, and then don't use the original interval, use the one
+                    #we started subdivision with.
+                    tempMs, tempErrors = transformChebToInterval(originalMs, getLastTransform(tempInterval)..., errors, solverOptions.exact)
+                    tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
+                    #We can assume that nothing in these has to be recombined
+                    append!(resultInterior,tempResultsInterior)
+                    append!(newResultExterior,tempResultsExterior)
+                end
+            elseif isExteriorInterval(originalInterval, tempInterval)
+                push!(newResultExterior,tempInterval)
+            else
+                push!(resultInterior,tempInterval)
+            end
+        end
+        return resultInterior, newResultExterior
     end
 end
