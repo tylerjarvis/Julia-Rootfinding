@@ -993,7 +993,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         lastSizes = newSizes
     end
-    
+
     if should_stop
         #Start the final step if the is in the options and we aren't already in it.
         if trackedInterval.finalStep || !solverOptions.useFinalStep
@@ -1062,7 +1062,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             end
             #TODO: Don't subdivide in the final step in dimensions that are already points!
         end
-    else
+    else 
         #Otherwise, Subdivide
         if solverOptions.level == 15
             @warn "HIGH SUBDIVISION DEPTH!\nSubdivision on the search interval has now reached recursion depth 15. Runtime may be long."
@@ -1159,5 +1159,109 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             end
         end
         return resultInterior, newResultExterior
+    end
+end
+
+function solveChebyshevSubdivision(Ms::Vector{Array}, errors::Vector{Float64};
+    verbose::Bool = false, 
+    returnBoundingBoxes::Bool = false,
+    exact::Bool = false,
+    constant_check::Bool = true,
+    low_dim_quadratic_check::Bool = true,
+    all_dim_quadratic_check::Bool = false)
+
+    """
+    Initiates shrinking and subdivision recursion and returns the roots and bounding boxes.
+
+    Parameters
+    ----------
+    Ms : Vector{Array}
+    The Chebyshev approximations of the functions on the interval given to CombinedSolver
+    errors : Vector{Float64}
+    The max error of the Chebyshev approximation from the function on the interval
+    verbose : Bool
+    Defaults to false. Whether or not to output progress of solving to the terminal.
+    returnBoundingBoxes : Bool (Optional)
+    Defaults to false. If true, returns the bounding boxes around each root as well as the roots.
+    exact : Bool
+    Whether transformations should be done with higher precision to minimize error.
+    constant_check : Bool
+    Defaults to true. Whether or not to run constant term check after each subdivision.
+    low_dim_quadratic_check : Bool
+    Defaults to true. Whether or not to run quadratic check in dim 2, 3.
+    all_dim_quadratic_check : Bool
+    Defaults to false. Whether or not to run quadratic check in dim ≥ 4.
+
+    Returns
+    -------
+    roots : Vector
+    The roots of the system of functions on the interval given to Combined Solver
+    boundingBoxes : Vector{Array} (optional)
+    List of intervals for each root in which the root is bound to lie.
+    """
+
+    # Assert that we have n nD polys
+    if any(ndims(M) != length(Ms) for M in Ms)
+        throw(ArgumentError("Solver takes in N polynomials of dimension N!"))
+    end
+    if length(Ms) != length(errors)
+        throw(ArgumentError("Ms and errors must be same length!"))
+    end
+
+    # Solve
+    ndim = length(Ms)
+    originalInterval = TrackedInterval(hcat(fill(-1,ndim), fill(1,ndim))')
+    solverOptions = SolverOptions()
+    solverOptions.verbose = verbose
+    solverOptions.exact = exact
+    solverOptions.constant_check = constant_check
+    solverOptions.low_dim_quadratic_check = low_dim_quadratic_check
+    solverOptions.all_dim_quadratic_check = all_dim_quadratic_check
+    solverOptions.useFinalStep = true
+
+    if verbose
+        println("Finding roots...")
+    end
+
+    b1, b2 = solvePolyRecursive(Ms, originalInterval, errors, solverOptions)
+
+    boundingIntervals = append!(b1, b2)
+    roots = []
+    hasDupRoots = false
+    hasExtraRoots = false
+
+    for interval in boundingIntervals
+        #TODO: Figure out the best way to return the bounding intervals.
+        #Right now interval.finalInterval is the interval where we say the root is.
+        getFinalInterval(interval)
+        if interval.possibleExtraRoot
+            hasExtraRoots = true
+        end
+        if !isempty(interval.possibleDuplicateRoots)
+            append!(roots, interval.possibleDuplicateRoots)
+            hasDupRoots = true
+        else
+            push!(roots, getFinalPoint(interval))
+        end
+    end
+
+    # Warn if extra or duplicate roots
+    if hasExtraRoots
+        @warn "Might have extra roots! See bounding boxes for details!"
+    end
+    if hasDupRoots
+        @warn "Might have duplicate roots! See bounding boxes for details!"
+    end
+
+    # Return
+    roots = collect(roots)
+    if verbose
+        println("\nFound $(length(roots)) root(s)\n")
+    end
+
+    if returnBoundingBoxes
+        return roots, boundingIntervals
+    else
+        return roots
     end
 end
