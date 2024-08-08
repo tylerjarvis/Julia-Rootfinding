@@ -18,6 +18,7 @@ function test_all_ChebyshevSubdivisionSolver()
         test_isExteriorInterval()
         test_trimMs()
         test_solvePolyRecursive()
+        test_solveChebyshevSubdivision()
     end
 end
 
