@@ -4,9 +4,9 @@ using Logging
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
 function twoSum(a,b)
     """Returns x,y such that a+b=x+y exactly, and a+b=x in floating point."""
-    x = a+b
-    z = x-a
-    y = (a-(x-z)) + (b-z)
+    x = a .+ b
+    z = x .- a
+    y = (a .- (x .- z)) .+ (b .- z)
     return x, y
 end
 
@@ -633,6 +633,7 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
 
     dim = length(Ms)
     #Zoom in on the current interval
+    println("bounding")
     interval, changed, should_stop, throwOut = boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
     #Don't zoom in if we're already at a point
     for curr_dim in 1:dim
@@ -907,6 +908,7 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
 end
 
 function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
+    println("here")
     """Recursively shrinks and subdivides the given interval to find the locations of all roots.
 
     Parameters
@@ -994,7 +996,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     
     if should_stop
         #Start the final step if the is in the options and we aren't already in it.
-        if trackedInterval.finalStep || not solverOptions.useFinalStep
+        if trackedInterval.finalStep || !solverOptions.useFinalStep
             ##print(trackedInterval.interval)
             ##print("Root obtained with finalstep", trackedInterval.finalStep)
             if solverOptions.verbose
@@ -1012,6 +1014,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         else
             #print("Starting final step on interval:",trackedInterval.interval)
             startFinalStep(trackedInterval)
+            println("1")
             return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
         end
 
@@ -1020,6 +1023,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
         resultsAll = []
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
+            println("2")
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultsAll, newInterior)
             append!(resultsAll,newExterior)
@@ -1072,7 +1076,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         #Get the new intervals and polynomials
         allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
         #Run each interval
-        for (newMs, newErrs, newInt) in (allMs, allErrors, allIntervals)
+        for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
+            println("3")
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultInterior, newInterior)
             append!(resultExterior, newExterior)
@@ -1106,18 +1111,18 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     oldAsFinal, oldBsFinal = getFinalInterval(originalInterval)[1,:],getFinalInterval(originalInterval)[2,:]
                     #Find the final A and B values exactly. Then do the currSubinterval calculation exactly.
                     #Look at what was done on the example that's failing and see why.
-                    equalMask = oldBsFinal == oldAsFinal
-                    oldBsFinal[equalMask] = oldBsFinal[equalMask] + 1 #Avoid a divide by zero on the next line
-                    currSubinterval = ((2 .* vstack([newAsFinal, newBsFinal]) - oldAsFinal - oldBsFinal)/(oldBsFinal - oldAsFinal))'
+                    equalMask = oldBsFinal .== oldAsFinal
+                    oldBsFinal[equalMask] = oldBsFinal[equalMask] .+ 1 #Avoid a divide by zero on the next line
+                    currSubinterval = ((2 .* vcat([newAsFinal, newBsFinal]) .- oldAsFinal .- oldBsFinal)./(oldBsFinal .- oldAsFinal))'
                     #If the interval is exactly -1 or 1, make sure that shows up as exact.
-                    currSubinterval[equalMask,1] = -1
-                    currSubinterval[equalMask,2] = 1
-                    currSubinterval[1,:][oldAs == newAs] = -1
-                    currSubinterval[2,:][oldBs == newBs] = 1
+                    currSubinterval[1,equalMask] = -1
+                    currSubinterval[2,equalMask] = 1
+                    currSubinterval[1,:][oldAs .== newAs] = -1
+                    currSubinterval[2,:][oldBs .== newBs] = 1
                     #Update the current subinterval. Use the best transform we can get here, but use the exact combined
                     #interval for tracking
                     addTransform(combinedInterval,currSubinterval)
-                    combinedInterval.interval = vstack([newAs, newBs])'
+                    combinedInterval.interval = vcat([newAs, newBs])'
                     combinedInterval.reRun = true
                     deleteat!(resultExterior,idx2+1)
                     deleteat!(resultExterior,idx1+1)
@@ -1141,6 +1146,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #TODO: Instead of using the originalMs, use Ms, and then don't use the original interval, use the one
                     #we started subdivision with.
                     tempMs, tempErrors = transformChebToInterval(originalMs, getLastTransform(tempInterval)..., errors, solverOptions.exact)
+                    println("4")
                     tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
                     #We can assume that nothing in these has to be recombined
                     append!(resultInterior,tempResultsInterior)

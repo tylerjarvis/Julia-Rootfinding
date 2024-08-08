@@ -46,9 +46,10 @@ mutable struct TrackedInterval
     finalInterval # = [] (by default)
     finalAlpha # = 0 (by default)
     finalBeta # = 0 (by default)
+    reRun # = false (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0)
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0, false)
     end
 end
 
@@ -288,7 +289,7 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     arr2_2 = otherInterval[2,:]
 
     for i in 1:dim
-        println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
+        # println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
         if arr1_1[i] > arr1_2[i] || arr2_1[i] > arr2_2[i]
             return false
         end
