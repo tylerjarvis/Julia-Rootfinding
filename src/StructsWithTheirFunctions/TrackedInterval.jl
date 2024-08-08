@@ -46,9 +46,10 @@ mutable struct TrackedInterval
     finalInterval # = [] (by default)
     finalAlpha # = 0 (by default)
     finalBeta # = 0 (by default)
+    reRun # = false (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0)
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0, false)
     end
 end
 
@@ -159,10 +160,10 @@ function getFinalInterval(trackedInterval::TrackedInterval)
     finalInterval = finalInterval'
     finalIntervalError = finalIntervalError'
     trackedInterval.finalInterval = finalInterval + finalIntervalError # Add the error and save the result.
-    trackedInterval.finalAlpha, alphaError = twoSum(-finalInterval[:, 1] ./ 2, finalInterval[:, 2] ./ 2)
-    trackedInterval.finalAlpha += alphaError + (finalIntervalError[:, 2] - finalIntervalError[:, 1]) ./ 2
-    trackedInterval.finalBeta, betaError = twoSum(finalInterval[:, 1] ./ 2, finalInterval[:, 2] ./ 2)
-    trackedInterval.finalBeta += betaError + (finalIntervalError[:, 2] + finalIntervalError[:, 1]) ./ 2
+    trackedInterval.finalAlpha, alphaError = twoSum(-finalInterval[1,:] ./ 2, finalInterval[2,:] ./ 2)
+    trackedInterval.finalAlpha += alphaError + (finalIntervalError[2,:] - finalIntervalError[1,:]) ./ 2
+    trackedInterval.finalBeta, betaError = twoSum(finalInterval[1,:] ./ 2, finalInterval[2,:] ./ 2)
+    trackedInterval.finalBeta += betaError + (finalIntervalError[2,:] + finalIntervalError[1,:]) ./ 2
     return trackedInterval.finalInterval
 end
 
@@ -200,7 +201,7 @@ function getFinalPoint(trackedInterval::TrackedInterval)
         The final point to be reported as the root of the interval
     """
     if !trackedInterval.finalStep  # If no final step, use the midpoint of the calculated final interval.
-        trackedInterval.root = (trackedInterval.finalInterval[:, 1] .+ trackedInterval.finalInterval[:, 2]) ./ 2
+        trackedInterval.root = (trackedInterval.finalInterval[1,:] .+ trackedInterval.finalInterval[2,:]) ./ 2
     else  # If using the final step, recalculate the final interval using post-final transforms.
         finalInterval = trackedInterval.topInterval'
         finalIntervalError = zeros(size(finalInterval))
@@ -212,7 +213,7 @@ function getFinalPoint(trackedInterval::TrackedInterval)
             finalIntervalError += temp
         end
         finalInterval = finalInterval' .+ finalIntervalError'
-        trackedInterval.root = (finalInterval[:,1] .+ finalInterval[:,2]) ./ 2  # Return the midpoint
+        trackedInterval.root = (finalInterval[1,:] .+ finalInterval[2,:]) ./ 2  # Return the midpoint
     end
     return trackedInterval.root
 end
@@ -288,7 +289,7 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     arr2_2 = otherInterval[2,:]
 
     for i in 1:dim
-        println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
+        # println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
         if arr1_1[i] > arr1_2[i] || arr2_1[i] > arr2_2[i]
             return false
         end
