@@ -633,7 +633,6 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
 
     dim = length(Ms)
     #Zoom in on the current interval
-    println("bounding")
     interval, changed, should_stop, throwOut = boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
     #Don't zoom in if we're already at a point
     for curr_dim in 1:dim
@@ -908,7 +907,6 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
 end
 
 function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
-    println("here")
     """Recursively shrinks and subdivides the given interval to find the locations of all roots.
 
     Parameters
@@ -1113,16 +1111,16 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #Look at what was done on the example that's failing and see why.
                     equalMask = oldBsFinal .== oldAsFinal
                     oldBsFinal[equalMask] = oldBsFinal[equalMask] .+ 1 #Avoid a divide by zero on the next line
-                    currSubinterval = ((2 .* vcat([newAsFinal, newBsFinal]) .- oldAsFinal .- oldBsFinal)./(oldBsFinal .- oldAsFinal))'
+                    currSubinterval = ((2 .*reduce(hcat,[newAsFinal, newBsFinal]) .- oldAsFinal .- oldBsFinal)./(oldBsFinal .- oldAsFinal))'
                     #If the interval is exactly -1 or 1, make sure that shows up as exact.
-                    currSubinterval[1,equalMask] = -1
-                    currSubinterval[2,equalMask] = 1
-                    currSubinterval[1,:][oldAs .== newAs] = -1
-                    currSubinterval[2,:][oldBs .== newBs] = 1
+                    currSubinterval[1,equalMask] .= -1
+                    currSubinterval[2,equalMask] .= 1
+                    currSubinterval[1,:][oldAs .== newAs] .= -1
+                    currSubinterval[2,:][oldBs .== newBs] .= 1
                     #Update the current subinterval. Use the best transform we can get here, but use the exact combined
                     #interval for tracking
                     addTransform(combinedInterval,currSubinterval)
-                    combinedInterval.interval = vcat([newAs, newBs])'
+                    combinedInterval.interval = reduce(hcat,[newAs, newBs])'
                     combinedInterval.reRun = true
                     deleteat!(resultExterior,idx2+1)
                     deleteat!(resultExterior,idx1+1)
@@ -1139,13 +1137,14 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         newResultExterior = []
         for tempInterval in resultExterior
             if tempInterval.reRun
-                if all(tempInterval.interval == originalInterval.interval)
+                if tempInterval.interval == originalInterval.interval
                     push!(newResultExterior,tempInterval)
                 else
                     #Project the MS onto the interval, then recall the function.
                     #TODO: Instead of using the originalMs, use Ms, and then don't use the original interval, use the one
                     #we started subdivision with.
-                    tempMs, tempErrors = transformChebToInterval(originalMs, getLastTransform(tempInterval)..., errors, solverOptions.exact)
+                    lastTransform = getLastTransform(tempInterval)
+                    tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
                     println("4")
                     tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
                     #We can assume that nothing in these has to be recombined
