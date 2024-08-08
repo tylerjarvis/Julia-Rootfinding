@@ -11044,6 +11044,14 @@ function test_solvePolyRecursive()
             @test isapprox(interv.interval,exp)
         end
         @test b2_13 == []
+
+        Ms_14 = [[0.0000000000523;0.00000042;0.0012343;0.000000010234234;-0.00000000000002034]]
+        errs_14 = [0.]
+        tInterval_14 = TrackedInterval([-1;1;;])
+        solveOpts_14 = SolverOptions()
+        b1_14, b2_14 = solvePolyRecursive(Ms_14,tInterval_14,errs_14,solveOpts_14)
+        @test b1_14 == []
+        @test isapprox(b2_14[1].interval,[0;0;;])
     end
 end
 
