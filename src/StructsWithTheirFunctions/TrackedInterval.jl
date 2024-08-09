@@ -152,9 +152,11 @@ function getFinalInterval(trackedInterval::TrackedInterval)
     finalInterval = trackedInterval.topInterval'
     finalIntervalError = zeros(size(finalInterval))
     transformsToUse = trackedInterval.finalStep ? trackedInterval.preFinalTransforms : trackedInterval.transforms
-    for (alpha, beta) in reverse(transformsToUse) # Iteratively apply each saved transform
+    for transform in reverse(transformsToUse) # Iteratively apply each saved transform
+        alpha = transform[:,1]
+        beta = transform[:,2]
         finalInterval, temp = twoProd(finalInterval, alpha)
-        finalIntervalError = alpha * finalIntervalError + temp
+        finalIntervalError = alpha .* finalIntervalError + temp
         finalInterval, temp = twoSum(finalInterval,beta)
         finalIntervalError += temp
     end
