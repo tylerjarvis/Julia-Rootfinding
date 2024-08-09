@@ -47,9 +47,10 @@ mutable struct TrackedInterval
     finalAlpha # = 0 (by default)
     finalBeta # = 0 (by default)
     reRun # = false (by default)
+    root # = [] (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0, false)
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0, false,[])
     end
 end
 

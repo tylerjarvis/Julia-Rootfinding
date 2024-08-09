@@ -933,6 +933,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     #TODO: Check if trackedInterval.interval has width 0 in some dimension, in which case we should get rid of that dimension.
     #If the interval is a point, return it
     if isPoint(trackedInterval)
+        prinln("Point")
         return [], [trackedInterval]
     end
 
@@ -947,7 +948,11 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if solverOptions.constant_check
         consts = [M[1] for M in Ms]
         err = [sum(abs.(M))-abs(c)+e for (M,e,c) in zip(Ms,errors,consts)]
-        if any(abs.(consts) > err)
+        print("Const check err:")
+        print(err)
+        print(consts)
+        if abs.(consts) > err
+            println("Constant Check")
             return [], []
         end
     end
@@ -957,6 +962,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if (solverOptions.low_dim_quadratic_check && ndims(Ms[1]) <= 3) || solverOptions.all_dim_quadratic_check
         for i in eachindex(Ms)
             if quadraticCheck(Ms[i], errors[i])
+                println("QuadraticCheck")
                 return [], []
             end
         end
@@ -968,7 +974,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     trackedInterval = copyInterval(trackedInterval)
     errors = deepcopy(errors)
     trimMs(Ms, errors)
-
+    println("Ms:")
+    println(Ms)
     #Solve
     dim = ndims(Ms[1])
     changed = true
@@ -981,18 +988,28 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     while changed && zoomCount <= solverOptions.maxZoomCount
         #Zoom in until we stop changing or we hit machine epsilon
         Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
+        println("new Ms:")
+        println(Ms)
+        println(errors)
+        println(trackedInterval.interval)
+        println(changed)
+        println(should_stop)
+
         if trackedInterval.empty #Throw out the interval
+            println("Empty")
             return [], []
         end
         #Only count in towards the max is we don't cut the interval in half
         newSizes = dimSize(trackedInterval)
-        if all(newSizes >= (lastSizes ./ 2)) #Check all dims and use >= to account for a dimension being 0.
+        if all(newSizes .>= (lastSizes ./ 2)) #Check all dims and use >= to account for a dimension being 0.
+            println("Didn't zoom")
             zoomCount += 1
         end
         lastSizes = newSizes
     end
 
     if should_stop
+        println("Stopping")
         #Start the final step if the is in the options and we aren't already in it.
         if trackedInterval.finalStep || !solverOptions.useFinalStep
             ##print(trackedInterval.interval)
@@ -1017,6 +1034,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
 
     elseif trackedInterval.finalStep
+        println("Hit elif")
         trackedInterval.canThrowOutFinalStep = true
         allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
         resultsAll = []
@@ -1061,6 +1079,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             #TODO: Don't subdivide in the final step in dimensions that are already points!
         end
     else 
+        println("subdividing")
         #Otherwise, Subdivide
         if solverOptions.level == 15
             @warn "HIGH SUBDIVISION DEPTH!\nSubdivision on the search interval has now reached recursion depth 15. Runtime may be long."
