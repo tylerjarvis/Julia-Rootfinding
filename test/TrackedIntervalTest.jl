@@ -159,6 +159,7 @@ end
 
 function test_getFinalInterval()
     @test_skip "Test not implemented yet"
+    
 end
 
 function test_getFinalPoint()
