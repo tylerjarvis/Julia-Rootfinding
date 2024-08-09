@@ -2,12 +2,16 @@ include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.j
 using Test
 
 function test_all_TrackedInterval()
-    @testset "All tests in TrackedIntervalTest.jl" begin
+    println("All tests in TrackedIntervalTest.jl\tbegin...")
         test_copyInterval()
         test_addTransform()
         test_getIntervalForCombining()
         test_isPoint()
-    end
+        test_getFinalInterval()
+        test_getFinalPoint()
+        test_contains()
+        test_overlapsWith()
+        test_startFinalStep()
 end
 
 function test_copyInterval()
@@ -151,4 +155,24 @@ function test_isPoint()
         trackedInterval_8 = TrackedInterval([1+10^-20;1;;3-10^-20;3])
         @test isPoint(trackedInterval_8)
     end
+end
+
+function test_getFinalInterval()
+    @test_skip "Test not implemented yet"
+end
+
+function test_getFinalPoint()
+    @test_skip "Test not implemented yet"
+end
+
+function test_contains()
+    @test_skip "Test not implemented yet"
+end
+
+function test_overlapsWith()
+    @test_skip "Test not implemented yet"
+end
+
+function test_startFinalStep()
+    @test_skip "Test not implemented yet"
 end
