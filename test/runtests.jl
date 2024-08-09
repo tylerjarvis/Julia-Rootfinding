@@ -78,4 +78,4 @@ end
 # test_get_fixed_vars()
 # test_quadraticCheckND()
 # test_quadraticCheck()
-test_solvePolyRecursive()
+test_getFinalInterval()

@@ -22,10 +22,10 @@ end
 # TODO: import from a library instead
 function twoProd(a,b)
     """Returns x,y such that a*b=x+y exactly and a*b=x in floating point."""
-    x = a*b
+    x = a .* b
     a1,a2 = split(a)
     b1,b2 = split(b)
-    y=a2*b2-(((x-a1*b1)-a2*b1)-a1*b2)
+    y=a2 .*b2-(((x-a1 .*b1)-a2 .*b1)-a1 .*b2)
     return x,y
 end
 
@@ -757,7 +757,6 @@ function getInverseOrder(order)
     invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
     return Tuple(Int.(invOrder))
 end
-
 
 function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
