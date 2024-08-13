@@ -68,7 +68,8 @@ end
 # test_getIntervalForCombining()
 # test_isPoint()
 # test_getFinalInterval()
-test_getFinalPoint()
+# test_getFinalPoint()
+test_overlapsWith()
 
 # ============================================ QuadraticCheck Tests ============================================
 
@@ -80,4 +81,4 @@ test_getFinalPoint()
 # test_get_fixed_vars()
 # test_quadraticCheckND()
 # test_quadraticCheck()
-
+# test_getFinalInterval()

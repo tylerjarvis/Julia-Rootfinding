@@ -286,16 +286,21 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     currentInterval = getIntervalForCombining(trackedInterval)
     otherInterval = getIntervalForCombining(otherInterval)
     size_arr = size(currentInterval)
-    dim = size_arr[2]
+    if length(size_arr) == 1
+        dim = 1
+    else
+        dim = size_arr[2]
+    end
+    # println(dim)
 
     arr1_1 = currentInterval[1,:]
     arr1_2 = currentInterval[2,:]
     arr2_1 = otherInterval[1,:]
     arr2_2 = otherInterval[2,:]
+    # println(arr1_1)
 
     for i in 1:dim
-        # println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
-        if arr1_1[i] > arr1_2[i] || arr2_1[i] > arr2_2[i]
+        if ((arr1_1[i] > arr2_2[i]) || (arr2_1[i] > arr1_2[i]))
             return false
         end
     end
