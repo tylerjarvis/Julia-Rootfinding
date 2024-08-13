@@ -108,37 +108,6 @@ function getLastTransform(trackedInterval::TrackedInterval)
     return trackedInterval.transforms[end]
 end
 
-# def getFinalInterval(self):
-#     """Finds the interval that should be reported as containing a root.
-
-#     The final interval is calculated by applying all of the recorded transformations that
-#     occurred before the final step to topInterval, the original interval.
-
-#     Returns
-#     -------
-#     finalInterval: numpy array
-#         The final interval to be reported as containing a root
-#     """
-#     # TODO: Make this a seperate function so it can use njit.
-#     # Make these _NoNumba calls use floats so they call call the numba functions without a seperate compile
-#     finalInterval = self.topInterval.T
-#     finalIntervalError = np.zeros_like(finalInterval)
-#     transformsToUse = self.transforms if not self.finalStep else self.preFinalTransforms
-#     for alpha,beta in transformsToUse[::-1]: # Iteratively apply each saved transform
-#         finalInterval, temp = TwoProd_NoNumba(finalInterval, alpha)
-#         finalIntervalError = alpha * finalIntervalError + temp
-#         finalInterval, temp = TwoSum_NoNumba(finalInterval,beta)
-#         finalIntervalError += temp
-
-#     finalInterval = finalInterval.T
-#     finalIntervalError = finalIntervalError.T
-#     self.finalInterval = finalInterval + finalIntervalError # Add the error and save the result.
-#     self.finalAlpha, alphaError = TwoSum_NoNumba(-finalInterval[:,0]/2,finalInterval[:,1]/2)
-#     self.finalAlpha += alphaError + (finalIntervalError[:,1] - finalIntervalError[:,0])/2
-#     self.finalBeta, betaError = TwoSum_NoNumba(finalInterval[:,0]/2,finalInterval[:,1]/2)
-#     self.finalBeta += betaError + (finalIntervalError[:,1] + finalIntervalError[:,0])/2
-#     return self.finalInterval
-
 function getFinalInterval(trackedInterval::TrackedInterval)
     """Finds the point that should be reported as the root (midpoint of the final step interval).
 
@@ -168,31 +137,6 @@ function getFinalInterval(trackedInterval::TrackedInterval)
     return trackedInterval.finalInterval
 end
 
-# def getFinalPoint(self):
-#     """Finds the point that should be reported as the root (midpoint of the final step interval).
-
-#     Returns
-#     -------
-#     root: numpy array
-#         The final point to be reported as the root of the interval
-#     """
-#     #TODO: Make this a seperate function so it can use njit.
-#     #Make these _NoNumba calls use floats so they call call the numba functions without a seperate compile
-#     if not self.finalStep: #If no final step, use the midpoint of the calculated final interval.
-#         self.root = (self.finalInterval[:,0] + self.finalInterval[:,1]) / 2
-#     else: #If using the final step, recalculate the final interval using post-final transforms.
-#         finalInterval = self.topInterval.T
-#         finalIntervalError = np.zeros_like(finalInterval)
-#         transformsToUse = self.transforms
-#         for alpha,beta in transformsToUse[::-1]:
-#             finalInterval, temp = TwoProd_NoNumba(finalInterval, alpha)
-#             finalIntervalError = alpha * finalIntervalError + temp
-#             finalInterval, temp = TwoSum_NoNumba(finalInterval,beta)
-#             finalIntervalError += temp
-#         finalInterval = finalInterval.T + finalIntervalError.T
-#         self.root = (finalInterval[:,0] + finalInterval[:,1]) / 2 # Return the midpoint
-#     return self.root
-
 function getFinalPoint(trackedInterval::TrackedInterval)
     """Finds the point that should be reported as the root (midpoint of the final step interval).
 
@@ -220,10 +164,8 @@ function getFinalPoint(trackedInterval::TrackedInterval)
     end
     return trackedInterval.root
 end
-# def size(self):
-#     """Gets the volume of the current interval."""
-#     return np.product(self.interval[:,1] - self.interval[:,0])
 
+# not thoroughly tested
 function sizeOfInterval(trackedInterval)
     """Gets the volume of the current interval."""
     return prod(trackedInterval.interval[2,:] - trackedInterval.interval[1,:])
@@ -257,24 +199,11 @@ function copyInterval(trackedInterval::TrackedInterval)
     return newone
 end
 
-# def __contains__(self, point):
-#     """Determines if point is contained in the current interval."""
-#     return np.all(point >= self.interval[:,0]) and np.all(point <= self.interval[:,1])
-
+# Not tested or used
 function contains(trackedInterval::TrackedInterval, point)
     """Determines if point is contained in the current interval."""
     return all(point >= trackedInterval.interval[1,:]) && all(point <= trackedInterval.interval[2,:])
 end
-
-# def overlapsWith(self, otherInterval):
-#     """Determines if the otherInterval overlaps with the current interval.
-
-#     Returns True if the lower bound of one interval is less than the upper bound of the other
-#         in EVERY dimension; returns False otherwise."""
-#     for (a1,b1),(a2,b2) in zip(self.getIntervalForCombining(), otherInterval.getIntervalForCombining()):
-#         if a1 > b2 or a2 > b1:
-#             return False
-#     return True
 
 function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedInterval)
     """Determines if the otherInterval overlaps with the current interval.
@@ -303,19 +232,10 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     return true
 end
 
-
 function isPoint(trackedInterval::TrackedInterval, macheps = 2^-52)
     """Determines if the current interval has essentially length 0 in each dimension."""
     return all(abs.(trackedInterval.interval[1,:] - trackedInterval.interval[2,:]) .< macheps)
 end
-
-
-
-# def startFinalStep(self):
-#     """Prepares for the final step by saving the current interval and its transform list."""
-#     self.finalStep = True
-#     self.preFinalInterval = self.interval.copy()
-#     self.preFinalTransforms = self.transforms.copy()
 
 function startFinalStep(trackedInterval::TrackedInterval)
     """Prepares for the final step by saving the current interval and its transform list."""

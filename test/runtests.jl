@@ -69,7 +69,8 @@ end
 # test_isPoint()
 # test_getFinalInterval()
 # test_getFinalPoint()
-test_overlapsWith()
+# test_overlapsWith()
+test_startFinalStep()
 
 # ============================================ QuadraticCheck Tests ============================================
 
