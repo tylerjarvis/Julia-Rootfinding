@@ -85,10 +85,8 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
     b1 = subInterval[2,:] # all the lower bounds and upper bounds of the new interval, respectively
     a2 = trackedInterval.interval[1,:]
     b2 = trackedInterval.interval[2,:] # all the lower bounds and upper bounds of the original interval
-    # println(a1,b1,a2,b2)
     alpha1, beta1 = (b1-a1)/2, (b1+a1)/2
     alpha2, beta2 = (b2-a2)/2, (b2+a2)/2
-    # println(alpha1,beta1,alpha2,beta2) 
     push!(trackedInterval.transforms,hcat(alpha1, beta1))
     #Update the lower and upper bounds of the current interval
     for dim in 0:trackedInterval.ndim-1
