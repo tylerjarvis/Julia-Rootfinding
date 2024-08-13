@@ -947,10 +947,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if solverOptions.constant_check
         consts = [M[1] for M in Ms]
         err = [sum(abs.(M))-abs(c)+e for (M,e,c) in zip(Ms,errors,consts)]
-        print("Const check err:")
-        print(err)
-        print(consts)
-        if abs.(consts) > err
+        println("Const check err:")
+        println(err)
+        println(consts)
+        if any(abs.(consts) .> errs)
             println("Constant Check")
             return [], []
         end
