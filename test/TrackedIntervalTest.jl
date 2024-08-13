@@ -13,6 +13,7 @@ function test_all_TrackedInterval()
         test_overlapsWith()
         test_startFinalStep()
         test_getFinalInterval()
+        test_getFinalPoint()
 end
 
 function test_copyInterval()
@@ -191,7 +192,29 @@ function test_getFinalInterval()
 end
 
 function test_getFinalPoint()
-    @test_skip "Test not implemented yet"
+    @testset "getFinalPoint unit tests" begin
+        tInterval_1 = TrackedInterval([-1.;1;;-1;1;;-1;1;;-1;1])
+        tInterval_1.interval = [-.5;.11;;-9;5;;-3.;1;;-1.;1]
+        tInterval_1.finalInterval = [-1.;1;;-1;1;;-1;1;;-1;1]
+        push!(tInterval_1.transforms,[.01;.1;.624;1;;.009;.0123847;2.;0])
+        tInterval_1.finalStep = false
+        tInterval_1.preFinalTransforms = []
+        push!(tInterval_1.preFinalTransforms,[.1;.1;.624;1;;.009;.0123847;2.;9])
+        @test isapprox(getFinalPoint(tInterval_1),[0.,0,0,0])
+        tInterval_1.finalStep = true
+        @test isapprox(getFinalPoint(tInterval_1),[.009,.0123847,2,0])
+
+        tInterval_2 = TrackedInterval([-2.;1;;])
+        tInterval_2.interval = [-.9;-.89;;]
+        push!(tInterval_2.transforms,[.4;;4])
+        tInterval_2.finalStep = true
+        tInterval_2.preFinalTransforms = []
+        push!(tInterval_2.preFinalTransforms,[1.;;0.])
+        tInterval_2.finalInterval = [-5.;5;;]
+        @test isapprox(getFinalPoint(tInterval_2),[3.8])
+        tInterval_2.finalStep = false
+        @test isapprox(getFinalPoint(tInterval_2),[0.])
+    end
 end
 
 function test_contains()

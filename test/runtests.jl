@@ -68,6 +68,7 @@ test_solvePolyRecursive()
 # test_getIntervalForCombining()
 # test_isPoint()
 # test_getFinalInterval()
+# test_getFinalPoint()
 
 # ============================================ QuadraticCheck Tests ============================================
 

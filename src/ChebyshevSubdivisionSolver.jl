@@ -932,7 +932,6 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     #TODO: Check if trackedInterval.interval has width 0 in some dimension, in which case we should get rid of that dimension.
     #If the interval is a point, return it
     if isPoint(trackedInterval)
-        prinln("Point")
         return [], [trackedInterval]
     end
 
@@ -947,11 +946,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if solverOptions.constant_check
         consts = [M[1] for M in Ms]
         err = [sum(abs.(M))-abs(c)+e for (M,e,c) in zip(Ms,errors,consts)]
-        println("Const check err:")
-        println(err)
-        println(consts)
-        if any(abs.(consts) .> errs)
-            println("Constant Check")
+        if any(abs.(consts) .> err)
             return [], []
         end
     end
@@ -961,7 +956,6 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if (solverOptions.low_dim_quadratic_check && ndims(Ms[1]) <= 3) || solverOptions.all_dim_quadratic_check
         for i in eachindex(Ms)
             if quadraticCheck(Ms[i], errors[i])
-                println("QuadraticCheck")
                 return [], []
             end
         end
@@ -973,8 +967,6 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     trackedInterval = copyInterval(trackedInterval)
     errors = deepcopy(errors)
     trimMs(Ms, errors)
-    println("Ms:")
-    println(Ms)
     #Solve
     dim = ndims(Ms[1])
     changed = true
@@ -987,21 +979,13 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     while changed && zoomCount <= solverOptions.maxZoomCount
         #Zoom in until we stop changing or we hit machine epsilon
         Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
-        println("new Ms:")
-        println(Ms)
-        println(errors)
-        println(trackedInterval.interval)
-        println(changed)
-        println(should_stop)
 
         if trackedInterval.empty #Throw out the interval
-            println("Empty")
             return [], []
         end
         #Only count in towards the max is we don't cut the interval in half
         newSizes = dimSize(trackedInterval)
         if all(newSizes .>= (lastSizes ./ 2)) #Check all dims and use >= to account for a dimension being 0.
-            println("Didn't zoom")
             zoomCount += 1
         end
         lastSizes = newSizes
@@ -1093,10 +1077,17 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
-            println("3")
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultInterior, newInterior)
             append!(resultExterior, newExterior)
+        end
+        println("ResultInterior:")
+        for item in resultInterior
+            println(item.interval)
+        end
+        println("REsultExterior:")
+        for item in resultExterior
+            println(item.interval)
         end
         #Rerun the touching intervals
         idx1 = 0
@@ -1109,7 +1100,12 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         while idx1 < length(resultExterior)
             while idx2 < length(resultExterior)
+                println(idx1)
+                println(idx2)
                 if overlapsWith(resultExterior[idx1+1],resultExterior[idx2+1])
+                    println("Found overlap")
+                    println(idx1)
+                    println(idx2)
                     #Combine, throw at the back. Set reRun to true.
                     combinedInterval = copyInterval(originalInterval)
                     if combinedInterval.finalStep
@@ -1163,7 +1159,6 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #we started subdivision with.
                     lastTransform = getLastTransform(tempInterval)
                     tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
-                    println("4")
                     tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
                     #We can assume that nothing in these has to be recombined
                     append!(resultInterior,tempResultsInterior)

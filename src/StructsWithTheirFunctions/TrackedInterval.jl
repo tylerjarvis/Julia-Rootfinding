@@ -209,9 +209,11 @@ function getFinalPoint(trackedInterval::TrackedInterval)
         finalInterval = trackedInterval.topInterval'
         finalIntervalError = zeros(size(finalInterval))
         transformsToUse = trackedInterval.transforms
-        for (alpha, beta) in reverse(transformsToUse)
+        for transform in reverse(transformsToUse)
+            alpha = transform[:,1]
+            beta = transform[:,2]
             finalInterval, temp = twoProd(finalInterval, alpha)
-            finalIntervalError = alpha * finalIntervalError + temp
+            finalIntervalError = alpha .* finalIntervalError + temp
             finalInterval, temp = twoSum(finalInterval, beta)
             finalIntervalError += temp
         end
