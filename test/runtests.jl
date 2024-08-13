@@ -56,7 +56,8 @@ end
 # test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
-test_solvePolyRecursive()
+# test_solvePolyRecursive()
+# test_solveChebyshevSubdivision()
 
 # ============================================ TrackedInterval Tests ============================================
 
@@ -77,4 +78,4 @@ test_solvePolyRecursive()
 # test_get_fixed_vars()
 # test_quadraticCheckND()
 # test_quadraticCheck()
-test_solvePolyRecursive()
+test_getFinalInterval()

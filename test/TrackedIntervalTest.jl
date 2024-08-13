@@ -12,6 +12,7 @@ function test_all_TrackedInterval()
         test_contains()
         test_overlapsWith()
         test_startFinalStep()
+        test_getFinalInterval()
 end
 
 function test_copyInterval()
@@ -158,8 +159,35 @@ function test_isPoint()
 end
 
 function test_getFinalInterval()
-    @test_skip "Test not implemented yet"
-    
+    @testset "getFinalInterval unit tests" begin
+        tInterval_1 = TrackedInterval([-1.;1;;-1;1;;-1;1;;-1;1])
+        tInterval_1.interval = [-.5;.11;;-9;5;;-3.;1;;-1.;1]
+        push!(tInterval_1.transforms,[.01;.1;.624;1;;.009;.0123847;2.;0])
+        tInterval_1.finalStep = false
+        tInterval_1.preFinalTransforms = []
+        push!(tInterval_1.preFinalTransforms,[.1;.1;.624;1;;.009;.0123847;2.;0])
+        @test isapprox(getFinalInterval(tInterval_1),[-1.000000e-03;  1.900000e-02;;-8.761530e-02;  1.123847e-01;; 1.376000e+00;  2.624000e+00;;-1.000000e+00;  1.000000e+00])
+        @test isapprox(tInterval_1.finalAlpha, [0.01,  0.1,   0.624, 1.   ])
+        @test isapprox(tInterval_1.finalBeta, [0.009,     0.0123847, 2.,        0.       ])
+        tInterval_1.finalStep = true
+        @test isapprox(getFinalInterval(tInterval_1),[-0.091;      0.109;;-0.0876153;  0.1123847;;1.376;      2.624;;-1.;         1.       ])
+        @test isapprox(tInterval_1.finalAlpha,[0.1,   0.1,   0.624, 1.   ])
+        @test isapprox(tInterval_1.finalBeta,[0.009,     0.0123847, 2.,        0.       ])
+
+        tInterval_2 = TrackedInterval([-2.;1;;])
+        tInterval_2.interval = [-.9-.89;;]
+        push!(tInterval_2.transforms,[.4;;4])
+        tInterval_2.finalStep = true
+        tInterval_2.preFinalTransforms = []
+        push!(tInterval_2.preFinalTransforms,[1.;;0.])
+        @test isapprox(getFinalInterval(tInterval_2),[-2.;  1.;;])
+        @test isapprox(tInterval_2.finalAlpha, [1.5])
+        @test isapprox(tInterval_2.finalBeta, [-.5])
+        tInterval_2.finalStep = false
+        @test isapprox(getFinalInterval(tInterval_2),[3.2; 4.4;;])
+        @test isapprox(tInterval_2.finalAlpha, [.6])
+        @test isapprox(tInterval_2.finalBeta, [3.8])
+    end
 end
 
 function test_getFinalPoint()
