@@ -85,10 +85,8 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
     b1 = subInterval[2,:] # all the lower bounds and upper bounds of the new interval, respectively
     a2 = trackedInterval.interval[1,:]
     b2 = trackedInterval.interval[2,:] # all the lower bounds and upper bounds of the original interval
-    # println(a1,b1,a2,b2)
     alpha1, beta1 = (b1-a1)/2, (b1+a1)/2
     alpha2, beta2 = (b2-a2)/2, (b2+a2)/2
-    # println(alpha1,beta1,alpha2,beta2) 
     push!(trackedInterval.transforms,hcat(alpha1, beta1))
     #Update the lower and upper bounds of the current interval
     for dim in 0:trackedInterval.ndim-1
@@ -286,7 +284,11 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     currentInterval = getIntervalForCombining(trackedInterval)
     otherInterval = getIntervalForCombining(otherInterval)
     size_arr = size(currentInterval)
-    dim = size_arr[2]
+    if length(size_arr) == 1
+        dim = 1
+    else
+        dim = size_arr[2]
+    end
 
     arr1_1 = currentInterval[1,:]
     arr1_2 = currentInterval[2,:]
@@ -294,8 +296,7 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     arr2_2 = otherInterval[2,:]
 
     for i in 1:dim
-        # println(arr1_1[i],arr1_2[i],arr2_1[i],arr2_2[i])
-        if arr1_1[i] > arr1_2[i] || arr2_1[i] > arr2_2[i]
+        if ((arr1_1[i] > arr2_2[i]) || (arr2_1[i] > arr1_2[i]))
             return false
         end
     end

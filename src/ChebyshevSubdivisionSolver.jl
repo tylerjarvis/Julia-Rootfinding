@@ -994,6 +994,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     if should_stop
         println("Stopping")
         #Start the final step if the is in the options and we aren't already in it.
+        println(trackedInterval.finalStep)
+        println(solverOptions.useFinalStep)
         if trackedInterval.finalStep || !solverOptions.useFinalStep
             ##print(trackedInterval.interval)
             ##print("Root obtained with finalstep", trackedInterval.finalStep)
@@ -1077,6 +1079,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
+            println("3")
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultInterior, newInterior)
             append!(resultExterior, newExterior)
@@ -1112,8 +1115,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                         combinedInterval.interval = copyInterval(combinedInterval.preFinalInterval)
                         combinedInterval.transforms = copyInterval(combinedInterval.preFinalTransforms)
                     end
-                    newAs = minimum([getIntervalForCombining(resultExterior[idx1+1])[1,:], getIntervalForCombining(resultExterior[idx2+1])[1,:]])
-                    newBs = maximum([getIntervalForCombining(resultExterior[idx1+1])[2,:], getIntervalForCombining(resultExterior[idx2+1])[2,:]])
+                    newAs = minimum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1+1])[1,:], getIntervalForCombining(resultExterior[idx2+1])[1,:]]),dims=2)
+                    newBs = maximum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1+1])[2,:], getIntervalForCombining(resultExterior[idx2+1])[2,:]]),dims=2)
+                    println(getIntervalForCombining(resultExterior[idx1+1])[1,:])
+                    println(getIntervalForCombining(resultExterior[idx2+1])[1,:])
                     final1 = getFinalInterval(resultExterior[idx1+1])
                     final2 = getFinalInterval(resultExterior[idx2+1])
                     newAsFinal = minimum([final1[1,:], final2[1,:]])
@@ -1127,10 +1132,17 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     oldBsFinal[equalMask] = oldBsFinal[equalMask] .+ 1 #Avoid a divide by zero on the next line
                     currSubinterval = ((2 .*reduce(hcat,[newAsFinal, newBsFinal]) .- oldAsFinal .- oldBsFinal)./(oldBsFinal .- oldAsFinal))'
                     #If the interval is exactly -1 or 1, make sure that shows up as exact.
+                    println(currSubinterval)
                     currSubinterval[1,equalMask] .= -1
                     currSubinterval[2,equalMask] .= 1
-                    currSubinterval[1,:][oldAs .== newAs] .= -1
-                    currSubinterval[2,:][oldBs .== newBs] .= 1
+                    println("stuff")
+                    println(oldAs)
+                    println(newAs)
+                    println(oldBs)
+                    println(newBs)
+                    currSubinterval[1,:][reshape(oldAs.==newAs,length(oldAs))] .= -1
+                    currSubinterval[2,:][reshape(oldBs.==newBs,length(newBs))] .= 1
+                    println(currSubinterval)
                     #Update the current subinterval. Use the best transform we can get here, but use the exact combined
                     #interval for tracking
                     addTransform(combinedInterval,currSubinterval)
@@ -1138,6 +1150,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     combinedInterval.reRun = true
                     deleteat!(resultExterior,idx2+1)
                     deleteat!(resultExterior,idx1+1)
+                    println("CombinedInterval")
+                    println(combinedInterval.interval)
                     push!(resultExterior,combinedInterval)
                     idx2 = idx1 + 1
                 else
@@ -1151,7 +1165,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         newResultExterior = []
         for tempInterval in resultExterior
             if tempInterval.reRun
-                if tempInterval.interval == originalInterval.interval
+                println("here")
+                println(tempInterval.interval)
+                println(originalInterval.interval)
+                if isapprox(tempInterval.interval,originalInterval.interval)
                     push!(newResultExterior,tempInterval)
                 else
                     #Project the MS onto the interval, then recall the function.
@@ -1159,6 +1176,11 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #we started subdivision with.
                     lastTransform = getLastTransform(tempInterval)
                     tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
+                    println("4")
+                    println(tempMs)
+                    println(tempInterval.interval)
+                    println(tempErrors)
+                    println(solverOptions.level)
                     tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
                     #We can assume that nothing in these has to be recombined
                     append!(resultInterior,tempResultsInterior)

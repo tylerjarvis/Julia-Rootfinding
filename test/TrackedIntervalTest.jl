@@ -14,6 +14,7 @@ function test_all_TrackedInterval()
         test_startFinalStep()
         test_getFinalInterval()
         test_getFinalPoint()
+        test_overlapsWith()
 end
 
 function test_copyInterval()
@@ -222,7 +223,23 @@ function test_contains()
 end
 
 function test_overlapsWith()
-    @test_skip "Test not implemented yet"
+    @testset "overlapsWith unit tests" begin
+        tInterval_1a = TrackedInterval([-1.;1;;-3;-2])
+        tInterval_1b = TrackedInterval([-1.;1;;-1;1])
+        @test overlapsWith(tInterval_1a,tInterval_1b) == false
+
+        tInterval_2a = TrackedInterval([-3.;-2;;-1;1])
+        tInterval_2b = TrackedInterval([-1.;1;;-1;1])
+        @test overlapsWith(tInterval_2a,tInterval_2b) == false
+
+        tInterval_3a = TrackedInterval([-4.;4;;-1;1;;-4;4])
+        tInterval_3b = TrackedInterval([-1.;1;;-5;5;;-1;1])
+        @test overlapsWith(tInterval_3a,tInterval_3b) == true
+        
+        tInterval_4a = TrackedInterval([-.54;-.54;;-.78;-.78])
+        tInterval_4b = TrackedInterval([-.83;-.83;;.13;.13])
+        @test overlapsWith(tInterval_4a,tInterval_4b) == false
+    end
 end
 
 function test_startFinalStep()
