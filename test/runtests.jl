@@ -70,6 +70,7 @@ test_solvePolyRecursive()
 # test_getFinalInterval()
 # test_getFinalPoint()
 # test_overlapsWith()
+# test_startFinalStep()
 
 # ============================================ QuadraticCheck Tests ============================================
 

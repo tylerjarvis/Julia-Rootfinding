@@ -15,6 +15,7 @@ function test_all_TrackedInterval()
         test_getFinalInterval()
         test_getFinalPoint()
         test_overlapsWith()
+        test_startFinalStep()
 end
 
 function test_copyInterval()
@@ -243,5 +244,13 @@ function test_overlapsWith()
 end
 
 function test_startFinalStep()
-    @test_skip "Test not implemented yet"
+    @testset "startFinalStep unit tests" begin
+        tInterval_1 = TrackedInterval([1;2;;-1;1])
+        @test tInterval_1.finalStep == false
+        tInterval_1.transforms = [3;1;2;1;;4;1;2;3]
+        startFinalStep(tInterval_1)
+        @test tInterval_1.finalStep == true
+        @test isapprox(tInterval_1.preFinalInterval,[1;2;;-1;1])
+        @test isapprox(tInterval_1.preFinalTransforms,[3;1;2;1;;4;1;2;3])
+    end
 end
