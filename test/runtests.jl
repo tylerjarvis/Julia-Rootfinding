@@ -56,7 +56,7 @@ end
 # test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
-# test_solvePolyRecursive()
+test_solvePolyRecursive()
 # test_solveChebyshevSubdivision()
 
 # ============================================ TrackedInterval Tests ============================================
@@ -70,7 +70,7 @@ end
 # test_getFinalInterval()
 # test_getFinalPoint()
 # test_overlapsWith()
-test_startFinalStep()
+# test_startFinalStep()
 
 # ============================================ QuadraticCheck Tests ============================================
 
