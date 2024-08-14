@@ -1149,13 +1149,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     end
 end
 
-function solveChebyshevSubdivision(Ms::Vector{Array}, errors::Vector{Float64};
-    verbose::Bool = false, 
-    returnBoundingBoxes::Bool = false,
-    exact::Bool = false,
-    constant_check::Bool = true,
-    low_dim_quadratic_check::Bool = true,
-    all_dim_quadratic_check::Bool = false)
+function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBoxes = false, exact = false, constant_check = true, low_dim_quadratic_check = true, all_dim_quadratic_check = false)
 
     """
     Initiates shrinking and subdivision recursion and returns the roots and bounding boxes.
@@ -1197,7 +1191,7 @@ function solveChebyshevSubdivision(Ms::Vector{Array}, errors::Vector{Float64};
 
     # Solve
     ndim = length(Ms)
-    originalInterval = TrackedInterval(hcat(fill(-1,ndim), fill(1,ndim))')
+    originalInterval = TrackedInterval(hcat(fill(-1.,ndim), fill(1.,ndim))')
     solverOptions = SolverOptions()
     solverOptions.verbose = verbose
     solverOptions.exact = exact

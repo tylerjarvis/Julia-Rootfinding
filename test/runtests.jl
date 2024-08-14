@@ -57,7 +57,7 @@ end
 # test_isExteriorInterval()
 # test_trimMs()
 # test_solvePolyRecursive()
-# test_solveChebyshevSubdivision()
+test_solveChebyshevSubdivision()
 
 # ============================================ TrackedInterval Tests ============================================
 
