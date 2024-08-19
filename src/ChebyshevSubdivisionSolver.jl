@@ -1,3 +1,6 @@
+include("QuadraticCheck.jl")
+include("StructsWithTheirFunctions/SolverOptions.jl")
+include("StructsWithTheirFunctions/TrackedInterval.jl")
 using LinearAlgebra
 using Logging
 
