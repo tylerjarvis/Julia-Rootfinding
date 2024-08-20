@@ -115,7 +115,6 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
     #If the bounding box is the entire interval, subdivide it!
     usingSubdivision = all(b-a .> minBoundingIntervalSize)
     if length(boundingBoxes) == 1 && all(finalDimSize(boundingBoxes[1]) .== 2) && usingSubdivision
-        println("here")
         #Subdivide the interval and resolve to get better resolution across different parts of the interval
         yroots, boundingBoxes = [], []
         for val in Iterators.product(Iterators.repeated(([false,true]), length(a))...)
