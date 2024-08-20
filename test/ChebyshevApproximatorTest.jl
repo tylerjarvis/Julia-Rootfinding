@@ -137,10 +137,10 @@ function test_checkConstantInDimension()
         # Functions with bounds for testing
         f = (x_1, x_2, x_3, x_4) -> x_2 + 0.00000001 * x_3
         bf = [5; 5; 1.1; 5]
-        af = [-5; -5; 1; -5]
+        af = [-5.; -5; 1; -5]
         g = (x_1, x_2, x_3, x_4, x_5) -> cos(x_1) + cos(x_2 / 80) + x_4 + sin(x_5)
         bg = [0.5; 0.5; 5; 0.5; 5]
-        ag = [0; 0; -5; 0; -5]
+        ag = [0.; 0; -5; 0; -5]
         # Tests with low tolerance
         tol = 1e-15
         @test checkConstantInDimension(f, af, bf, 0, tol) == true
@@ -421,10 +421,7 @@ end
 
 function check100points(func,a,b)
     points = createpoints(-ones(length(a)),ones(length(b)))
-    # println(points)
     coeffs, error = chebApproximate(func,a,b)
-    # println("coeffs: ")
-    # println(coeffs)
 
     actual_vals = mapslices(x->func(transformPoints(x,a,b)...),points,dims=1)
     approx_vals = mapslices(x->cheb_solve(x,coeffs),points,dims=1)
@@ -433,33 +430,18 @@ function check100points(func,a,b)
         @test abs(actual_vals[i] - approx_vals[i]) < 1e-10
     end
     @test error < 1e-10
-    println(error)
 end
 
 function createpoints(a,b)
     vectors_a_to_b_accross_dimension = [[a[d]+(b[d]-a[d])i/98 for i in 0:98] for d in eachindex(a)]
-    # println(vectors_a_to_b_accross_dimension)
     meshgrids = createMeshgrid(vectors_a_to_b_accross_dimension)
-    # if length(a) == 1
-    #     meshgrids = [meshgrids]
-    # end
-    # println(meshgrids)
     return reshape(vcat(map(x -> reshape(x,(1,length(x))),meshgrids[1])...),(length(a),:))
-    # println(cheb_pts)
 end
 
 function cheb_solve(point,coeffs)
     dimensions = length(point)
-    # println(dimensions)
-    # if dimensions == 1
-    #     return clenshaw_algorithm(point...,coeffs)
-    # end
-    # println("coeffs: ")
-    # println(coeffs)
     for i in reverse(1:dimensions)
         coeffs = mapslices(x->clenshaw_algorithm(point[i],x),coeffs,dims=i)
-        # println("coeffs: ")
-        # println(coeffs)
     end
 
     return coeffs[1]
@@ -467,10 +449,6 @@ function cheb_solve(point,coeffs)
 end
 
 function clenshaw_algorithm(val,a)
-    # println("value: ")
-    # println(val)
-    # println("a: ")
-    # println(a)
     u = zeros(length(a)+1)
     u[end-1] = a[end]
     for k in reverse(1:length(a)-1)
