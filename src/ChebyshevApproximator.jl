@@ -554,16 +554,18 @@ function chebApproximate(f, a, b, relApproxTol=1e-10)
 	b = (b isa Real) ? [b] : b
 
 	if length(a) ≠ length(b)
-		throw(ValueError("Invalid input: $(length(a)) lower bounds were given but $(length(b)) upper bounds were given"))
+		throw(ArgumentError("Invalid input: $(length(a)) lower bounds were given but $(length(b)) upper bounds were given"))
 	end
     
 	#TODO: Figure out if this code runs through the whole array first or not .< may be slower than checking each element individually
 	if any(b .< a)
-		throw(ValueError("Invalid input: at least one lower bound is greater than the corresponding upper bound."))
+		throw(ArgumentError("Invalid input: at least one lower bound is greater than the corresponding upper bound."))
 	end
 
-    if (methods(f)[1].nargs - 1 ≠ length(a))
-        throw(ValueError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
+    try
+        f(a...)
+    catch
+        throw(ArgumentError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
     end
     # Generate and return the approximation
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
