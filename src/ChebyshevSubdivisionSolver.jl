@@ -723,6 +723,10 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     end
 end
 
+function getSubdivisionDim(shapes,dim)
+    return Int.(((argmax(shapes)-1)%dim) .* ones(dim)')
+end
+
 function getInverseOrder(order)
     """Gets a particular order of matrices needed in getSubdivisionIntervals (helper function).
 
@@ -757,7 +761,7 @@ function getInverseOrder(order)
     return Tuple(Int.(invOrder))
 end
 
-function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
+function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimension=false)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
 
     Parameters
@@ -782,7 +786,13 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
     allIntervals : list of TrackedIntervals
         The intervals from the subdivision (corresponding one to one with the matrices in allMs)
     """
-    subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+    
+    if oneDimension
+        subdivisionDims = getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
+    else
+        subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+    end
+
     dimSet = Set(reshape(subdivisionDims,(1,length(subdivisionDims))))
     dimSet = sort!(collect(dimSet))
     if length(dimSet) != size(subdivisionDims)[end-1]
@@ -1012,7 +1022,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
 
     elseif trackedInterval.finalStep
         trackedInterval.canThrowOutFinalStep = true
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         resultsAll = []
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
@@ -1065,7 +1075,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         resultInterior, resultExterior = [], []
         #Get the new intervals and polynomials
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
