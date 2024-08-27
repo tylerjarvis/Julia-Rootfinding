@@ -176,11 +176,12 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
             push!(finalBoxes,transformPoints(box.finalInterval',a,b)')
             #Get the roots from this box
             if length(box.possibleDuplicateRoots) > 0
-                push!(finalRoots,transformPoints(box.possibleDuplicateRoots,a,b))
+                for dup in box.possibleDuplicateRoots
+                    push!(finalRoots,transformPoints(dup,a,b))
+                end
             else
                 push!(finalRoots,transformPoints(getFinalPoint(box),a,b))
             end
-            # print(finalRoots)
         end
     end
     # Find and return the roots (and, optionally, the bounding boxes)

@@ -14,7 +14,7 @@ function twoSum(a,b)
 end
 
 # TODO: import from a library instead
-function splitt(a)
+function homebrewSplit(a)
     """Returns x,y such that a = x+y exactly and a = x in floating point."""
     c = (2^27 + 1) * a
     x = c-(c-a)
@@ -26,8 +26,8 @@ end
 function twoProd(a,b)
     """Returns x,y such that a*b=x+y exactly and a*b=x in floating point."""
     x = a .* b
-    a1,a2 = splitt(a)
-    b1,b2 = splitt(b)
+    a1,a2 = homebrewSplit(a)
+    b1,b2 = homebrewSplit(b)
     y=a2 .*b2-(((x-a1 .*b1)-a2 .*b1)-a1 .*b2)
     return x,y
 end
@@ -36,7 +36,7 @@ end
 function TwoProdWithSplit(a,b,a1,a2)
     """Returns x,y such that a*b = x+y exactly and a*b = x in floating point but with a already split."""
     x = a*b
-    b1,b2 = splitt(b)
+    b1,b2 = homebrewSplit(b)
     y=a2*b2-(((x-a1*b1)-a2*b1)-a1*b2)
     return x,y
 end 

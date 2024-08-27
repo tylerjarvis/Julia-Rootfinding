@@ -5,7 +5,7 @@ using Test
 Pkg.activate(".") # MAKE SURE YOU ARE IN THE /Julia-Rootfinding folder when you run this script in the terminal
 Pkg.instantiate()
 
-print("Testing...")
+println("Testing...")
 include("ChebyshevApproximatorTest.jl")
 include("ChebyshevSubdivisionSolverTest.jl")
 include("TrackedIntervalTest.jl")

@@ -520,11 +520,11 @@ function getChebyshevDegrees(f, a, b, relApproxTol, absApproxTol = 0)
     return Int.(chebDegrees), epsilons, rhos
 end
 
-function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{AbstractArray, Real}, relApproxTol=1e-10)
+function chebApproximate(f, a, b, relApproxTol=1e-10)
     # TODO:implement a way for the user to input Chebyshev coefficients they may already have, (MultiCheb/MultiPower stuff in python implementation)
     """
 
-    Parameters (Note that ::Function and  ::Union{AbstractArray, Real} in the header do the type checking for us. The error will no longer be thrown in our code, but in the built-in stuff)
+    Parameters
     ----------
     f : function
         The function to be approximated. NOTE: Valid input is restricted to callable Python functions
@@ -554,16 +554,18 @@ function chebApproximate(f::Function, a::Union{AbstractArray, Real}, b::Union{Ab
 	b = (b isa Real) ? [b] : b
 
 	if length(a) ≠ length(b)
-		throw(ValueError("Invalid input: $(length(a)) lower bounds were given but $(length(b)) upper bounds were given"))
+		throw(ArgumentError("Invalid input: $(length(a)) lower bounds were given but $(length(b)) upper bounds were given"))
 	end
     
 	#TODO: Figure out if this code runs through the whole array first or not .< may be slower than checking each element individually
 	if any(b .< a)
-		throw(ValueError("Invalid input: at least one lower bound is greater than the corresponding upper bound."))
+		throw(ArgumentError("Invalid input: at least one lower bound is greater than the corresponding upper bound."))
 	end
 
-    if (methods(f)[1].nargs - 1 ≠ length(a))
-        throw(ValueError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
+    try
+        f(a...)
+    catch
+        throw(ArgumentError("Invalid input: length of the upper/lower bound lists does not match the dimension (no. inputs) of the function"))
     end
     # Generate and return the approximation
     degs, epsilons, rhos = getChebyshevDegrees(f, a, b, relApproxTol)
