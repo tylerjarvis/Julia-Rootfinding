@@ -286,17 +286,17 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         end
 
         # All middle entries
-        for i in 2:maxRow-2
-            arr3[i+1] = -arr1[i+1] + alpha.*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
-            transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
+        for i in 3:maxRow-1
+            arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
         end
 
         # The second to last entry
-        i = maxRow -1
-        arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha.*(arr2[i]) + 2*beta.*arr2[i+1]
-        transformedCoeffs[idxs...,i+1] += thisCoeff .* arr3[i+1]
+        i = maxRow
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
+        transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
         #The last entry
-        finalVal = alpha*arr2[i+1]
+        finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
@@ -723,9 +723,13 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     end
 end
 
-function getSubdivisionDim(shapes,dim)
+function getSubdivisionDim(shapes,dim) # largest degree subdivide
     return Int.(((argmax(shapes)-1)%dim) .* ones(dim)')
 end
+
+# function getSubdivisionDim(interval) # largest size subdivide
+#     (argmax(interval[1,:] - interval[2,:]) - 1) .* ones(Int(length(interval)/2))'
+# end
 
 function getInverseOrder(order)
     """Gets a particular order of matrices needed in getSubdivisionIntervals (helper function).
@@ -788,6 +792,7 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     """
     
     if oneDimension
+        # subdivisionDims = getSubdivisionDim(trackedInterval.interval)
         subdivisionDims = getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
     else
         subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
