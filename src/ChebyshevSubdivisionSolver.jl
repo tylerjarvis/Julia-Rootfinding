@@ -185,8 +185,8 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     transformedCoeffs[1] += beta * coeffs[2] # arr2[0] * coeffs[1] (matrix muliplication)
     transformedCoeffs[2] += alpha * coeffs[2] # arr2[1] * coeffs[1] (matrix multiplication)
     maxRow = 2
-    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
-        thisCoeff = coeffs[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+    for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
+        thisCoeff = coeffs[col] # the row of coeffs corresponding to the column col of C (for matrix mult)
         # The first entry
         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta*arr2[1]
         transformedCoeffs[1] += thisCoeff * arr3[1]
@@ -197,17 +197,17 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         end
 
         # All middle entries
-        for i in 2:maxRow-2
-            arr3[i+1] = -arr1[i+1] + alpha*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
-            transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        for i in 3:maxRow-1
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            transformedCoeffs[i] += thisCoeff * arr3[i]
         end
 
         # The second to last entry
-        i = maxRow -1
-        arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha*(arr2[i]) + 2*beta*arr2[i+1]
-        transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        i = maxRow
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha*(arr2[i-1]) + 2*beta*arr2[i]
+        transformedCoeffs[i] += thisCoeff * arr3[i]
         #The last entry
-        finalVal = alpha*arr2[i+1]
+        finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
@@ -814,6 +814,14 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     end
 end
 
+function getSubdivisionDim(shapes,dim) # largest degree subdivide
+    return Int.(((argmax(shapes)-1)%dim) .* ones(dim)')
+end
+
+# function getSubdivisionDim(interval) # largest size subdivide
+#     (argmax(interval[1,:] - interval[2,:]) - 1) .* ones(Int(length(interval)/2))'
+# end
+
 function getInverseOrder(order)
     """Gets a particular order of matrices needed in getSubdivisionIntervals (helper function).
 
@@ -848,7 +856,7 @@ function getInverseOrder(order)
     return Tuple(Int.(invOrder))
 end
 
-function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
+function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimension=false)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
 
     Parameters
@@ -873,7 +881,14 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level)
     allIntervals : list of TrackedIntervals
         The intervals from the subdivision (corresponding one to one with the matrices in allMs)
     """
-    subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+    
+    if oneDimension
+        # subdivisionDims = getSubdivisionDim(trackedInterval.interval)
+        subdivisionDims = getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
+    else
+        subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+    end
+
     dimSet = Set(reshape(subdivisionDims,(1,length(subdivisionDims))))
     dimSet = sort!(collect(dimSet))
     if length(dimSet) != size(subdivisionDims)[end-1]
@@ -1103,7 +1118,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
 
     elseif trackedInterval.finalStep
         trackedInterval.canThrowOutFinalStep = true
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         resultsAll = []
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
@@ -1156,7 +1171,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         resultInterior, resultExterior = [], []
         #Get the new intervals and polynomials
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
             newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
