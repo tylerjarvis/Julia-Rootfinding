@@ -603,7 +603,7 @@ function test_transformChebInPlaceND()
     @testset "transformChebInPlaceND unit tests" begin
         alpha_1 = 0.8043138619259216
         beta_1 = 0.19568613807407842
-        dim_1 = 0
+        dim_1 = 1
         coeffs_1 = [1.6668764854819471; 0.502737971117991; 0.003441591526151544;;0.5575078290711436; 0; 0;; 0.01239107183457752; 0.0; 0.0;;;
                             -1.20687653838567; 0; 0;; 0; 0; 0;;0.0; 0.0; 0.0;;;
                             -0.018876295666785736; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -621,7 +621,7 @@ function test_transformChebInPlaceND()
 
         alpha_2 = 0.561531793052032
         beta_2 = -0.43846820694796795
-        dim_2 = 0
+        dim_2 = 1
         coeffs_2 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -639,7 +639,7 @@ function test_transformChebInPlaceND()
         
         alpha_3 = 0.561531793052032
         beta_3 = 0
-        dim_3 = 0
+        dim_3 = 1
         coeffs_3 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -657,7 +657,7 @@ function test_transformChebInPlaceND()
         
         alpha_4 = 0
         beta_4 = -0.43846820694796795
-        dim_4 = 0
+        dim_4 = 1
         coeffs_4 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -672,7 +672,7 @@ function test_transformChebInPlaceND()
         
         alpha_5 = 0
         beta_5 = 0
-        dim_5 = 0
+        dim_5 = 1
         coeffs_5 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -688,7 +688,7 @@ function test_transformChebInPlaceND()
         alpha_6 = 1.000000082740371e-10
         beta_6 = -0.7266187050359711
         coeffs_6 = [10.1; 13.9]
-        dim_6 = 0
+        dim_6 = 1
         expected_transformed_coeffs_6 = [0.00000000000000000000; 0.00000000139000011501]
         transformed_coeffs_6 = TransformChebInPlaceND(coeffs_6,dim_6,alpha_6,beta_6,false)
         @test isapprox(expected_transformed_coeffs_6,transformed_coeffs_6)
@@ -696,14 +696,14 @@ function test_transformChebInPlaceND()
         alpha_7 = 1
         beta_7 = 0
         coeffs_7 = [10.1; 13.9]
-        dim_7 = 0
+        dim_7 = 1
         expected_transformed_coeffs_7 = [10.1; 13.9]
         transformed_coeffs_7 = TransformChebInPlaceND(coeffs_7,dim_7,alpha_7,beta_7,false)
         @test isapprox(expected_transformed_coeffs_7,transformed_coeffs_7)
 
         alpha_8 = 0.561531793052032
         beta_8 = -0.43846820694796795
-        dim_8 = 1
+        dim_8 = 2
         coeffs_8 = [2.071105809166741; -1.20687653838567; -0.018876295666785736;;0.5575078290711436; 0; 0;;0.01239107183457752; 0.0; 0.0;;;
                         0.9144403736144754; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0;;;
                         0.010914670337842268; 0; 0;;0; 0; 0;;0.0; 0.0; 0.0]
@@ -721,7 +721,7 @@ function test_transformChebInPlaceND()
 
         alpha_9 = 1.2837492384
         beta_9 = .7234444321123415
-        dim_9 = 4
+        dim_9 = 5
         coeffs_9 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))
         transformed_coeffs_9 = TransformChebInPlaceND(coeffs_9,dim_9,alpha_9,beta_9,false)
         @test isapprox(transformed_coeffs_9[3,4,3,4,2,4], 2435.0950647445447)
@@ -734,7 +734,7 @@ function test_transformChebInPlaceND()
 
         alpha_10 = 1.2837492384
         beta_10 = .7234444321123415
-        dim_10 = 2
+        dim_10 = 3
         coeffs_10 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))   
         transformed_coeffs_10 = TransformChebInPlaceND(coeffs_10,dim_10,alpha_10,beta_10,false)
         @test isapprox(2435.09506474454474300728,transformed_coeffs_10[3,4,3,4,2,4])
@@ -750,7 +750,7 @@ function test_transformChebInPlaceND()
 
         alpha_11 = 3.456654
         beta_11 = .451324
-        dim_11 = 2
+        dim_11 = 3
         coeffs_11 = reshape(collect(0:3*2*1*2-1),(2,1,2,3))
         expected_transformed_coeffs_11 = coeffs_11
         transformed_coeffs_11 = TransformChebInPlaceND(coeffs_11,dim_11,alpha_11,beta_11,false)
@@ -766,8 +766,8 @@ function test_getTransformationError()
                 0; -1.63828770; 0; -1.63828770; -.00611697632; -.00852711940;;
                 0; 0; 0; 0; 0; 0;;
                 0; 0;  0;  0.0; 0.0; 0.0]
-        dim_1a = 0
-        dim_1b = 1
+        dim_1a = 1
+        dim_1b = 2
         expected_error_1a = 0.00000000000000714500
         expected_error_1b = 0.00000000000000714500
         @test isapprox(expected_error_1a,getTransformationError(M_1,dim_1a),atol = 2^-52)
@@ -779,20 +779,20 @@ function test_getTransformationError()
                 1.42079568; -1.63828770; -1.60737661; -1.63828770; -.00611697632; -.00852711940;;
                 .901029633; -.240222558; -1.16359475; -1.12860484; -.0167700634; -1.01490072;;
                 .310991071; -1.58265345;  .346049159;  0.0; 0.0; 0.0]
-        dim_2a = 0
-        dim_2b = 1
+        dim_2a = 1
+        dim_2b = 2
         expected_error_2a = 0.00000000000002703507
         expected_error_2b = 0.00000000000002703507
         @test isapprox(expected_error_2a,getTransformationError(M_2,dim_2a),atol = 2^-52)
         @test isapprox(expected_error_2b,getTransformationError(M_2,dim_2b),atol = 2^-52)
 
         M_3 = reshape(collect(0:4*2*4*3*4*3-1),(3,4,3,4,2,4))
-        dim_3a = 0
-        dim_3b = 1
-        dim_3c = 2
-        dim_3d = 3
-        dim_3e = 4
-        dim_3f = 5
+        dim_3a = 1
+        dim_3b = 2
+        dim_3c = 3
+        dim_3d = 4
+        dim_3e = 5
+        dim_3f = 6
         expected_error_3a = 0.00000000058884097598
         expected_error_3b = 0.00000000029442048799
         expected_error_3c = 0.00000000058884097598
@@ -807,14 +807,14 @@ function test_getTransformationError()
         @test isapprox(expected_error_3f,getTransformationError(M_3,dim_3f))
 
         M_4 = [10.1; 13.9]
-        dim_4 = 0
+        dim_4 = 1
         expected_error_4 = 0.00000000000001065814
         @test isapprox(expected_error_4,getTransformationError(M_4,dim_4),atol = 2^-52)
 
         M_5 = reshape(collect(0:3*2*1*2-1),(2,1,2,3))
-        dim_5a = 0
-        dim_5b = 1
-        dim_5c = 2
+        dim_5a = 1
+        dim_5b = 2
+        dim_5c = 3
         expected_error_5a = 0.00000000000004396483
         expected_error_5b = 0.00000000000002930989
         expected_error_5c = 0.00000000000001465494
@@ -1190,9 +1190,9 @@ function test_getSubdivisionDims()
                                              -1.;          1.        ])
         Ms_1 = [reshape(collect(0:4*2*3-1),(3,2,4)),reshape(collect(0:5*6*2-1),(2,6,5)),reshape(collect(0:3*3*3-1),(3,3,3))]
         level_1 = 1
-        expected_allDims_1 = [0; 2; 1;;
-                                        1; 0; 2;;
-                                        2; 1; 0]
+        expected_allDims_1 = [1; 3; 2;;
+                                        2; 1; 3;;
+                                        3; 2; 1]
         @test isapprox(expected_allDims_1, getSubdivisionDims(Ms_1,trackedInterval_1,level_1))
 
         trackedInterval_2 = TrackedInterval([ 0.1110769;   0.11932933;;
@@ -1200,9 +1200,9 @@ function test_getSubdivisionDims()
                                                         -0.87726429; -0.85851422])
         Ms_2 = [reshape(collect(0:4*2*3-1),(3,2,4)),reshape(collect(0:5*6*2-1),(2,6,5)),reshape(collect(0:3*3*3-1),(3,3,3))]
         level_2 = 7
-        expected_allDims_2 = [0; 2; 1;;
-                                        1; 0; 2;;
-                                        2; 1; 0]
+        expected_allDims_2 = [1; 3; 2;;
+                                        2; 1; 3;;
+                                        3; 2; 1]
         @test isapprox(expected_allDims_2, getSubdivisionDims(Ms_2,trackedInterval_2,level_2))
 
         trackedInterval_3 = TrackedInterval([ 0.08600977;  0.1526489 ;;
@@ -1210,9 +1210,9 @@ function test_getSubdivisionDims()
                                                         -0.95417107; -0.80126711])
         Ms_3 = [reshape(collect(0:4*2*3-1),(3,2,4)),reshape(collect(0:5*6*2-1),(2,6,5)),reshape(collect(0:3*3*3-1),(3,3,3))]
         level_3 = 4
-        expected_allDims_3 = [0; 2;;
-                                        0; 2;;
-                                        2; 0]
+        expected_allDims_3 = [1; 3;;
+                                        1; 3;;
+                                        3; 1]
         @test isapprox(expected_allDims_3, getSubdivisionDims(Ms_3,trackedInterval_3,level_3))
 
         trackedInterval_3a = TrackedInterval([ 0.08600977;  0.1526489 ;;
@@ -1220,9 +1220,9 @@ function test_getSubdivisionDims()
                                                         -0.95417107; -0.80126711])
         Ms_3a = [reshape(collect(0:4*2*3-1),(3,2,4)),reshape(collect(0:5*6*2-1),(2,6,5)),reshape(collect(0:3*3*3-1),(3,3,3))]
         level_3a = 4
-        expected_allDims_3a = [0; 2; 1;;
-                                        1; 0; 2;;
-                                        2; 1; 0]
+        expected_allDims_3a = [1; 3; 2;;
+                                        2; 1; 3;;
+                                        3; 2; 1]
         @test isapprox(expected_allDims_3a, getSubdivisionDims(Ms_3a,trackedInterval_3a,level_3a))
 
         trackedInterval_3b = TrackedInterval([ 0.08600977;  0.1526489 ;;
@@ -1230,9 +1230,9 @@ function test_getSubdivisionDims()
                                                             -0.95417107; -0.80126711])
         Ms_3b = [reshape(collect(0:4*2*3-1),(3,2,4)),reshape(collect(0:5*6*2-1),(2,6,5)),reshape(collect(0:3*3*3-1),(3,3,3))]
         level_3b = 6
-        expected_allDims_3b = [0; 2;;
-                                0; 2;;
-                                2; 0]
+        expected_allDims_3b = [1; 3;;
+                                1; 3;;
+                                3; 1]
         @test isapprox(expected_allDims_3b, getSubdivisionDims(Ms_3b,trackedInterval_3b,level_3b))
 
         trackedInterval_4 = TrackedInterval([1.;  1.])
@@ -1245,7 +1245,7 @@ function test_getSubdivisionDims()
                             1.26081368e-11;  5.08808273e-12; -2.43249865e-13; -9.04276654e-14;
                             4.28823643e-15;  1.47104551e-15]]
         level_4 = 1
-        expected_allDims_4 = [0;;]
+        expected_allDims_4 = [1;;]
         @test isapprox(expected_allDims_4, getSubdivisionDims(Ms_4,trackedInterval_4,level_4))
 
         trackedInterval_5 = TrackedInterval([-1.;         -0.48027223])
@@ -1255,7 +1255,7 @@ function test_getSubdivisionDims()
                             2.29566748e-09;  1.50932004e-11; -1.03726751e-11; -5.90607284e-14;
                             3.54786084e-14;  1.76079511e-16; -9.46841952e-17]]
         level_5 = 3
-        expected_allDims_5 = [0;;]
+        expected_allDims_5 = [1;;]
         @test isapprox(expected_allDims_5, getSubdivisionDims(Ms_5,trackedInterval_5,level_5))
 
         trackedInterval_6 = TrackedInterval([-1.;         1.;;
@@ -1265,11 +1265,11 @@ function test_getSubdivisionDims()
                                                         -0.2184735;  1.])
         Ms_6 = [reshape(collect(0:3*3*3*2*2-1),(2,2, 3, 3,3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*2-1),(2, 3, 3, 3, 3)),reshape(collect(0:3*3*3*2*3-1),(3, 2, 3, 3, 3))]
         level_6 = 1
-        expected_allDims_6 = [2; 1; 0; 4; 3;;
-                                        4; 3; 2; 1; 0;;
-                                        4; 3; 2; 1; 0;;
-                                        3; 2; 1; 0; 4;;
-                                        4; 2; 1; 0; 3]
+        expected_allDims_6 = [3; 2; 1; 5; 4;;
+                                        5; 4; 3; 2; 1;;
+                                        5; 4; 3; 2; 1;;
+                                        4; 3; 2; 1; 5;;
+                                        5; 3; 2; 1; 4]
         @test isapprox(expected_allDims_6, getSubdivisionDims(Ms_6,trackedInterval_6,level_6))
 
         trackedInterval_7 = TrackedInterval([ 0.03945555;  1.;;
@@ -1279,11 +1279,11 @@ function test_getSubdivisionDims()
                                                 0.41480102;  1.])
         Ms_7 = [reshape(collect(0:3*3*3*2*2-1),(2,2, 3, 3,3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*2-1),(2, 3, 3, 3, 3)),reshape(collect(0:3*3*3*2*3-1),(3, 2, 3, 3, 3))]
         level_7 = 2
-        expected_allDims_7 = [2; 1; 0; 4; 3;;
-                                        4; 3; 2; 1; 0;;
-                                        4; 3; 2; 1; 0;;
-                                        3; 2; 1; 0; 4;;
-                                        4; 2; 1; 0; 3]
+        expected_allDims_7 = [3; 2; 1; 5; 4;;
+                                        5; 4; 3; 2; 1;;
+                                        5; 4; 3; 2; 1;;
+                                        4; 3; 2; 1; 5;;
+                                        5; 3; 2; 1; 4]
         @test isapprox(expected_allDims_7, getSubdivisionDims(Ms_7,trackedInterval_7,level_7))
 
         trackedInterval_8 = TrackedInterval([ 0.03945555;  1.        ;;
@@ -1293,11 +1293,11 @@ function test_getSubdivisionDims()
                                  0.41480102;  1.        ])
         Ms_8 = [reshape(collect(0:3*3*3*2*2-1),(2,2, 3, 3,3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*2-1),(2, 3, 3, 3, 3)),reshape(collect(0:3*3*3*2*3-1),(3, 2, 3, 3, 3))]
         level_8 = 6
-        expected_allDims_8 = [2; 1; 0; 4; 3;;
-                                        4; 3; 2; 1; 0;;
-                                        4; 3; 2; 1; 0;;
-                                        3; 2; 1; 0; 4;;
-                                        4; 2; 1; 0; 3]
+        expected_allDims_8 = [3; 2; 1; 5; 4;;
+                                        5; 4; 3; 2; 1;;
+                                        5; 4; 3; 2; 1;;
+                                        4; 3; 2; 1; 5;;
+                                        5; 3; 2; 1; 4]
         @test isapprox(expected_allDims_8, getSubdivisionDims(Ms_8,trackedInterval_8,level_8))
 
         trackedInterval_9 = TrackedInterval([-1.;  1.])
@@ -1310,7 +1310,7 @@ function test_getSubdivisionDims()
                             1.26081368e-11;  5.08808273e-12; -2.43249865e-13; -9.04276654e-14;
                             4.28823643e-15;  1.47104551e-15]]
         level_9 = 5
-        expected_allDims_9 = [0;;]
+        expected_allDims_9 = [1;;]
         @test isapprox(expected_allDims_9, getSubdivisionDims(Ms_9,trackedInterval_9,level_9))
 
         trackedInterval_10 = TrackedInterval([-1.;  1.])
@@ -1323,7 +1323,7 @@ function test_getSubdivisionDims()
                             1.26081368e-11;  5.08808273e-12; -2.43249865e-13; -9.04276654e-14;
                             4.28823643e-15;  1.47104551e-15]]
         level_10 = 6
-        expected_allDims_10 = [0;;]
+        expected_allDims_10 = [1;;]
         @test isapprox(expected_allDims_10, getSubdivisionDims(Ms_10,trackedInterval_10,level_10))
 
         trackedInterval_11 = TrackedInterval([ 0.03945555;  0.03945555 + 1e-5;;
@@ -1333,11 +1333,11 @@ function test_getSubdivisionDims()
                                                 0.41480102;  0.41480102 + 1e-5])
         Ms_11 = [reshape(collect(0:3*3*3*2*2-1),(2,2, 3, 3,3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*2-1),(2, 3, 3, 3, 3)),reshape(collect(0:3*3*3*2*3-1),(3, 2, 3, 3, 3))]
         level_11 = 2
-        expected_allDims_11 = [1;;
-                                1;;
-                                1;;
-                                1;;
-                                1]
+        expected_allDims_11 = [2;;
+                                2;;
+                                2;;
+                                2;;
+                                2]
         @test isapprox(expected_allDims_11, getSubdivisionDims(Ms_11,trackedInterval_11,level_11))
 
         trackedInterval_12 = TrackedInterval([ 0.03945555;  0.03945555 + 1e-5;;
@@ -1347,11 +1347,11 @@ function test_getSubdivisionDims()
                                                 0.41480102;  0.41480102 + 1e-5])
         Ms_12 = [reshape(collect(0:3*3*3*2*2-1),(2,2, 3, 3,3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*3-1),(3, 3, 3, 3, 3)),reshape(collect(0:3*3*3*3*2-1),(2, 3, 3, 3, 3)),reshape(collect(0:3*3*3*2*3-1),(3, 2, 3, 3, 3))]
         level_12 = 2
-        expected_allDims_12 = [0; 4; 3;;
-                                4; 3; 0;;
-                                4; 3; 0;;
-                                3; 0; 4;;
-                                4; 0; 3]
+        expected_allDims_12 = [1; 5; 4;;
+                                5; 4; 1;;
+                                5; 4; 1;;
+                                4; 1; 5;;
+                                5; 1; 4]
         @test isapprox(expected_allDims_12, getSubdivisionDims(Ms_12,trackedInterval_12,level_12))
 
         trackedInterval_13 = TrackedInterval([1;1 + 1e-5;;
@@ -1360,10 +1360,10 @@ function test_getSubdivisionDims()
                                                 1;13])
         Ms_13 = [reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2))]
         level_13 = 4
-        expected_allDims_13 = [1;;
-                                1;;
-                                1;;
-                                1]
+        expected_allDims_13 = [2;;
+                                2;;
+                                2;;
+                                2]
         @test isapprox(expected_allDims_13, getSubdivisionDims(Ms_13,trackedInterval_13,level_13))
     
         trackedInterval_14 = TrackedInterval([1;5;;
@@ -1372,10 +1372,10 @@ function test_getSubdivisionDims()
                                                 1;13])
         Ms_14 = [reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2)),reshape(collect(0:2*3*2*1-1),(1,2,3,2))]
         level_14 = 4
-        expected_allDims_14 = [1; 0;;
-                                1; 0;;
-                                1; 0;;
-                                1; 0]
+        expected_allDims_14 = [2; 1;;
+                                2; 1;;
+                                2; 1;;
+                                2; 1]
         @test isapprox(expected_allDims_14, getSubdivisionDims(Ms_14,trackedInterval_14,level_14))
 
         trackedInterval_15 = TrackedInterval([1;5;;
@@ -1384,33 +1384,33 @@ function test_getSubdivisionDims()
                                                 1;13])
         Ms_15 = [reshape(collect(0:15*3*2*1-1),(1,3,2,15)),reshape(collect(0:15*1*4*3-1),(3,4,1,15)),reshape(collect(0:15*3*2*1-1),(1,2,3,15)),reshape(collect(0:15*2*2*1-1),(1,2,2,15))]
         level_15 = 4
-        expected_allDims_15 = [0;;
-                                0;;
-                                0;;
-                                0]
+        expected_allDims_15 = [1;;
+                                1;;
+                                1;;
+                                1]
         @test isapprox(expected_allDims_15, getSubdivisionDims(Ms_15,trackedInterval_15,level_15))
     end
 end
 
 function test_getInverseOrder()
     @testset "getInverseOrder unit tests" begin
-        @test (0, 2, 1, 3, 4, 6, 5, 7) == getInverseOrder([0; 2; 1])
-        @test getInverseOrder([1; 0; 2]) == (0, 1, 4, 5, 2, 3, 6, 7)
-        @test getInverseOrder([2; 1; 0]) == (0, 4, 2, 6, 1, 5, 3, 7)
-        @test getInverseOrder([2; 0]) == (0, 2, 1, 3)
-        @test getInverseOrder([0; 2]) == (0, 1, 2, 3)
-        @test getInverseOrder([0]) == (0, 1)
-        @test getInverseOrder([2]) == (0, 1)
-        @test getInverseOrder([4;0;2;3;1]) == (0, 16, 2, 18, 4, 20, 6, 22, 1, 17, 3, 19, 5, 21, 7, 23, 8, 24, 10, 26, 12, 28, 14, 30, 9, 25, 11, 27, 13, 29, 15, 31)
-        @test getInverseOrder([0;4;1;3;2]) == (0, 8, 2, 10, 1, 9, 3, 11, 4, 12, 6, 14, 5, 13, 7, 15, 16, 24, 18, 26, 17, 25, 19, 27, 20, 28, 22, 30, 21, 29, 23, 31)
-        @test getInverseOrder([0;4;5;1;3;6;2]) == (0, 2, 16, 18, 32, 34, 48, 50, 4, 6, 20, 22, 36, 38, 52, 54, 1, 3, 17, 19, 33, 35, 49, 51, 5, 7, 21, 23, 37, 39, 53, 55, 8, 10, 24, 26, 40, 42, 56, 58, 12, 14, 28, 30, 44, 46, 60, 62, 9, 11, 25, 27, 41, 43, 57, 59, 13, 15, 29, 31, 45, 47, 61, 63, 64, 66, 80, 82, 96, 98, 112, 114, 68, 70, 84, 86, 100, 102, 116, 118, 65, 67, 81, 83, 97, 99, 113, 115, 69, 71, 85, 87, 101, 103, 117, 119, 72, 74, 88, 90, 104, 106, 120, 122, 76, 78, 92, 94, 108, 110, 124, 126, 73, 75, 89, 91, 105, 107, 121, 123, 77, 79, 93, 95, 109, 111, 125, 127)
-        @test getInverseOrder([1]) == (0,1)
-        @test getInverseOrder([0;3;1]) == (0, 2, 1, 3, 4, 6, 5, 7)
-        @test getInverseOrder([0;3;4]) == (0, 1, 2, 3, 4, 5, 6, 7)
-        @test getInverseOrder([4]) == (0, 1)
-        @test getInverseOrder([0;5;4]) == (0, 2, 1, 3, 4, 6, 5, 7)
-        @test getInverseOrder([3;5;4]) == (0, 2, 1, 3, 4, 6, 5, 7)
-        @test getInverseOrder([5;3]) == (0, 2, 1, 3)
+        @test (1, 3, 2, 4, 5, 7, 6, 8) == getInverseOrder([2; 4; 3])
+        @test getInverseOrder([2; 1; 3]) == (1, 2, 5, 6, 3, 4, 7, 8)
+        @test getInverseOrder([3; 2; 1]) == (1, 5, 3, 7, 2, 6, 4, 8)
+        @test getInverseOrder([20; 19]) == (1, 3, 2, 4)
+        @test getInverseOrder([0; 2]) == (1, 2, 3, 4)
+        @test getInverseOrder([1]) == (1, 2)
+        @test getInverseOrder([2]) == (1, 2)
+        @test getInverseOrder([4;0;2;3;1]) == (1, 17, 3, 19, 5, 21, 7, 23, 2, 18, 4, 20, 6, 22, 8, 24, 9, 25, 11, 27, 13, 29, 15, 31, 10, 26, 12, 28, 14, 30, 16, 32)
+        @test getInverseOrder([0;4;1;3;2]) == (1, 9, 3, 11, 2, 10, 4, 12, 5, 13, 7, 15, 6, 14, 8, 16, 17, 25, 19, 27, 18, 26, 20, 28, 21, 29, 23, 31, 22, 30, 24, 32)
+        @test getInverseOrder([0;4;5;1;3;6;2]) == (1, 3, 17, 19, 33, 35, 49, 51, 5, 7, 21, 23, 37, 39, 53, 55, 2, 4, 18, 20, 34, 36, 50, 52, 6, 8, 22, 24, 38, 40, 54, 56, 9, 11, 25, 27, 41, 43, 57, 59, 13, 15, 29, 31, 45, 47, 61, 63, 10, 12, 26, 28, 42, 44, 58, 60, 14, 16, 30, 32, 46, 48, 62, 64, 65, 67, 81, 83, 97, 99, 113, 115, 69, 71, 85, 87, 101, 103, 117, 119, 66, 68, 82, 84, 98, 100, 114, 116, 70, 72, 86, 88, 102, 104, 118, 120, 73, 75, 89, 91, 105, 107, 121, 123, 77, 79, 93, 95, 109, 111, 125, 127, 74, 76, 90, 92, 106, 108, 122, 124, 78, 80, 94, 96, 110, 112, 126, 128)
+        @test getInverseOrder([1]) == (1,2)
+        @test getInverseOrder([0;3;1]) == (1, 3, 2, 4, 5, 7, 6, 8)
+        @test getInverseOrder([0;3;4]) == (1, 2, 3, 4, 5, 6, 7, 8)
+        @test getInverseOrder([4]) == (1, 2)
+        @test getInverseOrder([0;5;4]) == (1, 3, 2, 4, 5, 7, 6, 8)
+        @test getInverseOrder([3;5;4]) == (1, 3, 2, 4, 5, 7, 6, 8)
+        @test getInverseOrder([5;3]) == (1, 3, 2, 4)
     end
 end
 
