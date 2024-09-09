@@ -65,9 +65,10 @@ function getLinearTerms(M)
     """
     A = []
     spot = 1
+    newM = reshape(M,(1,length(M)))
     
     for i in size(M)
-        push!(A, (i) == 1 ? 0 : reshape(M,(1,length(M)))[spot+1])
+        push!(A, (i) == 1 ? 0 : newM[spot+1])
         spot *= (i)
     end
 
