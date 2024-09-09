@@ -43,7 +43,7 @@ end
 # 
 # test_getLinearTerms()
 # test_linearCheck1()
-# test_reduceSolveDim()
+# test_reduceSolvedDim()
 # test_transformChebInPlace1D()
 # test_transformChebInPlaceND()
 # test_getTransformationError()
