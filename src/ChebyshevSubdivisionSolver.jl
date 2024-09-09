@@ -338,18 +338,18 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
 
     #TODO: Could we calculate the allowed error beforehand and pass it in here?
     #TODO: Make this work for the power basis polynomials
-    if (((alpha == 1.0) && (beta == 0.0)) || (size(coeffs)[end-dim] == 1))
+    if (((alpha == 1.0) && (beta == 0.0)) || (size(coeffs)[end-(dim-1)] == 1))
         return coeffs # No need to transform if the degree of dim is 0 or transformation is the identity.
     end
 
     transformFunc = transformChebInPlace1D
 
-    if dim == 0
+    if dim == 1
         return transformFunc(coeffs, alpha, beta)
     else # Need to transpose the matrix to line up the multiplication for the current dim
         ndim = length(size(coeffs))
         # Move the current dimension to the dim 0 spot in the np array.
-        python_order = vcat([dim+1], collect(1:dim), collect(dim+2:ndim))
+        python_order = vcat([dim], collect(1:dim-1), collect(dim+1:ndim))
         order = (ndim+1) .- reverse(python_order)
         # Then transpose with the inverted order after the transformation occurs.
         python_backOrder = zeros(Int,ndim)
@@ -380,7 +380,7 @@ function getTransformationError(M,dim)
     """
 
     machEps = 2^-52
-    error = reverse(size(M))[dim+1] * machEps * sum(abs.(M))
+    error = reverse(size(M))[dim] * machEps * sum(abs.(M))
     return error #TODO: Figure out a more rigurous bound!
 end
 
@@ -409,7 +409,7 @@ function transformCheb(M,alphas,betas,error,exact)
     """
     #This just does the matrix multiplication on each dimension. Except it's by a tensor.
     ndim = length(size(M))
-    for (dim,n,alpha,beta) in zip(0:ndim-1,size(M),alphas,betas)
+    for (dim,alpha,beta) in zip(1:ndim,alphas,betas)
         error += getTransformationError(M, dim)
         M = TransformChebInPlaceND(M,dim,alpha,beta,exact)
     end
@@ -686,21 +686,21 @@ function getSubdivisionDims(Ms,trackedInterval,level)
         The ith row gives the dimensions in which Ms[i] should be subdivided, in order.
     """
     dim = length(Ms)
-    dims_to_consider = collect(0:dim-1)
-    for i in 0:dim-1
-        if isapprox(trackedInterval.interval[1,i+1], trackedInterval.interval[2,i+1],rtol=1e-5,atol=1e-8)
+    dims_to_consider = collect(1:dim)
+    for i in 1:dim
+        if isapprox(trackedInterval.interval[1,i], trackedInterval.interval[2,i],rtol=1e-5,atol=1e-8)
             if length(dims_to_consider) != 1
                 dims_to_consider = deleteat!(dims_to_consider, findall(x->x==i,dims_to_consider))
             end
         end
     end
     if level > 5
-        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M))[(1 .+ dims_to_consider)]))]) for M in Ms]
+        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M))[(dims_to_consider)]))]) for M in Ms]
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
     else
         dim_lengths = dimSize(trackedInterval)
-        max_length = maximum([dim_lengths[i] for i in (1 .+ dims_to_consider)])
-        dims_to_consider = filter(x -> dim_lengths[(1 + x)] > max_length/5,dims_to_consider)
+        max_length = maximum([dim_lengths[i] for i in (dims_to_consider)])
+        dims_to_consider = filter(x -> dim_lengths[(x)] > max_length/5,dims_to_consider)
         if length(dims_to_consider) > 1
             shapes = reverse(reduce(hcat,[collect(size(M)) for M in Ms]))
             # shapes_list = [reverse(collect(size(M))) for M in Ms]
@@ -708,15 +708,15 @@ function getSubdivisionDims(Ms,trackedInterval,level)
             degree_sums = sum(shapes,dims=2)
             total_sum = sum(shapes)
             for i in Base.copy(dims_to_consider)
-                if length(dims_to_consider) > 1 && (degree_sums[i+1] < floor(total_sum/(dim+1)))
+                if length(dims_to_consider) > 1 && (degree_sums[i] < floor(total_sum/(dim+1)))
                     dims_to_consider = deleteat!(dims_to_consider, findall(x->x==i,dims_to_consider))
                 end
             end
         end
         if length(dims_to_consider) == 0
-            dims_to_consider = [0]
+            dims_to_consider = [1]
         end
-        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(1 .+ dims_to_consider)])]) for M in Ms]
+        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(dims_to_consider)])]) for M in Ms]
         for M in Ms
         end
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
@@ -753,15 +753,15 @@ function getInverseOrder(order)
         matrices resulting from the subdivision as if the original matrix had been subdivided in
         numerical order
     """
-    t = zeros(length(order))
+    t = ones(length(order))
     t[sortperm(order)] = collect(0:length(t)-1)
     order = t
     order = Int.(2 .^(length(order)-1 .- order))
     combinations = Iterators.product([[0,1] for i in 1:length(order)]...)
     newOrder_matrix = [collect(reverse(i))'*order for i in combinations]
     newOrder = reshape(newOrder_matrix,(1,length(newOrder_matrix)))
-    invOrder = zeros(length(newOrder))
-    invOrder[newOrder .+ 1] = collect(0:length(newOrder)-1)
+    invOrder = ones(length(newOrder))
+    invOrder[newOrder .+ 1] = collect(1:length(newOrder))
     return Tuple(Int.(invOrder))
 end
 
@@ -813,7 +813,7 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
         #Iterate through the dimensions, highest degree first.
         currMs, currErrs = [M],[error]
         for thisDim in order
-            newMidpoint = trackedInterval.nextTransformPoints[thisDim+1]
+            newMidpoint = trackedInterval.nextTransformPoints[thisDim]
             alpha, beta = (newMidpoint+1)/2, (newMidpoint-1)/2
             tempMs = []
             tempErrs = []
@@ -835,8 +835,8 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
         else
             #Order the polynomials so they match the intervals in subdivideInterval
             invOrder = getInverseOrder(order)
-            push!(allMs,[currMs[i+1] for i in invOrder])
-            push!(allErrors,([currErrs[i+1] for i in invOrder]))
+            push!(allMs,[currMs[i] for i in invOrder])
+            push!(allErrors,([currErrs[i] for i in invOrder]))
         end
     end
     allMs = [[allMs[i][j] for i in eachindex(allMs)] for j in eachindex(allMs[1])]
@@ -845,19 +845,19 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     allIntervals = [trackedInterval]
     
     for thisDim in dimSet
-        newMidpoint = trackedInterval.nextTransformPoints[thisDim+1]
+        newMidpoint = trackedInterval.nextTransformPoints[thisDim]
         newSubinterval = ones(size(trackedInterval.interval)) #TODO: Make this outside for loop
         newSubinterval[1,:] .= -1.
         newIntervals = []
         for oldInterval in allIntervals
             newInterval1 = copyInterval(oldInterval)
             newInterval2 = copyInterval(oldInterval)
-            newSubinterval[:,thisDim+1] = [-1.; newMidpoint]
+            newSubinterval[:,thisDim] = [-1.; newMidpoint]
             addTransform(newInterval1,newSubinterval)
-            newSubinterval[:,thisDim+1] = [newMidpoint; 1.]
+            newSubinterval[:,thisDim] = [newMidpoint; 1.]
             addTransform(newInterval2,newSubinterval)
-            newInterval1.nextTransformPoints[thisDim+1] = 0
-            newInterval2.nextTransformPoints[thisDim+1] = 0
+            newInterval1.nextTransformPoints[thisDim] = 0
+            newInterval2.nextTransformPoints[thisDim] = 0
             push!(newIntervals,newInterval1)
             push!(newIntervals,newInterval2)
         end
