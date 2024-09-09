@@ -185,8 +185,8 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     transformedCoeffs[1] += beta * coeffs[2] # arr2[0] * coeffs[1] (matrix muliplication)
     transformedCoeffs[2] += alpha * coeffs[2] # arr2[1] * coeffs[1] (matrix multiplication)
     maxRow = 2
-    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
-        thisCoeff = coeffs[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+    for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
+        thisCoeff = coeffs[col] # the row of coeffs corresponding to the column col of C (for matrix mult)
         # The first entry
         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta*arr2[1]
         transformedCoeffs[1] += thisCoeff * arr3[1]
@@ -197,17 +197,17 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         end
 
         # All middle entries
-        for i in 2:maxRow-2
-            arr3[i+1] = -arr1[i+1] + alpha*(arr2[i] + arr2[i+2]) + 2*beta.*arr2[i+1]
-            transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        for i in 3:maxRow-1
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            transformedCoeffs[i] += thisCoeff * arr3[i]
         end
 
         # The second to last entry
-        i = maxRow -1
-        arr3[i+1] = -arr1[i+1] + (i == 1 ? 2 : 1)*alpha*(arr2[i]) + 2*beta*arr2[i+1]
-        transformedCoeffs[i+1] += thisCoeff * arr3[i+1]
+        i = maxRow
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha*(arr2[i-1]) + 2*beta*arr2[i]
+        transformedCoeffs[i] += thisCoeff * arr3[i]
         #The last entry
-        finalVal = alpha*arr2[i+1]
+        finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
         if abs(finalVal) > 1e-16 #TODO: Justify this val!
