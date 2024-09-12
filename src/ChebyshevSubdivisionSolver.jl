@@ -3,6 +3,7 @@ include("StructsWithTheirFunctions/SolverOptions.jl")
 include("StructsWithTheirFunctions/TrackedInterval.jl")
 using LinearAlgebra
 using Logging
+using RecursiveArrayTools
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
 function twoSum(a,b)
@@ -65,9 +66,10 @@ function getLinearTerms(M)
     """
     A = []
     spot = 1
+    newM = reshape(M,(1,length(M)))
     
     for i in size(M)
-        push!(A, (i) == 1 ? 0 : reshape(M,(1,length(M)))[spot+1])
+        push!(A, (i) == 1 ? 0 : newM[spot+1])
         spot *= (i)
     end
 
@@ -225,6 +227,102 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     return transformedCoeffs[1:maxRow]
 end
 
+function transformChebInPlace1D(coeffs,alpha,beta)
+    """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
+
+    Recursively finds each column of the transformation matrix C from the previous two columns
+    and then performs entrywise matrix multiplication for each entry of the column, thus enabling
+    the transformation to occur while only retaining three columns of C in memory at a time.
+
+    Parameters
+    ----------
+    coeffs : array
+        The coefficient array
+    alpha : double
+        The scaler of the transformation
+    beta : double
+        The shifting of the transformation
+
+    Returns
+    -------
+    transformedCoeffs : array
+        The new coefficient array following the transformation
+    """
+    coeffs_shape = size(coeffs)
+    if length(coeffs_shape) == 1
+        return transformChebInPlace1D1D(coeffs,alpha,beta)
+    end
+    last_dim_length = coeffs_shape[end]
+    transformedCoeffs = zeros(coeffs_shape)
+    # Initialize three arrays to represent subsequent columns of the transformation matrix.
+    arr1 = zeros(last_dim_length)
+    arr2 = zeros(last_dim_length)
+    arr3 = zeros(last_dim_length)
+
+    #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
+    arr1[1] = 1.
+
+    # Get the correct number of colons for indexing transformedCoeffs
+    # idxs = []
+    dims = length(coeffs_shape)
+    # for i in 1:dims-1
+    #     push!(idxs,:)
+    # end
+
+    # oldSlices = mapslices(x->[x],coeffs,dims = 1:dims-1)
+    oldSlices = collect(eachslice(coeffs,dims=dims))
+    # newSlices = mapslices(x->[x],transformedCoeffs,dims = 1:dims-1)
+    newSlices = collect(Array.(eachslice(transformedCoeffs,dims=dims)))
+    newSlices[1] = oldSlices[1] # arr1[0] * coeffs[0] (matrix multiplication step)
+    #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
+    arr2[1] = beta
+    arr2[2] = alpha
+    newSlices[1] += beta * oldSlices[2] # arr2[0] * coeffs[1] (matrix muliplication)
+    newSlices[2] += alpha * oldSlices[2] # arr2[1] * coeffs[1] (matrix multiplication)
+    maxRow = 2
+    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
+        thisCoeff = oldSlices[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+        # The first entry
+        arr3[1] = -arr1[1] + alpha*arr2[2] + 2*beta*arr2[1]
+        newSlices[1] += thisCoeff * arr3[1]
+        # The second entry
+        if maxRow > 2
+            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta*arr2[2]
+            newSlices[2] += thisCoeff * arr3[2]
+        end
+
+        # All middle entries
+        for i in 3:maxRow-1
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta*arr2[i]
+            # newSlices[i] += thisCoeff .* arr3[i]
+            newSlices[i] += thisCoeff * arr3[i]
+        end
+
+        # The second to last entry
+        i = maxRow
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha*(arr2[i-1]) + 2*beta*arr2[i]
+        newSlices[i] += thisCoeff * arr3[i]
+        #The last entry
+        finalVal = alpha*arr2[i]
+        # This final entry is typically very small. If it is essentially machine epsilon,
+        # zero it out to save calculations.
+        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+            arr3[maxRow+1] = finalVal
+            newSlices[maxRow+1] += thisCoeff * finalVal
+            maxRow += 1 # Next column will have one more entry than the current column.
+        end
+
+        # Save the values of arr2 and arr3 to arr1 and arr2 to get ready for calculating the next column.
+        arr = arr1
+        arr1 = arr2
+        arr2 = arr3
+        arr3 = arr
+    end
+    VA = VectorOfArray(newSlices[1:maxRow])
+    return convert(Array,VA)
+    # return cat(newSlices[1:maxRow]...,dims = dims)
+end
+
 # function transformChebInPlace1D(coeffs,alpha,beta)
 #     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
 
@@ -266,44 +364,42 @@ end
 #     # for i in 1:dims-1
 #     #     push!(idxs,:)
 #     # end
-
-#     oldSlices = mapslices(x->[x],coeffs,dims = 1:dims-1)
-#     newSlices = mapslices(x->[x],transformedCoeffs,dims = 1:dims-1)
-#     newSlices[1] = oldSlices[1] # arr1[0] * coeffs[0] (matrix multiplication step)
+#     transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
 #     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
 #     arr2[1] = beta
 #     arr2[2] = alpha
-#     newSlices[1] .+= beta .* oldSlices[2] # arr2[0] * coeffs[1] (matrix muliplication)
-#     newSlices[2] .+= alpha .* oldSlices[2] # arr2[1] * coeffs[1] (matrix multiplication)
+#     transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
+#     transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
 #     maxRow = 2
-#     for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
-#         thisCoeff = oldSlices[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
+#     for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
+#         thisCoeff = coeffs[idxs...,col] # the row of coeffs corresponding to the column col of C (for matrix mult)
 #         # The first entry
 #         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
-#         newSlices[1] += thisCoeff .* arr3[1]
+#         transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
 #         # The second entry
 #         if maxRow > 2
 #             arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
-#             newSlices[2] += thisCoeff .* arr3[2]
+#             transformedCoeffs[idxs...,2] += thisCoeff .* arr3[2]
 #         end
 
 #         # All middle entries
 #         for i in 3:maxRow-1
+
 #             arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
-#             newSlices[i] += thisCoeff .* arr3[i]
+#             transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
 #         end
 
 #         # The second to last entry
 #         i = maxRow
 #         arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
-#         newSlices[i] += thisCoeff .* arr3[i]
+#         transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
 #         #The last entry
 #         finalVal = alpha*arr2[i]
 #         # This final entry is typically very small. If it is essentially machine epsilon,
 #         # zero it out to save calculations.
 #         if abs(finalVal) > 1e-16 #TODO: Justify this val!
 #             arr3[maxRow+1] = finalVal
-#             newSlices[maxRow+1] += thisCoeff * finalVal
+#             transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
 #             maxRow += 1 # Next column will have one more entry than the current column.
 #         end
 
@@ -313,97 +409,8 @@ end
 #         arr2 = arr3
 #         arr3 = arr
 #     end
-#     return cat(newSlices[1:maxRow]...,dims = dims)
+#     return transformedCoeffs[idxs...,1:maxRow]
 # end
-
-function transformChebInPlace1D(coeffs,alpha,beta)
-    """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
-
-    Recursively finds each column of the transformation matrix C from the previous two columns
-    and then performs entrywise matrix multiplication for each entry of the column, thus enabling
-    the transformation to occur while only retaining three columns of C in memory at a time.
-
-    Parameters
-    ----------
-    coeffs : array
-        The coefficient array
-    alpha : double
-        The scaler of the transformation
-    beta : double
-        The shifting of the transformation
-
-    Returns
-    -------
-    transformedCoeffs : array
-        The new coefficient array following the transformation
-    """
-    coeffs_shape = size(coeffs)
-    if length(coeffs_shape) == 1
-        return transformChebInPlace1D1D(coeffs,alpha,beta)
-    end
-    last_dim_length = coeffs_shape[end]
-    transformedCoeffs = zeros(coeffs_shape)
-    # Initialize three arrays to represent subsequent columns of the transformation matrix.
-    arr1 = zeros(last_dim_length)
-    arr2 = zeros(last_dim_length)
-    arr3 = zeros(last_dim_length)
-
-    #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
-    arr1[1] = 1.
-
-    # Get the correct number of colons for indexing transformedCoeffs
-    idxs = []
-    dims = length(coeffs_shape)
-    for i in 1:dims-1
-        push!(idxs,:)
-    end
-
-    transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
-    #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
-    arr2[1] = beta
-    arr2[2] = alpha
-    transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
-    transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
-    maxRow = 2
-    for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
-        thisCoeff = coeffs[idxs...,col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
-        # The first entry
-        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
-        transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
-        # The second entry
-        if maxRow > 2
-            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
-            transformedCoeffs[idxs...,2] += thisCoeff .* arr3[2]
-        end
-
-        # All middle entries
-        for i in 3:maxRow-1
-            arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
-            transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
-        end
-
-        # The second to last entry
-        i = maxRow
-        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
-        transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
-        #The last entry
-        finalVal = alpha*arr2[i]
-        # This final entry is typically very small. If it is essentially machine epsilon,
-        # zero it out to save calculations.
-        if abs(finalVal) > 1e-16 #TODO: Justify this val!
-            arr3[maxRow+1] = finalVal
-            transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
-            maxRow += 1 # Next column will have one more entry than the current column.
-        end
-
-        # Save the values of arr2 and arr3 to arr1 and arr2 to get ready for calculating the next column.
-        arr = arr1
-        arr1 = arr2
-        arr2 = arr3
-        arr3 = arr
-    end
-    return transformedCoeffs[idxs...,1:maxRow]
-end
 
 function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
     """Transforms a single dimension of a Chebyshev approximation for a polynomial.
@@ -1179,27 +1186,27 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             append!(resultExterior, newExterior)
         end
         #Rerun the touching intervals
-        idx1 = 0
-        idx2 = 1
+        idx1 = 1
+        idx2 = 2
         #Combine any touching intervals and throw them at the end. Flip a bool saying rerun them
         #If changing this code, test it by defaulting the nextTransformationsInterals to 0, so roots lie on the boundary more.
         #TODO: Make the combining intervals it's own function!!!
         for tempInterval in resultExterior
             tempInterval.reRun = false
         end
-        while idx1 < length(resultExterior)
-            while idx2 < length(resultExterior)
-                if overlapsWith(resultExterior[idx1+1],resultExterior[idx2+1])
+        while idx1 <= length(resultExterior)
+            while idx2 <= length(resultExterior)
+                if overlapsWith(resultExterior[idx1],resultExterior[idx2])
                     #Combine, throw at the back. Set reRun to true.
                     combinedInterval = copyInterval(originalInterval)
                     if combinedInterval.finalStep
                         combinedInterval.interval = copyInterval(combinedInterval.preFinalInterval)
                         combinedInterval.transforms = copyInterval(combinedInterval.preFinalTransforms)
                     end
-                    newAs = minimum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1+1])[1,:], getIntervalForCombining(resultExterior[idx2+1])[1,:]]),dims=2)
-                    newBs = maximum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1+1])[2,:], getIntervalForCombining(resultExterior[idx2+1])[2,:]]),dims=2)
-                    final1 = getFinalInterval(resultExterior[idx1+1])
-                    final2 = getFinalInterval(resultExterior[idx2+1])
+                    newAs = minimum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1])[1,:], getIntervalForCombining(resultExterior[idx2])[1,:]]),dims=2)
+                    newBs = maximum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1])[2,:], getIntervalForCombining(resultExterior[idx2])[2,:]]),dims=2)
+                    final1 = getFinalInterval(resultExterior[idx1])
+                    final2 = getFinalInterval(resultExterior[idx2])
                     newAsFinal = minimum(reduce(hcat,[final1[1,:], final2[1,:]]),dims=2)
                     newBsFinal = maximum(reduce(hcat,[final1[2,:], final2[2,:]]),dims=2)
                     oldAs = originalInterval.interval[1,:]
@@ -1220,8 +1227,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     addTransform(combinedInterval,currSubinterval)
                     combinedInterval.interval = reduce(hcat,[newAs, newBs])'
                     combinedInterval.reRun = true
-                    deleteat!(resultExterior,idx2+1)
-                    deleteat!(resultExterior,idx1+1)
+                    deleteat!(resultExterior,idx2)
+                    deleteat!(resultExterior,idx1)
                     push!(resultExterior,combinedInterval)
                     idx2 = idx1 + 1
                 else
