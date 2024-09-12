@@ -384,7 +384,6 @@ end
 
 #         # All middle entries
 #         for i in 3:maxRow-1
-
 #             arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
 #             transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
 #         end
