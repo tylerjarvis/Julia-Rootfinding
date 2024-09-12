@@ -3,6 +3,7 @@ include("StructsWithTheirFunctions/SolverOptions.jl")
 include("StructsWithTheirFunctions/TrackedInterval.jl")
 using LinearAlgebra
 using Logging
+using RecursiveArrayTools
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
 function twoSum(a,b)
@@ -268,36 +269,39 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     #     push!(idxs,:)
     # end
 
-    oldSlices = mapslices(x->[x],coeffs,dims = 1:dims-1)
-    newSlices = mapslices(x->[x],transformedCoeffs,dims = 1:dims-1)
+    # oldSlices = mapslices(x->[x],coeffs,dims = 1:dims-1)
+    oldSlices = collect(eachslice(coeffs,dims=dims))
+    # newSlices = mapslices(x->[x],transformedCoeffs,dims = 1:dims-1)
+    newSlices = collect(Array.(eachslice(transformedCoeffs,dims=dims)))
     newSlices[1] = oldSlices[1] # arr1[0] * coeffs[0] (matrix multiplication step)
     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
     arr2[1] = beta
     arr2[2] = alpha
-    newSlices[1] .+= beta .* oldSlices[2] # arr2[0] * coeffs[1] (matrix muliplication)
-    newSlices[2] .+= alpha .* oldSlices[2] # arr2[1] * coeffs[1] (matrix multiplication)
+    newSlices[1] += beta * oldSlices[2] # arr2[0] * coeffs[1] (matrix muliplication)
+    newSlices[2] += alpha * oldSlices[2] # arr2[1] * coeffs[1] (matrix multiplication)
     maxRow = 2
     for col in 2:last_dim_length-1 # For each column, calculate each entry and do matrix mult
         thisCoeff = oldSlices[col+1] # the row of coeffs corresponding to the column col of C (for matrix mult)
         # The first entry
-        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
-        newSlices[1] += thisCoeff .* arr3[1]
+        arr3[1] = -arr1[1] + alpha*arr2[2] + 2*beta*arr2[1]
+        newSlices[1] += thisCoeff * arr3[1]
         # The second entry
         if maxRow > 2
-            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
-            newSlices[2] += thisCoeff .* arr3[2]
+            arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta*arr2[2]
+            newSlices[2] += thisCoeff * arr3[2]
         end
 
         # All middle entries
         for i in 3:maxRow-1
-            arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
-            newSlices[i] += thisCoeff .* arr3[i]
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta*arr2[i]
+            # newSlices[i] += thisCoeff .* arr3[i]
+            newSlices[i] += thisCoeff * arr3[i]
         end
 
         # The second to last entry
         i = maxRow
-        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
-        newSlices[i] += thisCoeff .* arr3[i]
+        arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha*(arr2[i-1]) + 2*beta*arr2[i]
+        newSlices[i] += thisCoeff * arr3[i]
         #The last entry
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
@@ -314,7 +318,9 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         arr2 = arr3
         arr3 = arr
     end
-    return cat(newSlices[1:maxRow]...,dims = dims)
+    VA = VectorOfArray(newSlices[1:maxRow])
+    return convert(Array,VA)
+    # return cat(newSlices[1:maxRow]...,dims = dims)
 end
 
 # function transformChebInPlace1D(coeffs,alpha,beta)
@@ -353,12 +359,11 @@ end
 #     arr1[1] = 1.
 
 #     # Get the correct number of colons for indexing transformedCoeffs
-#     idxs = []
+#     # idxs = []
 #     dims = length(coeffs_shape)
-#     for i in 1:dims-1
-#         push!(idxs,:)
-#     end
-
+#     # for i in 1:dims-1
+#     #     push!(idxs,:)
+#     # end
 #     transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
 #     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
 #     arr2[1] = beta

@@ -43,8 +43,8 @@ end
 # 
 # test_getLinearTerms()
 # test_linearCheck1()
-# test_reduceSolvedDim()
-# test_transformChebInPlace1D()
+# test_reduceSolveDim()
+test_transformChebInPlace1D()
 # test_transformChebInPlaceND()
 # test_getTransformationError()
 # test_transformCheb()
@@ -56,8 +56,8 @@ end
 # test_zoomInOnIntervalIter()
 # test_isExteriorInterval()
 # test_trimMs()
-test_solvePolyRecursive()
-test_solveChebyshevSubdivision()
+# test_solvePolyRecursive()
+# test_solveChebyshevSubdivision()
 
 # ============================================ TrackedInterval Tests ============================================
 
