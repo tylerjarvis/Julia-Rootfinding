@@ -190,7 +190,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
         thisCoeff = coeffs[col] # the row of coeffs corresponding to the column col of C (for matrix mult)
         # The first entry
-        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta*arr2[1]
+        arr3[1] = -arr1[1] + alpha*arr2[2] + 2*beta*arr2[1]
         transformedCoeffs[1] += thisCoeff * arr3[1]
         # The second entry
         if maxRow > 2
@@ -200,7 +200,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
 
         # All middle entries
         for i in 3:maxRow-1
-            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta*arr2[i]
             transformedCoeffs[i] += thisCoeff * arr3[i]
         end
 
