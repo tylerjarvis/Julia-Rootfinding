@@ -899,7 +899,7 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
         The absolute error increase allowed
     """
     dim = ndims(Ms[1])
-    for polyNum in eachindex(Ms) #Loop through the polynomials
+    for polyNum in 1:dim #Loop through the polynomials
         allowedErrorIncrease = absApproxTol + errors[polyNum] * relApproxTol
         #Use slicing to look at a slice of the highest degree in the dimension we want to trim
         slices = []
@@ -907,24 +907,24 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
             push!(slices,:)
         end
         # [: for i in 1:dim] # equivalent to selecting everything
-        for currDim in 1:dim
-            slices[currDim] = reverse(size(Ms[polyNum]))[currDim] # Now look at just the last row of the current dimension's approximation
-            lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+        for currDim in dim:-1:1
+            slices[currDim] = size(Ms[polyNum])[currDim] # Now look at just the last row of the current dimension's approximation
+            lastSum = sum(abs.(Ms[polyNum][slices...]))
             # Iteratively eliminate the highest degree row of the current dimension if
             # the sum of its approximation coefficients is of low error, but keep deg at least 2
-            while (lastSum < allowedErrorIncrease) && (reverse(size(Ms[polyNum]))[currDim] > 3)
+            while (lastSum < allowedErrorIncrease) && (size(Ms[polyNum])[currDim] > 3)
                 # Trim the polynomial
-                slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]-1
-                Ms[polyNum] = Ms[polyNum][reverse(slices)...]
+                slices[currDim] = 1:(slices[currDim]-1)
+                Ms[polyNum] = Ms[polyNum][slices...]
                 # Update the remaining error increase allowed an the error of the approximation.
                 allowedErrorIncrease -= lastSum
                 errors[polyNum] += lastSum
                 # Reset for the next iteration with the next highest degree of the current dimension.
-                slices[currDim] = reverse(size(Ms[polyNum]))[currDim]
-                lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+                slices[currDim] = size(Ms[polyNum])[currDim]
+                lastSum = sum(abs.(Ms[polyNum][slices...]))
             end
             # Reset to select all of the current dimension when looking at the next dimension.
-            slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]
+            slices[currDim] = 1:size(Ms[polyNum])[currDim]
         end
     end
 end
