@@ -190,7 +190,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
         thisCoeff = coeffs[col] # the row of coeffs corresponding to the column col of C (for matrix mult)
         # The first entry
-        arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta*arr2[1]
+        arr3[1] = -arr1[1] + alpha*arr2[2] + 2*beta*arr2[1]
         transformedCoeffs[1] += thisCoeff * arr3[1]
         # The second entry
         if maxRow > 2
@@ -200,7 +200,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
 
         # All middle entries
         for i in 3:maxRow-1
-            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
+            arr3[i] = -arr1[i] + alpha*(arr2[i-1] + arr2[i+1]) + 2*beta*arr2[i]
             transformedCoeffs[i] += thisCoeff * arr3[i]
         end
 
@@ -322,94 +322,6 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     return convert(Array,VA)
     # return cat(newSlices[1:maxRow]...,dims = dims)
 end
-
-# function transformChebInPlace1D(coeffs,alpha,beta)
-#     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
-
-#     Recursively finds each column of the transformation matrix C from the previous two columns
-#     and then performs entrywise matrix multiplication for each entry of the column, thus enabling
-#     the transformation to occur while only retaining three columns of C in memory at a time.
-
-#     Parameters
-#     ----------
-#     coeffs : array
-#         The coefficient array
-#     alpha : double
-#         The scaler of the transformation
-#     beta : double
-#         The shifting of the transformation
-
-#     Returns
-#     -------
-#     transformedCoeffs : array
-#         The new coefficient array following the transformation
-#     """
-#     coeffs_shape = size(coeffs)
-#     if length(coeffs_shape) == 1
-#         return transformChebInPlace1D1D(coeffs,alpha,beta)
-#     end
-#     last_dim_length = coeffs_shape[end]
-#     transformedCoeffs = zeros(coeffs_shape)
-#     # Initialize three arrays to represent subsequent columns of the transformation matrix.
-#     arr1 = zeros(last_dim_length)
-#     arr2 = zeros(last_dim_length)
-#     arr3 = zeros(last_dim_length)
-
-#     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
-#     arr1[1] = 1.
-
-#     # Get the correct number of colons for indexing transformedCoeffs
-#     # idxs = []
-#     dims = length(coeffs_shape)
-#     # for i in 1:dims-1
-#     #     push!(idxs,:)
-#     # end
-#     transformedCoeffs[idxs...,1] = coeffs[idxs...,1] # arr1[0] * coeffs[0] (matrix multiplication step)
-#     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
-#     arr2[1] = beta
-#     arr2[2] = alpha
-#     transformedCoeffs[idxs...,1] .+= beta .* coeffs[idxs...,2] # arr2[0] * coeffs[1] (matrix muliplication)
-#     transformedCoeffs[idxs...,2] .+= alpha .* coeffs[idxs...,2] # arr2[1] * coeffs[1] (matrix multiplication)
-#     maxRow = 2
-#     for col in 3:last_dim_length # For each column, calculate each entry and do matrix mult
-#         thisCoeff = coeffs[idxs...,col] # the row of coeffs corresponding to the column col of C (for matrix mult)
-#         # The first entry
-#         arr3[1] = -arr1[1] + alpha.*arr2[2] + 2*beta.*arr2[1]
-#         transformedCoeffs[idxs...,1] += thisCoeff .* arr3[1]
-#         # The second entry
-#         if maxRow > 2
-#             arr3[2] = -arr1[2] + alpha*(2*arr2[1] + arr2[3]) + 2*beta.*arr2[2]
-#             transformedCoeffs[idxs...,2] += thisCoeff .* arr3[2]
-#         end
-
-#         # All middle entries
-#         for i in 3:maxRow-1
-#             arr3[i] = -arr1[i] + alpha.*(arr2[i-1] + arr2[i+1]) + 2*beta.*arr2[i]
-#             transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
-#         end
-
-#         # The second to last entry
-#         i = maxRow
-#         arr3[i] = -arr1[i] + (i == 2 ? 2 : 1)*alpha.*(arr2[i-1]) + 2*beta.*arr2[i]
-#         transformedCoeffs[idxs...,i] += thisCoeff .* arr3[i]
-#         #The last entry
-#         finalVal = alpha*arr2[i]
-#         # This final entry is typically very small. If it is essentially machine epsilon,
-#         # zero it out to save calculations.
-#         if abs(finalVal) > 1e-16 #TODO: Justify this val!
-#             arr3[maxRow+1] = finalVal
-#             transformedCoeffs[idxs...,maxRow+1] += thisCoeff * finalVal
-#             maxRow += 1 # Next column will have one more entry than the current column.
-#         end
-
-#         # Save the values of arr2 and arr3 to arr1 and arr2 to get ready for calculating the next column.
-#         arr = arr1
-#         arr1 = arr2
-#         arr2 = arr3
-#         arr3 = arr
-#     end
-#     return transformedCoeffs[idxs...,1:maxRow]
-# end
 
 function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
     """Transforms a single dimension of a Chebyshev approximation for a polynomial.
@@ -987,7 +899,7 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
         The absolute error increase allowed
     """
     dim = ndims(Ms[1])
-    for polyNum in eachindex(Ms) #Loop through the polynomials
+    for polyNum in 1:dim #Loop through the polynomials
         allowedErrorIncrease = absApproxTol + errors[polyNum] * relApproxTol
         #Use slicing to look at a slice of the highest degree in the dimension we want to trim
         slices = []
@@ -995,24 +907,24 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
             push!(slices,:)
         end
         # [: for i in 1:dim] # equivalent to selecting everything
-        for currDim in 1:dim
-            slices[currDim] = reverse(size(Ms[polyNum]))[currDim] # Now look at just the last row of the current dimension's approximation
-            lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+        for currDim in dim:-1:1
+            slices[currDim] = size(Ms[polyNum])[currDim] # Now look at just the last row of the current dimension's approximation
+            lastSum = sum(abs.(Ms[polyNum][slices...]))
             # Iteratively eliminate the highest degree row of the current dimension if
             # the sum of its approximation coefficients is of low error, but keep deg at least 2
-            while (lastSum < allowedErrorIncrease) && (reverse(size(Ms[polyNum]))[currDim] > 3)
+            while (lastSum < allowedErrorIncrease) && (size(Ms[polyNum])[currDim] > 3)
                 # Trim the polynomial
-                slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]-1
-                Ms[polyNum] = Ms[polyNum][reverse(slices)...]
+                slices[currDim] = 1:(slices[currDim]-1)
+                Ms[polyNum] = Ms[polyNum][slices...]
                 # Update the remaining error increase allowed an the error of the approximation.
                 allowedErrorIncrease -= lastSum
                 errors[polyNum] += lastSum
                 # Reset for the next iteration with the next highest degree of the current dimension.
-                slices[currDim] = reverse(size(Ms[polyNum]))[currDim]
-                lastSum = sum(abs.(Ms[polyNum][reverse(slices)...]))
+                slices[currDim] = size(Ms[polyNum])[currDim]
+                lastSum = sum(abs.(Ms[polyNum][slices...]))
             end
             # Reset to select all of the current dimension when looking at the next dimension.
-            slices[currDim] = 1:reverse(size(Ms[polyNum]))[currDim]
+            slices[currDim] = 1:size(Ms[polyNum])[currDim]
         end
     end
 end
