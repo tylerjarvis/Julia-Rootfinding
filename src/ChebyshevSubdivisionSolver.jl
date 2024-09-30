@@ -708,7 +708,7 @@ function getSubdivisionDims(Ms,trackedInterval,level)
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
     else
         dim_lengths = dimSize(trackedInterval)
-        max_length = maximum([dim_lengths[i] for i in (dims_to_consider)])
+        max_length = maximum(dim_lengths[dims_to_consider])
         dims_to_consider = filter(x -> dim_lengths[(x)] > max_length/5,dims_to_consider)
         if length(dims_to_consider) > 1
             shapes = reverse(reduce(hcat,[collect(size(M)) for M in Ms]))
@@ -726,8 +726,6 @@ function getSubdivisionDims(Ms,trackedInterval,level)
             dims_to_consider = [1]
         end
         idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(dims_to_consider)])]) for M in Ms]
-        for M in Ms
-        end
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
     end
 end
