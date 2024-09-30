@@ -696,13 +696,13 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     """
     dim = length(Ms)
     dims_to_consider = collect(1:dim)
+    new_dims = []
     for i in 1:dim
-        if isapprox(trackedInterval.interval[1,i], trackedInterval.interval[2,i],rtol=1e-5,atol=1e-8)
-            if length(dims_to_consider) != 1
-                dims_to_consider = deleteat!(dims_to_consider, findall(x->x==i,dims_to_consider))
-            end
+        if !isapprox(trackedInterval.interval[1,i], trackedInterval.interval[2,i],rtol=1e-5,atol=1e-8) || length(dims_to_consider) == 1
+            push!(new_dims,dims_to_consider[i])
         end
     end
+    dims_to_consider = new_dims
     if level > 5
         idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M))[(dims_to_consider)]))]) for M in Ms]
         return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
