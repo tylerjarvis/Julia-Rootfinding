@@ -761,8 +761,9 @@ function getInverseOrder(order)
     t = ones(length(order))
     t[sortperm(order)] = collect(0:length(t)-1)
     order = t
-    order = Int.(2 .^(length(order)-1 .- order))
-    combinations = Iterators.product([[0,1] for i in 1:length(order)]...)
+    len = length(order)-1
+    order = Int.([2^(len-x) for x in order])
+    combinations = Iterators.product(fill([0,1],len+1)...)
     newOrder_matrix = [collect(reverse(i))'*order for i in combinations]
     newOrder = reshape(newOrder_matrix,(1,length(newOrder_matrix)))
     invOrder = ones(length(newOrder))
