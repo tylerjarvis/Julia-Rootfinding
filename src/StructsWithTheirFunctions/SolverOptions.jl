@@ -26,8 +26,12 @@ mutable struct SolverOptions
     maxZoomCount # = 25 (by default)
     level # = 0 (by default)
     useFinalStep # = true (by default)
-    function SolverOptions()
+    function SolverOptions(verbose=false,exact=false,constant_check=true,low_dim_quadratic_check=true,all_dim_quadratic_check=true,maxZoomCount=25,level=0,useFinalStep=true)
         #Init all the Options to default value
-        new(false,false,true,true,true,25,0,true)
+        new(verbose,exact,constant_check,low_dim_quadratic_check,all_dim_quadratic_check,maxZoomCount,level,useFinalStep)
     end
+end
+
+function copySO(SO)
+    return SolverOptions(SO.verbose,SO.exact,SO.constant_check,SO.low_dim_quadratic_check,SO.all_dim_quadratic_check,SO.maxZoomCount,SO.level,SO.useFinalStep)
 end

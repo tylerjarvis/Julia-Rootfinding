@@ -952,7 +952,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
 
     #If we ever change the options in this function, we will need to do a copy here.
     #Should be cheap, but as we never change them for now just avoid the copy
-    solverOptions = deepcopy(solverOptions)
+    solverOptions = copySO(solverOptions)
     solverOptions.level += 1
 
     #Constant term check, runs at the beginning of the solve and before each subdivision
@@ -980,7 +980,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     Ms = copy(Ms)
     originalMs = copy(Ms)
     trackedInterval = copyInterval(trackedInterval)
-    errors = deepcopy(errors)
+    errors = copy(errors)
     trimMs(Ms, errors)
 
     #Solve
