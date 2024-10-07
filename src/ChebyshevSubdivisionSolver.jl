@@ -698,22 +698,20 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     dims_to_consider = collect(1:dim)
     new_dims = []
     for i in 1:dim
-        if !isapprox(trackedInterval.interval[1,i], trackedInterval.interval[2,i],rtol=1e-5,atol=1e-8) || length(dims_to_consider) == 1
+        if !isapprox(trackedInterval.interval[1,i], trackedInterval.interval[2,i],rtol=1e-5,atol=1e-8) || (i == dim && length(new_dims) == 0)
             push!(new_dims,dims_to_consider[i])
         end
     end
     dims_to_consider = new_dims
     if level > 5
-        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M))[(dims_to_consider)]))]) for M in Ms]
-        return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
+        idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(dims_to_consider)])]) for M in Ms]
+        return idxs_by_dim
     else
         dim_lengths = dimSize(trackedInterval)
-        max_length = maximum([dim_lengths[i] for i in (dims_to_consider)])
+        max_length = maximum(dim_lengths[dims_to_consider])
         dims_to_consider = filter(x -> dim_lengths[(x)] > max_length/5,dims_to_consider)
         if length(dims_to_consider) > 1
             shapes = reverse(reduce(hcat,[collect(size(M)) for M in Ms]))
-            # shapes_list = [reverse(collect(size(M))) for M in Ms]
-            # shapes = reshape([item for sublist in shapes_list for item in sublist],(dim,dim))
             degree_sums = sum(shapes,dims=2)
             total_sum = sum(shapes)
             for i in Base.copy(dims_to_consider)
@@ -726,9 +724,7 @@ function getSubdivisionDims(Ms,trackedInterval,level)
             dims_to_consider = [1]
         end
         idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(dims_to_consider)])]) for M in Ms]
-        for M in Ms
-        end
-        return reshape([item for sublist in idxs_by_dim for item in sublist],(length(dims_to_consider),dim))
+        return idxs_by_dim
     end
 end
 
@@ -765,8 +761,9 @@ function getInverseOrder(order)
     t = ones(length(order))
     t[sortperm(order)] = collect(0:length(t)-1)
     order = t
-    order = Int.(2 .^(length(order)-1 .- order))
-    combinations = Iterators.product([[0,1] for i in 1:length(order)]...)
+    len = length(order)-1
+    order = Int.([2^(len-x) for x in order])
+    combinations = Iterators.product(fill([0,1],len+1)...)
     newOrder_matrix = [collect(reverse(i))'*order for i in combinations]
     newOrder = reshape(newOrder_matrix,(1,length(newOrder_matrix)))
     invOrder = ones(length(newOrder))
@@ -801,23 +798,17 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     """
     
     if oneDimension
-        # subdivisionDims = getSubdivisionDim(trackedInterval.interval)
         subdivisionDims = getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
     else
         subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
     end
-
-    dimSet = Set(reshape(subdivisionDims,(1,length(subdivisionDims))))
-    dimSet = sort!(collect(dimSet))
-    if length(dimSet) != size(subdivisionDims)[end-1]
-        println("Subdivision Dimensions are invalid! Each Polynomial must subdivide in the same dimensions!")
-    end
+    dimSet = sort(subdivisionDims[1])
     allMs = []
     allErrors = []
     idx = 0
-    num_subdivisions = length(subdivisionDims[1,:])
-    for (M,error,order_num) in zip(Ms, errors, collect(1:num_subdivisions))
-        order = subdivisionDims[:,order_num]
+    dim = length(Ms)
+    for (M,error,order_num) in zip(Ms, errors, collect(1:dim))
+        order = subdivisionDims[order_num]
         idx += 1
         #Iterate through the dimensions, highest degree first.
         currMs, currErrs = [M],[error]
