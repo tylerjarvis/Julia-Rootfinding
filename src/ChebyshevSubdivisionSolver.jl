@@ -545,15 +545,14 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     a0, b0 = linearCheck1(totalErrs, A, consts)
     a_orig = a0
     b_orig = b0
+    U,S,Vh = svd(A')
+    Ainv = ((1 ./ S).*Vh')' * (U')
+    center = -Ainv*consts'
+    wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
     for i = 0:1
         #Now do the linear solve check
-        U,S,Vh = svd(A')
-        wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
         #We use the matrix inverse to find the width, so might as well use it both spots. Should be fine as dim is small.
         if wellConditioned #Make sure conditioning is ok.
-            Ainv = ((1 ./ S).*Vh')' * (U')
-
-            center = -Ainv*consts'
             width = abs.(Ainv)*err'
             a1 = center-width
             b1 = center + width
