@@ -1,7 +1,7 @@
 include("ChebyshevApproximator.jl")
 include("ChebyshevSubdivisionSolver.jl")
 
-function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5)
+function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5, precision=53.0)
     """Finds and returns the roots of a system of functions on the search interval [a,b].
 
     Generates an approximation for each function using Chebyshev polynomials on the interval given,
@@ -80,7 +80,6 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         The exact intervals (boxes) in which each root is bound to lie.
     """
     dim = length(funcs)
-    # polys = Vector{Array{Float64}}()
     polys = Vector{Array{Float64,dim}}(undef, dim)
     errs = fill(0.0,dim)
     # Get an approximation for each function.
@@ -108,9 +107,30 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         println([[a[i],b[i]] for i in 1:dim])
     end
 
+    # Set precision for the solver. If precision is less than a default data-type, use that. Otherwise, use BigFloat
+    if precision <= 11
+        polys = Vector{Array{Float16,dim}}(undef, dim)
+        errs = Float16.(errs)
+        a = Float16.(a)
+        b = Float16.(b)
+    elseif precision <= 24
+        polys = Vector{Array{Float32,dim}}(undef, dim)
+        errs = Float32.(errs)
+        a = Float32.(a)
+        b = Float32.(b)
+    elseif precision <= 53
+
+    else
+        setprecision(precision)
+        polys = Vector{Array{BigFloat,dim}}(undef,dim)
+        errs = BigFloat.(errs)
+        a = BigFloat.(a)
+        b = BigFloat.(b)
+    end
+
     #Solve the Chebyshev polynomial system
     yroots, boundingBoxes = solveChebyshevSubdivision(polys,errs;verbose=verbose,returnBoundingBoxes=true,exact=exact,
-                constant_check=true, low_dim_quadratic_check=true, all_dim_quadratic_check=false)
+                constant_check=true, low_dim_quadratic_check=true, all_dim_quadratic_check=false,precision=precision)
 
     #If the bounding box is the entire interval, subdivide it!
     usingSubdivision = all(b-a .> minBoundingIntervalSize)

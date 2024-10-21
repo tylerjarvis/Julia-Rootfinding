@@ -165,7 +165,7 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     return final_Ms,new_errors,trackedInterval
 end
 
-function transformChebInPlace1D1D(coeffs,alpha,beta)
+function transformChebInPlace1D1D(coeffs,alpha,beta,precision)
     """
     Does the 1d coeff array case for transformChebInPlace1D
     """
@@ -212,7 +212,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+        if abs(finalVal) > 2.0^(-precision) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             transformedCoeffs[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -227,7 +227,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     return transformedCoeffs[1:maxRow]
 end
 
-function transformChebInPlace1D(coeffs,alpha,beta)
+function transformChebInPlace1D(coeffs,alpha,beta,precision)
     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
 
     Recursively finds each column of the transformation matrix C from the previous two columns
@@ -250,7 +250,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     """
     coeffs_shape = size(coeffs)
     if length(coeffs_shape) == 1
-        return transformChebInPlace1D1D(coeffs,alpha,beta)
+        return transformChebInPlace1D1D(coeffs,alpha,beta,precision)
     end
     last_dim_length = coeffs_shape[end]
     transformedCoeffs = zeros(coeffs_shape)
@@ -306,7 +306,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+        if abs(finalVal) > 2.0^(-precision) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             newSlices[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -323,7 +323,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     # return cat(newSlices[1:maxRow]...,dims = dims)
 end
 
-function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
+function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact, precision)
     """Transforms a single dimension of a Chebyshev approximation for a polynomial.
 
     Parameters
@@ -354,7 +354,7 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
     transformFunc = transformChebInPlace1D
 
     if dim == 1
-        return transformFunc(coeffs, alpha, beta)
+        return transformFunc(coeffs, alpha, beta,precision)
     else # Need to transpose the matrix to line up the multiplication for the current dim
         ndim = length(size(coeffs))
         # Move the current dimension to the dim 0 spot in the np array.
@@ -364,11 +364,11 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
         python_backOrder = zeros(Int,ndim)
         python_backOrder[python_order] = collect(1:length(size(coeffs)))
         backOrder = (ndim+1) .- reverse(python_backOrder)
-        return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta),backOrder)
+        return permutedims(transformFunc(permutedims(coeffs,order), alpha, beta, precision),backOrder)
     end
 end
 
-function getTransformationError(M,dim)
+function getTransformationError(M,dim,precision)
     """Returns an upper bound on the error of transforming the Chebyshev approximation M
 
     In the transformation of dimension dim in M, the matrix multiplication of M by the transformation
@@ -388,12 +388,12 @@ function getTransformationError(M,dim)
         The upper bound for the error associated with the transformation of dimension dim in M
     """
 
-    machEps = 2^-52
+    machEps = 2.0^(-(precision-1.))
     error = reverse(size(M))[dim] * machEps * sum(abs.(M))
     return error #TODO: Figure out a more rigurous bound!
 end
 
-function transformCheb(M,alphas,betas,error,exact)
+function transformCheb(M,alphas,betas,error,exact,precision)
     """Transforms an entire Chebyshev coefficient matrix using the transformation xHat = alpha*x + beta.
 
     Parameters
@@ -419,13 +419,13 @@ function transformCheb(M,alphas,betas,error,exact)
     #This just does the matrix multiplication on each dimension. Except it's by a tensor.
     ndim = length(size(M))
     for (dim,alpha,beta) in zip(1:ndim,alphas,betas)
-        error += getTransformationError(M, dim)
-        M = TransformChebInPlaceND(M,dim,alpha,beta,exact)
+        error += getTransformationError(M, dim,precision)
+        M = TransformChebInPlaceND(M,dim,alpha,beta,exact,precision)
     end
     return M, error
 end
 
-function transformChebToInterval(Ms, alphas, betas, errors, exact)
+function transformChebToInterval(Ms, alphas, betas, errors, exact, precision)
     """Transforms an entire list of Chebyshev approximations to a new interval xHat = alpha*x + beta.
 
     Parameters
@@ -452,7 +452,7 @@ function transformChebToInterval(Ms, alphas, betas, errors, exact)
     newMs = []
     newErrors = []
     for (M,e) in zip(Ms, errors)
-        newM, newE = transformCheb(M, alphas, betas, e, exact)
+        newM, newE = transformCheb(M, alphas, betas, e, exact,precision)
         push!(newMs,newM)
         push!(newErrors,(newE))
     end
@@ -607,7 +607,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     end
 end
 
-function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
+function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact, precision)
     """One iteration of shrinking an interval that may contain roots.
 
     Calls BoundingIntervaLinearSystem which determines a smaller interval in which any roots are
@@ -666,7 +666,7 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
     end
     #Transform the chebyshev polynomials
     addTransform(trackedInterval,interval)
-    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)[:,1],getLastTransform(trackedInterval)[:,2], errors, exact)
+    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)[:,1],getLastTransform(trackedInterval)[:,2], errors, exact,precision)
     #We should stop in the final step once the interval has become a point
     if trackedInterval.finalStep && isPoint(trackedInterval)
         should_stop = true
@@ -770,7 +770,7 @@ function getInverseOrder(order)
     return Tuple(Int.(invOrder))
 end
 
-function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimension=false)
+function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level,precision;oneDimension=false)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
 
     Parameters
@@ -818,8 +818,8 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
             tempErrs = []
             for (T,E) in zip(currMs, currErrs)
                 #Transform the polys
-                P1, P2 = TransformChebInPlaceND(T, thisDim, alpha, beta, thisDim), TransformChebInPlaceND(T, thisDim, -beta, alpha, exact)
-                E1 = getTransformationError(T, thisDim)
+                P1, P2 = TransformChebInPlaceND(T, thisDim, alpha, beta, thisDim,precision), TransformChebInPlaceND(T, thisDim, -beta, alpha, exact,precision)
+                E1 = getTransformationError(T, thisDim,precision)
                 push!(tempMs,P1)
                 push!(tempMs,P2)
                 push!(tempErrs,E1+E)
@@ -919,7 +919,7 @@ function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
     end
 end
 
-function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
+function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions,precision)
     """Recursively shrinks and subdivides the given interval to find the locations of all roots.
 
     Parameters
@@ -993,7 +993,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     lastSizes = dimSize(trackedInterval)
     while changed && zoomCount <= solverOptions.maxZoomCount
         #Zoom in until we stop changing or we hit machine epsilon
-        Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
+        Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact,precision)
 
         if trackedInterval.empty #Throw out the interval
             return [], []
@@ -1021,15 +1021,15 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             end
         else
             startFinalStep(trackedInterval)
-            return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
+            return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions,precision)
         end
 
     elseif trackedInterval.finalStep
         trackedInterval.canThrowOutFinalStep = true
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level,precision;oneDimension=false)
         resultsAll = []
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
-            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions,precision)
             append!(resultsAll, newInterior)
             append!(resultsAll,newExterior)
         end
@@ -1079,10 +1079,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         resultInterior, resultExterior = [], []
         #Get the new intervals and polynomials
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
+        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level,precision;oneDimension=false)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
-            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions,precision)
             append!(resultInterior, newInterior)
             append!(resultExterior, newExterior)
         end
@@ -1150,8 +1150,8 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #TODO: Instead of using the originalMs, use Ms, and then don't use the original interval, use the one
                     #we started subdivision with.
                     lastTransform = getLastTransform(tempInterval)
-                    tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
-                    tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
+                    tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact,precision)
+                    tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions,precision)
                     #We can assume that nothing in these has to be recombined
                     append!(resultInterior,tempResultsInterior)
                     append!(newResultExterior,tempResultsExterior)
@@ -1166,8 +1166,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     end
 end
 
-function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBoxes = false, exact = false, constant_check = true, low_dim_quadratic_check = true, all_dim_quadratic_check = false)
-
+function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBoxes = false, exact = false, constant_check = true, low_dim_quadratic_check = true, all_dim_quadratic_check = false,precision=53.)
     """
     Initiates shrinking and subdivision recursion and returns the roots and bounding boxes.
 
@@ -1208,7 +1207,23 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
 
     # Solve
     ndim = length(Ms)
-    originalInterval = TrackedInterval(hcat(fill(-1.,ndim), fill(1.,ndim))')
+    #set precision of TrackedInterval
+    if precision <= 11
+        polys = Vector{Array{Float16,dim}}(undef, dim)
+        errs = Float16.(errs)
+        a = Float16.(a)
+        b = Float16.(b)
+    elseif precision <= 24
+        polys = Vector{Array{Float32,dim}}(undef, dim)
+        errs = Float32.(errs)
+        a = Float32.(a)
+        b = Float32.(b)
+    elseif precision <= 53
+        originalInterval = TrackedInterval(hcat(fill(-1.,ndim), fill(1.,ndim))')
+    else
+        setprecision(precision)
+        originalInterval = TrackedInterval(hcat(BigFloat(fill(-1.,ndim)), BigFloat(fill(1.,ndim)))')
+    end
     solverOptions = SolverOptions()
     solverOptions.verbose = verbose
     solverOptions.exact = exact
@@ -1221,7 +1236,7 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
         println("Finding roots...")
     end
 
-    b1, b2 = solvePolyRecursive(Ms, originalInterval, errors, solverOptions)
+    b1, b2 = solvePolyRecursive(Ms, originalInterval, errors, solverOptions,precision)
 
     boundingIntervals = append!(b1, b2)
     roots = []
