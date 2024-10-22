@@ -415,7 +415,6 @@ function createMeshgrid(arrays...)
             full_reps = prod(dims[1:iter-1])
         catch end
         # Repeat the current array into a matrix with height and width determined by the sizes before and after
-        newArray = arrays[iter]
         endArray = repeat(arrays[iter],full_reps,reps)
         # Reshape it to the meshgrid array and push it onto our final list
         push!(finals,reshape(endArray',Tuple(reverse(dims)))) 
