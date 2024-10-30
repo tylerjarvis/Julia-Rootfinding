@@ -2,6 +2,8 @@ include("../../Julia-Rootfinding/src/ChebyshevSubdivisionSolver.jl")
 using Test
 
 function test_all_ChebyshevSubdivisionSolver()
+    global type = Float64
+    global precision = 53
     @testset "All tests in ChebyshevSubdivisionSolverTest.jl" begin
         test_getLinearTerms()
         test_linearCheck1()
@@ -24,6 +26,8 @@ function test_all_ChebyshevSubdivisionSolver()
 end
 
 function test_getLinearTerms()
+    global type = Float64
+    global precision = 53
     @testset "getLinearTerms unit tests" begin
         M_1 = reshape(collect(0:15),(2,2,2,2))
         A_1_expected = [8; 4; 2; 1]
@@ -50,6 +54,8 @@ function test_getLinearTerms()
 end
 
 function test_linearCheck1()
+    global type = Float64
+    global precision = 53
     @testset "linearCheck1 unit tests" begin
         A1 = [-1.12215095; -0.10896646; -0.20570858;;
                 1.61496991;  0.36087537;  0.70263142;;
@@ -138,6 +144,8 @@ function test_linearCheck1()
 end
 
 function test_reduceSolvedDim()
+    global type = Float64
+    global precision = 53
     @testset "reduceSolvedDim unit tests" begin 
         # 2d case
         Ms_1 = [[3.1;-2;34;.000001;.0002;;4;1;2;.0002;.0102], [9.836;3.1;-.031;.001;-.045;.00002;;15.2344;42.234;2;4;3;.0023]]
@@ -240,6 +248,8 @@ function test_reduceSolvedDim()
 end
 
 function test_transformChebInPlace1D()
+    global type = Float64
+    global precision = 53
     @testset "transformChebInPlace1D unit tests" begin
         alpha_1 = 0.8043138619259216
         beta_1 = 0.19568613807407842
@@ -600,6 +610,8 @@ function test_transformChebInPlace1D()
 end
 
 function test_transformChebInPlaceND()
+    global type = Float64
+    global precision = 53
     @testset "transformChebInPlaceND unit tests" begin
         alpha_1 = 0.8043138619259216
         beta_1 = 0.19568613807407842
@@ -759,6 +771,8 @@ function test_transformChebInPlaceND()
 end
 
 function test_getTransformationError()
+    global type = Float64
+    global precision = 53
     @testset "getTransformationError unit tests" begin
         M_1 = [0; -.939093750; 0; -.0138146058; -.00106830799; -.0137307266;;
                 0; -1.05695980; 0; -.0149230031; .00237984138; -.0298460061;;
@@ -825,6 +839,8 @@ function test_getTransformationError()
 end
 
 function test_transformCheb()
+    global type = Float64
+    global precision = 53
     @testset "test_transformCheb unit tests" begin
         M_1 = [-4.51013026e-01;  9.19663154e-02;  3.28195239e-03; -1.11200236e-04;
                         -1.98249324e-06;  4.02883056e-08;  4.78752802e-10; -6.94867420e-12;
@@ -966,6 +982,8 @@ function test_transformCheb()
 end
 
 function test_transformChebToInterval()
+    global type = Float64
+    global precision = 53
     @testset "transformChebToInterval unit tests" begin
         macheps = 2^-52
         Ms_1 = [[ 0.87538780085034118006; 1.36733727263328685986; -0.20667177063640954082; -0.04896263625573957917; 0.00360945024389840467; 0.00050772958892000960; -0.00002481750254547087; -0.00000248561588318162; 0.00000009093565308793; 0.00000000707398165416; -0.00000000020683624682; -0.00000000001315504499; 0.00000000000032036243; 0.00000000000001723239; -0.00000000000000035961]]
@@ -1184,6 +1202,8 @@ function test_transformChebToInterval()
 end
 
 function test_getSubdivisionDims()
+    global type = Float64
+    global precision = 53
     @testset "getSubdivisionDims unit tests" begin
         trackedInterval_1 = TrackedInterval([-0.63673497;  0.75388677;;
                                              -1.;          0.24771388;;
@@ -1393,6 +1413,8 @@ function test_getSubdivisionDims()
 end
 
 function test_getInverseOrder()
+    global type = Float64
+    global precision = 53
     @testset "getInverseOrder unit tests" begin
         @test (1, 3, 2, 4, 5, 7, 6, 8) == getInverseOrder([2; 4; 3])
         @test getInverseOrder([2; 1; 3]) == (1, 2, 5, 6, 3, 4, 7, 8)
@@ -1415,6 +1437,8 @@ function test_getInverseOrder()
 end
 
 function test_getSubdivisionIntervals()
+    global type = Float64
+    global precision = 53
     @testset "getSubdivision Intervals unit tests" begin
         trackedInterval_1 = TrackedInterval([-0.63673497;  0.75388677;;
                                                         -1.;          0.24771388;;
@@ -5831,6 +5855,8 @@ function test_getSubdivisionIntervals()
 end                                                                                    
 
 function test_zoomInOnIntervalIter()
+    global type = Float64
+    global precision = 53
     @testset "zoomInOnIntervalIter unit tests" begin
         Ms_1 = [[ 1.07142165e+00;  1.61772562e-01;;
                         5.75461946e-02;  5.61619043e-01;;;
@@ -7180,6 +7206,8 @@ function test_zoomInOnIntervalIter()
 end
 
 function test_boundingIntervalLinearSystem()
+    global type = Float64
+    global precision = 53
     @testset "BoundingIntervalLinearSystem unit tests" begin
         Ms_1 = [[ 1.07142165e+00;  1.61772562e-01;;
                         5.75461946e-02;  5.61619043e-01;;;
@@ -9215,6 +9243,8 @@ function test_boundingIntervalLinearSystem()
 end
 
 function test_isExteriorInterval()
+    global type = Float64
+    global precision = 53
     @testset "isExteriorInterval unit tests" begin
         trackedInterval_1 = TrackedInterval([-.31111222222;-.3;;3;4;;3;4])
         trackedInterval_2 = TrackedInterval([-.31111222222;-.2;;4;5;;4;5])
@@ -9226,6 +9256,8 @@ function test_isExteriorInterval()
 end
 
 function test_trimMs()
+    global type = Float64
+    global precision = 53
     @testset "trim_Ms unit tests" begin
         # doesn't trim
         Ms_1 = [[-1.19628962e-01;  4.78500000e+00;  1.36125000e+00;;       
@@ -10864,6 +10896,8 @@ function test_trimMs()
 end
 
 function test_solvePolyRecursive()
+    global type = Float64
+    global precision = 53
     @testset "solvePolyRecursive unit tests" begin
         Ms_1 = [[0.;0;0;1;;0;0;0;0;;1;0;0;0],[0.;1;1;;-1;0;0]]
         tInterval_1 = TrackedInterval([-1.;1;;-1;1])
@@ -12171,6 +12205,8 @@ function test_solvePolyRecursive()
 end
 
 function test_solveChebyshevSubdivision()
+    global type = Float64
+    global precision = 53
     @testset "solveChebyshevSubdivision unit tests" begin
         Ms_1 = [[0.;0;0;1;;0;0;0;0;;1;0;0;0],[0.;1;1;;-1;0;0]]
         errs_1 = [0.,0]

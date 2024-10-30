@@ -2,6 +2,7 @@ include("QuadraticCheck.jl")
 include("StructsWithTheirFunctions/SolverOptions.jl")
 include("StructsWithTheirFunctions/TrackedInterval.jl")
 using LinearAlgebra
+using GenericLinearAlgebra
 using Logging
 using RecursiveArrayTools
 
@@ -17,7 +18,7 @@ end
 # TODO: import from a library instead
 function homebrewSplit(a)
     """Returns x,y such that a = x+y exactly and a = x in floating point."""
-    c = (2^27 + 1) * a
+    c = (type(2)^27 + 1) * a
     x = c-(c-a)
     y = a-x
     return x,y
@@ -99,11 +100,11 @@ function linearCheck1(totalErrs,A,consts)
         
     """
     dim = length(A[1,:])
-    a = -ones(dim) * Inf
-    b = ones(dim) * Inf
+    a = -type.(ones(dim) * Inf)
+    b = type.(ones(dim) * Inf)
     for row in 1:dim
         for col in 1:dim
-            if A[col,row] != 0 #Don't bother running the check if the linear term is too small.
+            if abs(A[col,row]) > type(2)^-(precision-1) #Don't bother running the check if the linear term is too small.
                 v1 = totalErrs[row] / abs(A[col,row]) - 1
                 v2 = 2 * consts[row] / A[col,row]
                 if v2 >= 0
@@ -171,14 +172,14 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     """
     coeffs_shape = size(coeffs)
     last_dim_length = coeffs_shape[end]
-    transformedCoeffs = zeros(coeffs_shape)
+    transformedCoeffs = zeros(type,coeffs_shape)
     # Initialize three arrays to represent subsequent columns of the transformation matrix.
-    arr1 = zeros(last_dim_length)
-    arr2 = zeros(last_dim_length)
-    arr3 = zeros(last_dim_length)
+    arr1 = zeros(type,last_dim_length)
+    arr2 = zeros(type,last_dim_length)
+    arr3 = zeros(type,last_dim_length)
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
-    arr1[1] = 1.
+    arr1[1] = 1
 
     transformedCoeffs[1] = coeffs[1] # arr1[0] * coeffs[0] (matrix multiplication step)
     #The second column of C. Note that T_1(alpha*x + beta) = alpha*T_1(x) + beta*T_0(x).
@@ -212,7 +213,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+        if abs(finalVal) > type(2)^-(precision-1) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             transformedCoeffs[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -253,14 +254,14 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         return transformChebInPlace1D1D(coeffs,alpha,beta)
     end
     last_dim_length = coeffs_shape[end]
-    transformedCoeffs = zeros(coeffs_shape)
+    transformedCoeffs = zeros(type, coeffs_shape)
     # Initialize three arrays to represent subsequent columns of the transformation matrix.
-    arr1 = zeros(last_dim_length)
-    arr2 = zeros(last_dim_length)
-    arr3 = zeros(last_dim_length)
+    arr1 = zeros(type, last_dim_length)
+    arr2 = zeros(type, last_dim_length)
+    arr3 = zeros(type, last_dim_length)
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
-    arr1[1] = 1.
+    arr1[1] = 1
 
     # Get the correct number of colons for indexing transformedCoeffs
     # idxs = []
@@ -306,7 +307,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > 1e-16 #TODO: Justify this val!
+        if abs(finalVal) > type(2)^(-(precision-1)) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             newSlices[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -388,7 +389,7 @@ function getTransformationError(M,dim)
         The upper bound for the error associated with the transformation of dimension dim in M
     """
 
-    machEps = 2^-52
+    machEps = type(2)^-(precision-1)
     error = reverse(size(M))[dim] * machEps * sum(abs.(M))
     return error #TODO: Figure out a more rigurous bound!
 end
@@ -495,16 +496,16 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
         Whether we should throw out the interval entirely
     """
     if finalStep
-        errors = zeros(size(errors))
+        errors = zeros(type, size(errors))
     end
     s=1
     dim = length(Ms)
     #Some constants we use here
-    widthToAdd = 1e-10 #Add this width to the new intervals we find to avoid rounding error throwing out roots
-    minZoomForChange = 0.99 #If the volume doesn't shrink by this amount say that it hasn't changed
-    minZoomForBaseCaseEnd = 0.4^dim #If the volume doesn't change by at least this amount when running with no error, stop
+    widthToAdd = type(1e-10) #Add this width to the new intervals we find to avoid rounding error throwing out roots
+    minZoomForChange = type(0.99) #If the volume doesn't shrink by this amount say that it hasn't changed
+    minZoomForBaseCaseEnd = type(0.4)^dim #If the volume doesn't change by at least this amount when running with no error, stop
     #Get the matrix of the linear terms
-    A = Matrix{Float64}(reduce(hcat,[getLinearTerms(M) for M in Ms]))
+    A = Matrix{type}(reduce(hcat,[getLinearTerms(M) for M in Ms]))
     #Get the Vector of the constant terms
     consts = [M[1] for M in Ms]'
     #Get the Error of everything else combined.
@@ -518,7 +519,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     for i in 1:dim
         scaleVal = maximum(abs.(A[:,i]))
         if scaleVal > 0
-            s = 2. ^Int(floor(log2(abs(scaleVal))))
+            s = type(2) ^Int(floor(log2(abs(scaleVal))))
             A[:,i] /= s
             consts[i] /= s
             totalErrs[i] /= s
@@ -528,11 +529,11 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
         end
     end
     #Precondition the columns. (AP)X = B -> A(PX) = B. So scale columns, solve, then scale the solution.
-    colScaler = ones(dim)
+    colScaler = ones(type, dim)
     for i in 1:dim
         scaleVal = maximum(abs.(A[i,:]))
         if scaleVal > 0
-            s = 2^(-floor(log2(abs(scaleVal))))
+            s = type(2)^(-floor(log2(abs(scaleVal))))
             colScaler[i] = s
             totalErrs += abs.(A[i,:])' * (s - 1)
             A[i,:] *= s
@@ -546,7 +547,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     a_orig = a0
     b_orig = b0
     U,S,Vh = svd(A')
-    Ainv = ((1 ./ S).*Vh')' * (U')
+    Ainv = ((type(1) ./ S).*Vh')' * (U')
     center = -Ainv*consts'
     wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
     for i = 0:1
@@ -576,7 +577,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
 
         forceShouldStop = finalStep && !wellConditioned
         # Calculate the "changed" variable
-        newRatio = prod(b - a) ./ 2^dim
+        newRatio = prod(b - a) ./ type(2)^dim
         changed = false
         if throwOut
             changed = true
@@ -645,8 +646,8 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
     #Don't zoom in if we're already at a point
     for curr_dim in 1:dim
         if trackedInterval.interval[1,curr_dim] == trackedInterval.interval[2,curr_dim]
-            interval[1,curr_dim] = -1.
-            interval[2,curr_dim] = 1.
+            interval[1,curr_dim] = type(-1)
+            interval[2,curr_dim] = type(1)
         end
     end
     #We can't throw out on the final step
@@ -845,15 +846,15 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     
     for thisDim in dimSet
         newMidpoint = trackedInterval.nextTransformPoints[thisDim]
-        newSubinterval = ones(size(trackedInterval.interval)) #TODO: Make this outside for loop
-        newSubinterval[1,:] .= -1.
+        newSubinterval = ones(type, size(trackedInterval.interval)) #TODO: Make this outside for loop
+        newSubinterval[1,:] .= -1
         newIntervals = []
         for oldInterval in allIntervals
             newInterval1 = copyInterval(oldInterval)
             newInterval2 = copyInterval(oldInterval)
-            newSubinterval[:,thisDim] = [-1.; newMidpoint]
+            newSubinterval[:,thisDim] = [-1; newMidpoint]
             addTransform(newInterval1,newSubinterval)
-            newSubinterval[:,thisDim] = [newMidpoint; 1.]
+            newSubinterval[:,thisDim] = [newMidpoint; 1]
             addTransform(newInterval2,newSubinterval)
             newInterval1.nextTransformPoints[thisDim] = 0
             newInterval2.nextTransformPoints[thisDim] = 0
@@ -870,7 +871,7 @@ function isExteriorInterval(originalInterval,trackedInterval)
     return any(getIntervalForCombining(trackedInterval) .== getIntervalForCombining(originalInterval))
 end
 
-function trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=0)
+function trimMs(Ms, errors, relApproxTol=type(1e-3), absApproxTol=type(2)^-(precision-1))
     """Reduces the degree of each chebyshev approximation M when doing so has negligible error.
 
     The coefficient matrices are trimmed in place. This function iteratively looks at the highest
@@ -1208,7 +1209,7 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
 
     # Solve
     ndim = length(Ms)
-    originalInterval = TrackedInterval(hcat(fill(-1.,ndim), fill(1.,ndim))')
+    originalInterval = TrackedInterval(hcat(fill(type(-1),ndim), fill(type(1),ndim))')
     solverOptions = SolverOptions()
     solverOptions.verbose = verbose
     solverOptions.exact = exact
