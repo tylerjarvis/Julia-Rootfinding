@@ -112,15 +112,17 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         errs = Float16.(errs)
         a = Float16.(a)
         b = Float16.(b)
+        precision = 11
         type = Float16
     elseif precision <= 24
         polys = [Float32.(arr) for arr in polys]
         errs = Float32.(errs)
         a = Float32.(a)
         b = Float32.(b)
+        precision = 24
         type = Float32
     elseif precision <= 53
-
+        precision = 53
     else
         setprecision(precision)
         polys = [BigFloat.(arr) for arr in polys]
