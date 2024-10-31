@@ -1,7 +1,7 @@
 include("ChebyshevApproximator.jl")
 include("ChebyshevSubdivisionSolver.jl")
 
-function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5)
+function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5, roundoff=53)
     """Finds and returns the roots of a system of functions on the search interval [a,b].
 
     Generates an approximation for each function using Chebyshev polynomials on the interval given,
@@ -103,6 +103,37 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         end
     end
 
+    # Set precision for Solver
+    global type = Float64
+    global precision = roundoff
+
+    if precision <= 11
+        polys = [Float16.(arr) for arr in polys]
+        errs = Float16.(errs)
+        a = Float16.(a)
+        b = Float16.(b)
+        precision = 11
+        type = Float16
+    elseif precision <= 24
+        polys = [Float32.(arr) for arr in polys]
+        errs = Float32.(errs)
+        a = Float32.(a)
+        b = Float32.(b)
+        precision = 24
+        type = Float32
+    elseif precision <= 53
+        precision = 53
+    else
+        setprecision(precision)
+        polys = [BigFloat.(arr) for arr in polys]
+        errs = BigFloat.(errs)
+        a = BigFloat.(a)
+        b = BigFloat.(b)
+        type = BigFloat
+    end
+
+    minBoundingIntervalSize = type(minBoundingIntervalSize)
+    
     if verbose
         print("Searching on interval ")
         println([[a[i],b[i]] for i in 1:dim])
@@ -122,7 +153,7 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
             #TODO: Do we need to combine bounding boxes in this step of the recursion as well?
             #      For now it seems safe enough to assume we won't have any roots on the midpoints.
             val = reverse(val)
-            midPoint = (a + b) .* 0.51234912839471234
+            midPoint = (a + b) .* type(0.51234912839471234)
             newA = ifelse.(val,midPoint,a)
             newB = ifelse.(val,b,midPoint)
             #Solve recursively
@@ -132,7 +163,7 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
                 print(" ")
                 println(newB)
             end
-            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize)
+            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize, roundoff=roundoff)
             if length(roots) != 0
                 append!(boundingBoxes,boxes)
                 append!(yroots,roots)
@@ -157,7 +188,7 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         newBox = transformPoints(box.finalInterval',a,b)
         newA, newB = newBox[:,1],newBox[:,2]
 
-        relMaxSize = minBoundingIntervalSize .* maximum(hcat(abs.(a),abs.(b),fill(1,length(a))),dims=2)
+        relMaxSize = minBoundingIntervalSize .* maximum(hcat(abs.(a),abs.(b),fill(type(1),length(a))),dims=2)
         if all(newB - newA .> relMaxSize)
             #Re-solve this box
             if verbose
@@ -166,7 +197,7 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
                 print(" ")
                 println(newB)
             end
-            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize)
+            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize, roundoff=roundoff)
             if length(roots) > 0
                 append!(finalRoots,roots)
                 append!(finalBoxes,boxes)

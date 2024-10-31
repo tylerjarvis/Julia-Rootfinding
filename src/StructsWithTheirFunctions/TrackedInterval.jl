@@ -50,7 +50,7 @@ mutable struct TrackedInterval
     root # = [] (by default)
     function TrackedInterval(interval)
         ndim = Int(length(interval)/2)
-        new(interval,interval,[],ndim,false,false,false,[],false,fill(0.0394555475981047,ndim),[],[],[],[],[], 1, 0, false,[])
+        new(interval,interval,[],ndim,false,false,false,[],false,fill(type(0.0394555475981047),ndim),[],[],[],[],[], 1, 0, false,[])
     end
 end
 
@@ -75,9 +75,9 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
         return
     elseif any(subInterval[1,:] > subInterval[2,:])
         #If we can't throw the interval out, it should be bounded by [-1,1].
-        subInterval[1,:] = min.(subInterval[1,:], ones(length(subInterval[1,:])))
-        subInterval[1,:] = max.(subInterval[1,:], -ones(length(subInterval[1,:])))
-        subInterval[2,:] = min.(subInterval[2,:], ones(length(subInterval[1,:])))
+        subInterval[1,:] = min.(subInterval[1,:], ones(type,length(subInterval[1,:])))
+        subInterval[1,:] = max.(subInterval[1,:], -ones(type,length(subInterval[1,:])))
+        subInterval[2,:] = min.(subInterval[2,:], ones(type,length(subInterval[1,:])))
         subInterval[2,:] = max.(subInterval[2,:], subInterval[1,:])
     end
     # Get the alpha and beta associated with the transformation in each dimension
@@ -85,8 +85,8 @@ function addTransform(trackedInterval::TrackedInterval, subInterval)
     b1 = subInterval[2,:] # all the lower bounds and upper bounds of the new interval, respectively
     a2 = trackedInterval.interval[1,:]
     b2 = trackedInterval.interval[2,:] # all the lower bounds and upper bounds of the original interval
-    alpha1, beta1 = (b1-a1)/2, (b1+a1)/2
-    alpha2, beta2 = (b2-a2)/2, (b2+a2)/2
+    alpha1, beta1 = (b1-a1)/type(2), (b1+a1)/type(2)
+    alpha2, beta2 = (b2-a2)/type(2), (b2+a2)/type(2)
     push!(trackedInterval.transforms,hcat(alpha1, beta1))
     #Update the lower and upper bounds of the current interval
     for dim in 0:trackedInterval.ndim-1
@@ -117,7 +117,7 @@ function getFinalInterval(trackedInterval::TrackedInterval)
         The final point to be reported as the root of the interval
     """
     finalInterval = trackedInterval.topInterval'
-    finalIntervalError = zeros(size(finalInterval))
+    finalIntervalError = zeros(type,size(finalInterval))
     transformsToUse = trackedInterval.finalStep ? trackedInterval.preFinalTransforms : trackedInterval.transforms
     for transform in reverse(transformsToUse) # Iteratively apply each saved transform
         alpha = transform[:,1]
@@ -130,10 +130,10 @@ function getFinalInterval(trackedInterval::TrackedInterval)
     finalInterval = finalInterval'
     finalIntervalError = finalIntervalError'
     trackedInterval.finalInterval = finalInterval + finalIntervalError # Add the error and save the result.
-    trackedInterval.finalAlpha, alphaError = twoSum(-finalInterval[1,:] ./ 2, finalInterval[2,:] ./ 2)
-    trackedInterval.finalAlpha += alphaError + (finalIntervalError[2,:] - finalIntervalError[1,:]) ./ 2
-    trackedInterval.finalBeta, betaError = twoSum(finalInterval[1,:] ./ 2, finalInterval[2,:] ./ 2)
-    trackedInterval.finalBeta += betaError + (finalIntervalError[2,:] + finalIntervalError[1,:]) ./ 2
+    trackedInterval.finalAlpha, alphaError = twoSum(-finalInterval[1,:] ./ type(2), finalInterval[2,:] ./ type(2))
+    trackedInterval.finalAlpha += alphaError + (finalIntervalError[2,:] - finalIntervalError[1,:]) ./ type(2)
+    trackedInterval.finalBeta, betaError = twoSum(finalInterval[1,:] ./ type(2), finalInterval[2,:] ./ type(2))
+    trackedInterval.finalBeta += betaError + (finalIntervalError[2,:] + finalIntervalError[1,:]) ./ type(2)
     return trackedInterval.finalInterval
 end
 
@@ -146,10 +146,10 @@ function getFinalPoint(trackedInterval::TrackedInterval)
         The final point to be reported as the root of the interval
     """
     if !trackedInterval.finalStep  # If no final step, use the midpoint of the calculated final interval.
-        trackedInterval.root = (trackedInterval.finalInterval[1,:] .+ trackedInterval.finalInterval[2,:]) ./ 2
+        trackedInterval.root = (trackedInterval.finalInterval[1,:] .+ trackedInterval.finalInterval[2,:]) ./ type(2)
     else  # If using the final step, recalculate the final interval using post-final transforms.
         finalInterval = trackedInterval.topInterval'
-        finalIntervalError = zeros(size(finalInterval))
+        finalIntervalError = zeros(type,size(finalInterval))
         transformsToUse = trackedInterval.transforms
         for transform in reverse(transformsToUse)
             alpha = transform[:,1]
@@ -160,7 +160,7 @@ function getFinalPoint(trackedInterval::TrackedInterval)
             finalIntervalError += temp
         end
         finalInterval = finalInterval' .+ finalIntervalError'
-        trackedInterval.root = (finalInterval[1,:] .+ finalInterval[2,:]) ./ 2  # Return the midpoint
+        trackedInterval.root = (finalInterval[1,:] .+ finalInterval[2,:]) ./ type(2)  # Return the midpoint
     end
     return trackedInterval.root
 end
@@ -232,7 +232,7 @@ function overlapsWith(trackedInterval::TrackedInterval, otherInterval::TrackedIn
     return true
 end
 
-function isPoint(trackedInterval::TrackedInterval, macheps = 2^-52)
+function isPoint(trackedInterval::TrackedInterval, macheps = type(2)^-(precision-1))
     """Determines if the current interval has essentially length 0 in each dimension."""
     return all(abs.(trackedInterval.interval[1,:] - trackedInterval.interval[2,:]) .< macheps)
 end
