@@ -12,11 +12,13 @@ include("TrackedIntervalTest.jl")
 include("QuadraticCheckTest.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
 include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/SolverOptions.jl")
+include("PolynomialTests.jl")
 function test_all()
     test_all_ChebyshevApproximator()
     test_all_ChebyshevSubdivisionSolver()
     test_all_TrackedInterval()
     test_all_QuadraticCheck()
+    test_all_Polynomial()
 end
 
 # Uncomment the lines below to run specific test sets
@@ -50,7 +52,7 @@ end
 # test_transformCheb()
 # test_transformChebToInterval()
 # test_getSubdivisionDims()
-test_getInverseOrder()
+# test_getInverseOrder()
 # test_getSubdivisionIntervals()
 # test_boundingIntervalLinearSystem()
 # test_zoomInOnIntervalIter()
@@ -82,3 +84,10 @@ test_getInverseOrder()
 # test_get_fixed_vars()
 # test_quadraticCheckND()
 # test_quadraticCheck()
+
+# ============================================ PolynomialTests Tests ============================================
+
+# test_all_Polynomial()
+
+# test_construction()
+# test_eval_MultiPower()
