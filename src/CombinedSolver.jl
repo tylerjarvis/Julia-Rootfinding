@@ -1,5 +1,6 @@
 include("ChebyshevApproximator.jl")
 include("ChebyshevSubdivisionSolver.jl")
+include("StructsWithTheirFunctions/Polynomial.jl")
 
 function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5, roundoff=53)
     """Finds and returns the roots of a system of functions on the search interval [a,b].
