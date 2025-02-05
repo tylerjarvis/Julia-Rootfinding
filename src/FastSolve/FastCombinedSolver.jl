@@ -1,8 +1,7 @@
-include("ChebyshevApproximator.jl")
-include("ChebyshevSubdivisionSolver.jl")
-include("StructsWithTheirFunctions/Polynomial.jl")
+include("FastChebyshevApproximator.jl")
+include("FastChebyshevSubdivisionSolver.jl")
 
-function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5)
+function fast_solve(funcs,a,b; verbose, returnBoundingBoxes, exact, minBoundingIntervalSize)
     """Finds and returns the roots of a system of functions on the search interval [a,b].
 
     Generates an approximation for each function using Chebyshev polynomials on the interval given,
@@ -90,32 +89,15 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
         print(" ")
     end
 
-    # Set precision for Solver
-    global type = Float64
-    global precision = roundoff
-
-    if precision <= 11
-        precision = 11
-        type = Float16
-    elseif precision <= 24
-        precision = 24
-        type = Float32
-    elseif precision <= 53
-        return solve_fast(args)
-    else
-        setprecision(precision)
-        type = BigFloat
-    end
-
     for i in 1:dim
         if typeof(funcs[i]) == MultiPower
-            polys[i] = multipower_to_cheb(funcs[i].coeff)
-            errs[i] = type(2)^-(precision-1)
+            polys[i] = fast_multipower_to_cheb(funcs[i].coeff)
+            errs[i] = 2. ^-52
         elseif typeof(funcs[i]) == MultiCheb
             polys[i] = funcs[i].coeff
-            errs[i] = type(2)^-(precision-1)
+            errs[i] = 2. ^-52
         else
-            polys[i], errs[i] = chebApproximate(funcs[i],a,b)
+            polys[i], errs[i] = fast_chebApproximate(funcs[i],a,b)
         end
         if verbose
             print(i)
@@ -129,25 +111,18 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
         end
     end
 
-    polys = [type.(arr) for arr in polys]
-    errs = type.(errs)
-    a = type.(a)
-    b = type.(b)
-
-    minBoundingIntervalSize = type(minBoundingIntervalSize)
-    
     if verbose
         print("Searching on interval ")
         println([[a[i],b[i]] for i in 1:dim])
     end
 
     #Solve the Chebyshev polynomial system
-    yroots, boundingBoxes = solveChebyshevSubdivision(polys,errs;verbose=verbose,returnBoundingBoxes=true,exact=exact,
+    yroots, boundingBoxes = fast_solveChebyshevSubdivision(polys,errs;verbose=verbose,returnBoundingBoxes=true,exact=exact,
                 constant_check=true, low_dim_quadratic_check=true, all_dim_quadratic_check=false)
 
     #If the bounding box is the entire interval, subdivide it!
     usingSubdivision = all(b-a .> minBoundingIntervalSize)
-    if length(boundingBoxes) == 1 && all(finalDimSize(boundingBoxes[1]) .== 2) && usingSubdivision
+    if length(boundingBoxes) == 1 && all(fast_finalDimSize(boundingBoxes[1]) .== 2) && usingSubdivision
         #Subdivide the interval and resolve to get better resolution across different parts of the interval
         yroots, boundingBoxes = [], []
         for val in Iterators.product(Iterators.repeated(([false,true]), length(a))...)
@@ -155,7 +130,7 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
             #TODO: Do we need to combine bounding boxes in this step of the recursion as well?
             #      For now it seems safe enough to assume we won't have any roots on the midpoints.
             val = reverse(val)
-            midPoint = (a + b) .* type(0.51234912839471234)
+            midPoint = (a + b) .* 0.51234912839471234
             newA = ifelse.(val,midPoint,a)
             newB = ifelse.(val,b,midPoint)
             #Solve recursively
@@ -165,7 +140,7 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
                 print(" ")
                 println(newB)
             end
-            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize, roundoff=roundoff)
+            roots, boxes = fast_solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize)
             if length(roots) != 0
                 append!(boundingBoxes,boxes)
                 append!(yroots,roots)
@@ -187,10 +162,10 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
     for box in boundingBoxes
         #Get the relative max size in each dimension. If a or b > 1 in magnitude, minBoundingIntervalSize is a relative number.
         #If they are < 1 in magnitude, it is an absolute number.
-        newBox = transformPoints(box.finalInterval',a,b)
+        newBox = fast_transformPoints(box.finalInterval',a,b)
         newA, newB = newBox[:,1],newBox[:,2]
 
-        relMaxSize = minBoundingIntervalSize .* maximum(hcat(abs.(a),abs.(b),fill(type(1),length(a))),dims=2)
+        relMaxSize = minBoundingIntervalSize .* maximum(hcat(abs.(a),abs.(b),fill(1,length(a))),dims=2)
         if all(newB - newA .> relMaxSize)
             #Re-solve this box
             if verbose
@@ -199,21 +174,21 @@ function fast_solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exa
                 print(" ")
                 println(newB)
             end
-            roots, boxes = solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize, roundoff=roundoff)
+            roots, boxes = fast_solve(funcs, newA, newB; verbose=verbose, returnBoundingBoxes=true, exact=exact, minBoundingIntervalSize = minBoundingIntervalSize)
             if length(roots) > 0
                 append!(finalRoots,roots)
                 append!(finalBoxes,boxes)
             end
         else
             #Transform back
-            push!(finalBoxes,transformPoints(box.finalInterval',a,b)')
+            push!(finalBoxes,fast_transformPoints(box.finalInterval',a,b)')
             #Get the roots from this box
             if length(box.possibleDuplicateRoots) > 0
                 for dup in box.possibleDuplicateRoots
-                    push!(finalRoots,transformPoints(dup,a,b))
+                    push!(finalRoots,fast_transformPoints(dup,a,b))
                 end
             else
-                push!(finalRoots,transformPoints(getFinalPoint(box),a,b))
+                push!(finalRoots,fast_transformPoints(fast_getFinalPoint(box),a,b))
             end
         end
     end

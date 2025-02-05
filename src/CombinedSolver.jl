@@ -1,7 +1,7 @@
 include("ChebyshevApproximator.jl")
 include("ChebyshevSubdivisionSolver.jl")
 include("StructsWithTheirFunctions/Polynomial.jl")
-include("FastSolve/CombinedSolver.jl")
+include("FastSolve/FastCombinedSolver.jl")
 
 function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=false, minBoundingIntervalSize=1e-5, roundoff=53)
     """Finds and returns the roots of a system of functions on the search interval [a,b].
@@ -102,7 +102,7 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         precision = 24
         type = Float32
     elseif precision <= 53
-        return fast_solve(args)
+        return fast_solve(funcs,a,b; verbose=verbose, returnBoundingBoxes=returnBoundingBoxes, exact=exact, minBoundingIntervalSize=minBoundingIntervalSize)
     else
         setprecision(precision)
         type = BigFloat

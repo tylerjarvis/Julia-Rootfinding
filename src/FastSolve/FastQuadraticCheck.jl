@@ -1,6 +1,6 @@
 using IterTools
 
-function get_fixed_vars(dim)
+function fast_get_fixed_vars(dim)
     " Returns Julia indicies of fixed vars "
     if dim < 2
         return []
@@ -8,7 +8,7 @@ function get_fixed_vars(dim)
     return reduce(vcat,[collect(IterTools.subsets(1:dim,Val{i}())) for i in dim-1:-1:1])
 end
 
-function quadraticCheck2D(test_coeff,tol)
+function fast_quadraticCheck2D(test_coeff,tol)
     if ndims(test_coeff) != 2
         return false
     end
@@ -37,7 +37,7 @@ function quadraticCheck2D(test_coeff,tol)
     k0 = c[1]-c[4]-c[6]
     k3 = 2*c[4]
     k5 = 2*c[6]
-    function eval_func(x,y)
+    function fast_eval_func(x,y)
         return k0 + (c[2] + k3 * x + c[5] * y) * x  + (c[3] + k5 * y) * y
     end
 
@@ -52,28 +52,28 @@ function quadraticCheck2D(test_coeff,tol)
 
     min_satisfied, max_satisfied = false,false
     #Check all the corners
-    eval = eval_func(interval[1][1], interval[1][2])
+    eval = fast_eval_func(interval[1][1], interval[1][2])
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
 
-    eval = eval_func(interval[2][1], interval[1][2])
+    eval = fast_eval_func(interval[2][1], interval[1][2])
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
 
-    eval = eval_func(interval[1][1], interval[2][2])
+    eval = fast_eval_func(interval[1][1], interval[2][2])
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
 
-    eval = eval_func(interval[2][1], interval[2][2])
+    eval = fast_eval_func(interval[2][1], interval[2][2])
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
@@ -88,7 +88,7 @@ function quadraticCheck2D(test_coeff,tol)
         x = interval[1][1]
         y = -(c[3] + c[5]*x)/cc5
         if interval[1][2] < y < interval[2][2]
-            eval = eval_func(x,y)
+            eval = fast_eval_func(x,y)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -98,7 +98,7 @@ function quadraticCheck2D(test_coeff,tol)
         x = interval[2][1]
         y = -(c[3] + c[5]*x)/cc5
         if interval[1][2] < y < interval[2][2]
-            eval = eval_func(x,y)
+            eval = fast_eval_func(x,y)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -115,7 +115,7 @@ function quadraticCheck2D(test_coeff,tol)
         y = interval[1][2]
         x = -(c[2] + c[5]*y)/cc3
         if interval[1][1] < x < interval[2][1]
-            eval = eval_func(x,y)
+            eval = fast_eval_func(x,y)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -137,7 +137,7 @@ function quadraticCheck2D(test_coeff,tol)
 
     #Check the interior value
     if interval[1][1] < int_x < interval[2][1] && interval[1][2] < int_y < interval[2][2]
-        eval = eval_func(int_x,int_y)
+        eval = fast_eval_func(int_x,int_y)
         min_satisfied = min_satisfied || eval < other_sum
         max_satisfied = max_satisfied || eval > -other_sum
         if min_satisfied && max_satisfied
@@ -148,7 +148,7 @@ function quadraticCheck2D(test_coeff,tol)
     return true
 end
 
-function quadraticCheck3D(test_coeff,tol)
+function fast_quadraticCheck3D(test_coeff,tol)
     """One of subinterval_checks
 
     Finds the min of the absolute value of the quadratic part, and compares to the sum of the
@@ -214,7 +214,7 @@ function quadraticCheck3D(test_coeff,tol)
     k7 = 2*c[8]
     k8 = 2*c[9]
     k9 = 2*c[10]
-    function eval_func(x,y,z)
+    function fast_eval_func(x,y,z)
         return k0 + (c[2] + k7 * x + c[5] * y + c[6] * z) * x + (c[3] + k8 * y + c[7] * z) * y + (c[4] + k9 * z) * z
     end
 
@@ -255,49 +255,49 @@ function quadraticCheck3D(test_coeff,tol)
 
     min_satisfied, max_satisfied = false,false
     #Check all the corners
-    eval = eval_func(x0, y0, z0)
+    eval = fast_eval_func(x0, y0, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x1, y0, z0)
+    eval = fast_eval_func(x1, y0, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x0, y1, z0)
+    eval = fast_eval_func(x0, y1, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x0, y0, z1)
+    eval = fast_eval_func(x0, y0, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x1, y1, z0)
+    eval = fast_eval_func(x1, y1, z0)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x1, y0, z1)
+    eval = fast_eval_func(x1, y0, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x0, y1, z1)
+    eval = fast_eval_func(x0, y1, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
         return false
     end
-    eval = eval_func(x1, y1, z1)
+    eval = fast_eval_func(x1, y1, z1)
     min_satisfied = min_satisfied || eval < other_sum
     max_satisfied = max_satisfied || eval > -other_sum
     if min_satisfied && max_satisfied
@@ -311,7 +311,7 @@ function quadraticCheck3D(test_coeff,tol)
         c6y0 = c[7]*y0
         z = -(c5x0_c3+c6y0)/kk9
         if z0 < z < z1
-            eval = eval_func(x0,y0,z)
+            eval = fast_eval_func(x0,y0,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -321,7 +321,7 @@ function quadraticCheck3D(test_coeff,tol)
         c6y1 = c[7]*y1
         z = -(c5x0_c3+c6y1)/kk9
         if z0 < z < z1
-            eval = eval_func(x0,y1,z)
+            eval = fast_eval_func(x0,y1,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -331,7 +331,7 @@ function quadraticCheck3D(test_coeff,tol)
         c5x1_c3 = c[6]*x1 + c[4]
         z = -(c5x1_c3+c6y0)/kk9
         if z0 < z < z1
-            eval = eval_func(x1,y0,z)
+            eval = fast_eval_func(x1,y0,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -340,7 +340,7 @@ function quadraticCheck3D(test_coeff,tol)
         end
         z = -(c5x1_c3+c6y1)/kk9
         if z0 < z < z1
-            eval = eval_func(x1,y1,z)
+            eval = fast_eval_func(x1,y1,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -357,7 +357,7 @@ function quadraticCheck3D(test_coeff,tol)
         c2_c4x0 = c[3]+c[5]*x0
         y = -(c2_c4x0+c6z0)/kk8
         if y0 < y < y1
-            eval = eval_func(x0,y,z0)
+            eval = fast_eval_func(x0,y,z0)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -367,7 +367,7 @@ function quadraticCheck3D(test_coeff,tol)
         c6z1 = c[7]*z1
         y = -(c2_c4x0+c6z1)/kk8
         if y0 < y < y1
-            eval = eval_func(x0,y,z1)
+            eval = fast_eval_func(x0,y,z1)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -377,7 +377,7 @@ function quadraticCheck3D(test_coeff,tol)
         c2_c4x1 = c[3]+c[5]*x1
         y = -(c2_c4x1+c6z0)/kk8
         if y0 < y < y1
-            eval = eval_func(x1,y,z0)
+            eval = fast_eval_func(x1,y,z0)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -386,7 +386,7 @@ function quadraticCheck3D(test_coeff,tol)
         end
         y = -(c2_c4x1+c6z1)/kk8
         if y0 < y < y1
-            eval = eval_func(x1,y,z1)
+            eval = fast_eval_func(x1,y,z1)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -403,7 +403,7 @@ function quadraticCheck3D(test_coeff,tol)
         c5z0 = c[6]*z0
         x = -(c1_c4y0+c5z0)/kk7
         if x0 < x < x1
-            eval = eval_func(x,y0,z0)
+            eval = fast_eval_func(x,y0,z0)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -413,7 +413,7 @@ function quadraticCheck3D(test_coeff,tol)
         c5z1 = c[6]*z1
         x = -(c1_c4y0+c5z1)/kk7
         if x0 < x < x1
-            eval = eval_func(x,y0,z1)
+            eval = fast_eval_func(x,y0,z1)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -423,7 +423,7 @@ function quadraticCheck3D(test_coeff,tol)
         c1_c4y1 = c[2]+c[5]*y1
         x = -(c1_c4y1+c5z0)/kk7
         if x0 < x < x1
-            eval = eval_func(x,y1,z0)
+            eval = fast_eval_func(x,y1,z0)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -432,7 +432,7 @@ function quadraticCheck3D(test_coeff,tol)
         end
         x = -(c1_c4y1+c5z1)/kk7
         if x0 < x < x1
-            eval = eval_func(x,y1,z1)
+            eval = fast_eval_func(x,y1,z1)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -451,7 +451,7 @@ function quadraticCheck3D(test_coeff,tol)
         y = (-kk9*c2_c4x0 +   c[7]*c3_c5x0)/fix_x_det
         z = (c[7]*c2_c4x0 -    kk8*c3_c5x0)/fix_x_det
         if y0 < y < y1 && z0 < z < z1
-            eval = eval_func(x0,y,z)
+            eval = fast_eval_func(x0,y,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -463,7 +463,7 @@ function quadraticCheck3D(test_coeff,tol)
         y = (-kk9*c2_c4x1 +   c[7]*c3_c5x1)/fix_x_det
         z = (c[7]*c2_c4x1 -    kk8*c3_c5x1)/fix_x_det
         if y0 < y < y1 && z0 < z < z1
-            eval = eval_func(x1,y,z)
+            eval = fast_eval_func(x1,y,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -482,7 +482,7 @@ function quadraticCheck3D(test_coeff,tol)
         x = (-kk9*c1_c4y0 +   c[6]*c3_c6y0)/fix_y_det
         z = (c[6]*c1_c4y0 -    kk7*c3_c6y0)/fix_y_det
         if x0 < x < x1 && z0 < z < z1
-            eval = eval_func(x,y0,z)
+            eval = fast_eval_func(x,y0,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -494,7 +494,7 @@ function quadraticCheck3D(test_coeff,tol)
         x = (-kk9*c1_c4y1 +   c[6]*c3_c6y1)/fix_y_det
         z = (c[6]*c1_c4y1 -    kk7*c3_c6y1)/fix_y_det
         if x0 < x < x1 && z0 < z < z1
-            eval = eval_func(x,y1,z)
+            eval = fast_eval_func(x,y1,z)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -513,7 +513,7 @@ function quadraticCheck3D(test_coeff,tol)
         x = (-kk8*c1_c5z0 +   c[5]*c2_c6z0)/fix_z_det
         y = (c[5]*c1_c5z0 -    kk7*c2_c6z0)/fix_z_det
         if x0 < x < x1 && y0 < y < y1
-            eval = eval_func(x,y,z0)
+            eval = fast_eval_func(x,y,z0)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -525,7 +525,7 @@ function quadraticCheck3D(test_coeff,tol)
         x = (-kk8*c1_c5z1 +   c[5]*c2_c6z1)/fix_z_det
         y = (c[5]*c1_c5z1 -    kk7*c2_c6z1)/fix_z_det
         if x0 < x < x1 && y0 < y < y1
-            eval = eval_func(x,y,z1)
+            eval = fast_eval_func(x,y,z1)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
@@ -536,7 +536,7 @@ function quadraticCheck3D(test_coeff,tol)
 
     #Add the interior value
     if x0 < int_x < x1 && y0 < int_y < y1 && z0 < int_z < z1
-        eval = eval_func(int_x,int_y,int_z)
+        eval = fast_eval_func(int_x,int_y,int_z)
         min_satisfied = min_satisfied || eval < other_sum
         max_satisfied = max_satisfied || eval > -other_sum
         if min_satisfied && max_satisfied
@@ -549,7 +549,7 @@ function quadraticCheck3D(test_coeff,tol)
 
 end
 
-function quadraticCheckND(test_coeff, tol)
+function fast_quadraticCheckND(test_coeff, tol)
     """One of subinterval_checks
 
     Finds the min of the absolute value of the quadratic part, and compares to the sum of the
@@ -622,7 +622,7 @@ function quadraticCheckND(test_coeff, tol)
     #create a poly object for evals
     k0 = const1 - sum(pure_quad_coeff)
 
-    function eval_func(point)
+    function fast_eval_func(point)
         "fast evaluation of quadratic chebyshev polynomials using horner's algorithm"
         _sum = k0
         for i in 1:dim
@@ -636,7 +636,7 @@ function quadraticCheckND(test_coeff, tol)
     other_sum = sum(abs.(test_coeff)) .+ tol
 
     #iterator for sides
-    fixed_vars = get_fixed_vars(dim)
+    fixed_vars = fast_get_fixed_vars(dim)
 
 
     Done = false
@@ -644,7 +644,7 @@ function quadraticCheckND(test_coeff, tol)
     #fix all variables--> corners
     for corner in IterTools.product([1:2 for i in 1:dim]...)
         #j picks if upper/lower bound. i is which var
-        eval = eval_func([interval[i,corner[i]] for i in 1:dim])
+        eval = fast_eval_func([interval[i,corner[i]] for i in 1:dim])
         min_satisfied = min_satisfied || eval < other_sum
         max_satisfied = max_satisfied || eval > -other_sum
     
@@ -697,7 +697,7 @@ function quadraticCheckND(test_coeff, tol)
                         if do_next
                             X[fixed_args] = X0
                             X[unfixed] = X_
-                            eval = eval_func(X)
+                            eval = fast_eval_func(X)
                             min_satisfied = min_satisfied || eval < other_sum
                             max_satisfied = max_satisfied || eval > -other_sum
                             if min_satisfied && max_satisfied
@@ -740,7 +740,7 @@ function quadraticCheckND(test_coeff, tol)
                         end
                     end
                     if do_next
-                        curr_eval = eval_func(X)
+                        curr_eval = fast_eval_func(X)
                         min_satisfied = min_satisfied || curr_eval < other_sum
                         max_satisfied = max_satisfied || curr_eval > -other_sum
                         if min_satisfied && max_satisfied
@@ -754,12 +754,12 @@ function quadraticCheckND(test_coeff, tol)
     return !Done
 end
 
-function quadraticCheck(test_coeff,tol,nd_check=false)
+function fast_quadraticCheck(test_coeff,tol,nd_check=false)
     if ndims(test_coeff) == 2 && !nd_check
-        return quadraticCheck2D(test_coeff, tol)
+        return fast_quadraticCheck2D(test_coeff, tol)
     elseif ndims(test_coeff) == 3 && !nd_check
-        return quadraticCheck3D(test_coeff, tol)
+        return fast_quadraticCheck3D(test_coeff, tol)
     else
-        return quadraticCheckND(test_coeff, tol)
+        return fast_quadraticCheckND(test_coeff, tol)
     end
 end

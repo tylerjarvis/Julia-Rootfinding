@@ -1,13 +1,13 @@
-include("QuadraticCheck.jl")
-include("StructsWithTheirFunctions/SolverOptions.jl")
-include("StructsWithTheirFunctions/TrackedInterval.jl")
+include("FastQuadraticCheck.jl")
+include("FastStructsWithTheirFunctions/FastSolverOptions.jl")
+include("FastStructsWithTheirFunctions/FastTrackedInterval.jl")
 using LinearAlgebra
 using GenericLinearAlgebra
 using Logging
 using RecursiveArrayTools
 
 # TODO: import from a library like this one instead of crowding our sourcecode with pre-written code https://github.com/JeffreySarnoff/ErrorfreeArithmetic.jl/blob/main/src/sum.jl
-function twoSum(a,b)
+function fast_twoSum(a,b)
     """Returns x,y such that a+b=x+y exactly, and a+b=x in floating point."""
     x = a .+ b
     z = x .- a
@@ -16,34 +16,34 @@ function twoSum(a,b)
 end
 
 # TODO: import from a library instead
-function homebrewSplit(a)
+function fast_homebrewSplit(a)
     """Returns x,y such that a = x+y exactly and a = x in floating point."""
-    c = (type(2)^ceil(Int,precision/2) + 1) * a
+    c = (2^27 + 1) * a
     x = c-(c-a)
     y = a-x
     return x,y
 end
 
 # TODO: import from a library instead
-function twoProd(a,b)
+function fast_twoProd(a,b)
     """Returns x,y such that a*b=x+y exactly and a*b=x in floating point."""
     x = a .* b
-    a1,a2 = homebrewSplit(a)
-    b1,b2 = homebrewSplit(b)
+    a1,a2 = fast_homebrewSplit(a)
+    b1,b2 = fast_homebrewSplit(b)
     y=a2 .*b2-(((x-a1 .*b1)-a2 .*b1)-a1 .*b2)
     return x,y
 end
 
 # TODO: import from a library instead
-function TwoProdWithSplit(a,b,a1,a2)
+function fast_TwoProdWithSplit(a,b,a1,a2)
     """Returns x,y such that a*b = x+y exactly and a*b = x in floating point but with a already split."""
     x = a*b
-    b1,b2 = homebrewSplit(b)
+    b1,b2 = fast_homebrewSplit(b)
     y=a2*b2-(((x-a1*b1)-a2*b1)-a1*b2)
     return x,y
 end 
 
-function getLinearTerms(M)
+function fast_getLinearTerms(M)
     """Gets the linear terms of the Chebyshev coefficient tensor M.
 
     Uses the fact that the linear terms are located at
@@ -77,7 +77,7 @@ function getLinearTerms(M)
     return reverse(A) # Return linear terms in dimension order.
 end
 
-function linearCheck1(totalErrs,A,consts)
+function fast_linearCheck1(totalErrs,A,consts)
     """Takes A, the linear terms of each function approximation, and makes any possible reduction 
         in the interval based on the totalErrs.
 
@@ -100,11 +100,11 @@ function linearCheck1(totalErrs,A,consts)
         
     """
     dim = length(A[1,:])
-    a = -type.(ones(dim) * Inf)
-    b = type.(ones(dim) * Inf)
+    a = -ones(dim) * Inf
+    b = ones(dim) * Inf
     for row in 1:dim
         for col in 1:dim
-            if abs(A[col,row]) > type(2)^-(precision-1) #Don't bother running the check if the linear term is too small.
+            if abs(A[col,row]) > 2.0^(-52) #Don't bother running the check if the linear term is too small.
                 v1 = totalErrs[row] / abs(A[col,row]) - 1
                 v2 = 2 * consts[row] / A[col,row]
                 if v2 >= 0
@@ -122,7 +122,7 @@ function linearCheck1(totalErrs,A,consts)
     return a, b
 end
 
-function reduceSolvedDim(Ms, errors, trackedInterval, dim)
+function fast_reduceSolvedDim(Ms, errors, trackedInterval, dim)
     # dim is python dim (starting from 0)
 
     val = (trackedInterval.interval[1,dim+1] + trackedInterval.interval[2,dim+1]) / 2
@@ -130,9 +130,9 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     A = []
     for M in Ms
         if isempty(A)
-            A = getLinearTerms(M)
+            A = fast_getLinearTerms(M)
         else 
-            A = hcat(A,getLinearTerms(M))
+            A = hcat(A,fast_getLinearTerms(M))
         end
     end
     # Figure out which linear approximation is flattest in the dimension we want to reduce
@@ -166,17 +166,17 @@ function reduceSolvedDim(Ms, errors, trackedInterval, dim)
     return final_Ms,new_errors,trackedInterval
 end
 
-function transformChebInPlace1D1D(coeffs,alpha,beta)
+function fast_transformChebInPlace1D1D(coeffs,alpha,beta)
     """
     Does the 1d coeff array case for transformChebInPlace1D
     """
     coeffs_shape = size(coeffs)
     last_dim_length = coeffs_shape[end]
-    transformedCoeffs = zeros(type,coeffs_shape)
+    transformedCoeffs = zeros(coeffs_shape)
     # Initialize three arrays to represent subsequent columns of the transformation matrix.
-    arr1 = zeros(type,last_dim_length)
-    arr2 = zeros(type,last_dim_length)
-    arr3 = zeros(type,last_dim_length)
+    arr1 = zeros(last_dim_length)
+    arr2 = zeros(last_dim_length)
+    arr3 = zeros(last_dim_length)
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
     arr1[1] = 1
@@ -213,7 +213,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > type(2)^-(precision-1) #TODO: Justify this val!
+        if abs(finalVal) > 2.0^(-52) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             transformedCoeffs[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -228,7 +228,7 @@ function transformChebInPlace1D1D(coeffs,alpha,beta)
     return transformedCoeffs[1:maxRow]
 end
 
-function transformChebInPlace1D(coeffs,alpha,beta)
+function fast_transformChebInPlace1D(coeffs,alpha,beta)
     """Applies the transformation alpha*x + beta to one dimension of a Chebyshev approximation.
 
     Recursively finds each column of the transformation matrix C from the previous two columns
@@ -251,14 +251,14 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     """
     coeffs_shape = size(coeffs)
     if length(coeffs_shape) == 1
-        return transformChebInPlace1D1D(coeffs,alpha,beta)
+        return fast_transformChebInPlace1D1D(coeffs,alpha,beta)
     end
     last_dim_length = coeffs_shape[end]
-    transformedCoeffs = zeros(type, coeffs_shape)
+    transformedCoeffs = zeros(coeffs_shape)
     # Initialize three arrays to represent subsequent columns of the transformation matrix.
-    arr1 = zeros(type, last_dim_length)
-    arr2 = zeros(type, last_dim_length)
-    arr3 = zeros(type, last_dim_length)
+    arr1 = zeros(last_dim_length)
+    arr2 = zeros(last_dim_length)
+    arr3 = zeros(last_dim_length)
 
     #The first column of the transformation matrix C. Since T_0(alpha*x + beta) = T_0(x) = 1 has 1 in the top entry and 0's elsewhere.
     arr1[1] = 1
@@ -307,7 +307,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
         finalVal = alpha*arr2[i]
         # This final entry is typically very small. If it is essentially machine epsilon,
         # zero it out to save calculations.
-        if abs(finalVal) > type(2)^(-(precision-1)) #TODO: Justify this val!
+        if abs(finalVal) > 2.0^(-52) #TODO: Justify this val!
             arr3[maxRow+1] = finalVal
             newSlices[maxRow+1] += thisCoeff * finalVal
             maxRow += 1 # Next column will have one more entry than the current column.
@@ -324,7 +324,7 @@ function transformChebInPlace1D(coeffs,alpha,beta)
     # return cat(newSlices[1:maxRow]...,dims = dims)
 end
 
-function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
+function fast_TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
     """Transforms a single dimension of a Chebyshev approximation for a polynomial.
 
     Parameters
@@ -352,7 +352,7 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
         return coeffs # No need to transform if the degree of dim is 0 or transformation is the identity.
     end
 
-    transformFunc = transformChebInPlace1D
+    transformFunc = fast_transformChebInPlace1D
 
     if dim == 1
         return transformFunc(coeffs, alpha, beta)
@@ -369,7 +369,7 @@ function TransformChebInPlaceND(coeffs, dim, alpha, beta, exact)
     end
 end
 
-function getTransformationError(M,dim)
+function fast_getTransformationError(M,dim)
     """Returns an upper bound on the error of transforming the Chebyshev approximation M
 
     In the transformation of dimension dim in M, the matrix multiplication of M by the transformation
@@ -389,12 +389,12 @@ function getTransformationError(M,dim)
         The upper bound for the error associated with the transformation of dimension dim in M
     """
 
-    machEps = type(2)^-(precision-1)
+    machEps = 2.0^(-52)
     error = reverse(size(M))[dim] * machEps * sum(abs.(M))
     return error #TODO: Figure out a more rigurous bound!
 end
 
-function transformCheb(M,alphas,betas,error,exact)
+function fast_transformCheb(M,alphas,betas,error,exact)
     """Transforms an entire Chebyshev coefficient matrix using the transformation xHat = alpha*x + beta.
 
     Parameters
@@ -420,13 +420,13 @@ function transformCheb(M,alphas,betas,error,exact)
     #This just does the matrix multiplication on each dimension. Except it's by a tensor.
     ndim = length(size(M))
     for (dim,alpha,beta) in zip(1:ndim,alphas,betas)
-        error += getTransformationError(M, dim)
-        M = TransformChebInPlaceND(M,dim,alpha,beta,exact)
+        error += fast_getTransformationError(M, dim)
+        M = fast_TransformChebInPlaceND(M,dim,alpha,beta,exact)
     end
     return M, error
 end
 
-function transformChebToInterval(Ms, alphas, betas, errors, exact)
+function fast_transformChebToInterval(Ms, alphas, betas, errors, exact)
     """Transforms an entire list of Chebyshev approximations to a new interval xHat = alpha*x + beta.
 
     Parameters
@@ -453,14 +453,14 @@ function transformChebToInterval(Ms, alphas, betas, errors, exact)
     newMs = []
     newErrors = []
     for (M,e) in zip(Ms, errors)
-        newM, newE = transformCheb(M, alphas, betas, e, exact)
+        newM, newE = fast_transformCheb(M, alphas, betas, e, exact)
         push!(newMs,newM)
         push!(newErrors,(newE))
     end
     return newMs, newErrors
 end
 
-function findVertices(A,b,errors)
+function fast_findVertices(A,b,errors)
     dim = length(b)
     V = reshape([(-1)^div(2^j*(i-1),2^(dim)) for i=1:2^dim for j=1:dim],(dim,2^dim))
     W = V .* e .+ z
@@ -472,7 +472,7 @@ function findVertices(A,b,errors)
     return as,bs
 end
 
-function boundingIntervalLinearSystem(Ms, errors, finalStep)
+function fast_boundingIntervalLinearSystem(Ms, errors, finalStep)
     """Finds a smaller region in which any root must be.
 
     Parameters
@@ -496,15 +496,15 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
         Whether we should throw out the interval entirely
     """
     if finalStep
-        errors = zeros(type, size(errors))
+        errors = zeros(size(errors))
     end
     s=1
     dim = length(Ms)
     #Some constants we use here
-    minZoomForChange = type(0.99) #If the volume doesn't shrink by this amount say that it hasn't changed
-    minZoomForBaseCaseEnd = type(0.4)^dim #If the volume doesn't change by at least this amount when running with no error, stop
+    minZoomForChange = 0.99 #If the volume doesn't shrink by this amount say that it hasn't changed
+    minZoomForBaseCaseEnd = 0.4^dim #If the volume doesn't change by at least this amount when running with no error, stop
     #Get the matrix of the linear terms
-    A = Matrix{type}(reduce(hcat,[getLinearTerms(M) for M in Ms]))
+    A = Matrix{Float64}(reduce(hcat,[fast_getLinearTerms(M) for M in Ms]))
     #Get the Vector of the constant terms
     consts = [M[1] for M in Ms]'
     #Get the Error of everything else combined.
@@ -518,7 +518,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     for i in 1:dim
         scaleVal = maximum(abs.(A[:,i]))
         if scaleVal > 0
-            s = type(2) ^Int(floor(log2(abs(scaleVal))))
+            s = 2.0^Int(floor(log2(abs(scaleVal))))
             A[:,i] /= s
             consts[i] /= s
             totalErrs[i] /= s
@@ -528,11 +528,11 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
         end
     end
     #Precondition the columns. (AP)X = B -> A(PX) = B. So scale columns, solve, then scale the solution.
-    colScaler = ones(type, dim)
+    colScaler = ones(dim)
     for i in 1:dim
         scaleVal = maximum(abs.(A[i,:]))
         if scaleVal > 0
-            s = type(2)^(-floor(log2(abs(scaleVal))))
+            s = 2.0^(-floor(log2(abs(scaleVal))))
             colScaler[i] = s
             totalErrs += abs.(A[i,:])' * (s - 1)
             A[i,:] *= s
@@ -542,15 +542,15 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     #Run linear algorithm for shrinking or deciding whether to subdivide.
     #This loop will only execute the second time if the interval was not changed on the first iteration and it needs to run again with tighter errors
     #Use the other interval shrinking method
-    a0, b0 = linearCheck1(totalErrs, A, consts)
+    a0, b0 = fast_linearCheck1(totalErrs, A, consts)
     a_orig = a0
     b_orig = b0
     U,S,Vh = svd(A')
     condNum = S[end]/S[1]
-    Ainv = ((type(1) ./ S).*Vh')' * (U')
+    Ainv = ((1.0 ./ S).*Vh')' * (U')
     center = -Ainv*consts'
     wellConditioned = S[1] > 0 && condNum > 1e-10
-    machEps = type(2)^-(precision-1)
+    machEps = 2.0^(-52)
     widthToAdd = max(condNum,2)*machEps
     for i = 0:1
         #Now do the linear solve check
@@ -579,7 +579,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
 
         forceShouldStop = finalStep && !wellConditioned
         # Calculate the "changed" variable
-        newRatio = prod(b - a) ./ type(2)^dim
+        newRatio = prod(b - a) ./ 2.0^dim
         changed = false
         if throwOut
             changed = true
@@ -610,7 +610,7 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     end
 end
 
-function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
+function fast_zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
     """One iteration of shrinking an interval that may contain roots.
 
     Calls BoundingIntervaLinearSystem which determines a smaller interval in which any roots are
@@ -644,16 +644,16 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
 
     dim = length(Ms)
     #Zoom in on the current interval
-    interval, changed, should_stop, throwOut = boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
+    interval, changed, should_stop, throwOut = fast_boundingIntervalLinearSystem(Ms, errors, trackedInterval.finalStep)
     #Don't zoom in if we're already at a point
     for curr_dim in 1:dim
         if trackedInterval.interval[1,curr_dim] == trackedInterval.interval[2,curr_dim]
-            interval[1,curr_dim] = type(-1)
-            interval[2,curr_dim] = type(1)
+            interval[1,curr_dim] = -1.0
+            interval[2,curr_dim] = 1.0
         end
     end
     #We can't throw out on the final step
-    if throwOut &&  ! canThrowOut(trackedInterval)
+    if throwOut &&  ! fast_canThrowOut(trackedInterval)
         throwOut = false
         should_stop = true
         changed = true
@@ -668,10 +668,10 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
         return Ms, errors, trackedInterval, changed, should_stop
     end
     #Transform the chebyshev polynomials
-    addTransform(trackedInterval,interval)
-    Ms, errors = transformChebToInterval(Ms, getLastTransform(trackedInterval)[:,1],getLastTransform(trackedInterval)[:,2], errors, exact)
+    fast_addTransform(trackedInterval,interval)
+    Ms, errors = fast_transformChebToInterval(Ms, fast_getLastTransform(trackedInterval)[:,1], fast_getLastTransform(trackedInterval)[:,2], errors, exact)
     #We should stop in the final step once the interval has become a point
-    if trackedInterval.finalStep && isPoint(trackedInterval)
+    if trackedInterval.finalStep && fast_isPoint(trackedInterval)
         should_stop = true
         changed = false
     end
@@ -679,7 +679,7 @@ function zoomInOnIntervalIter(Ms, errors, trackedInterval, exact)
     return Ms, errors, trackedInterval, changed, should_stop
 end
 
-function getSubdivisionDims(Ms,trackedInterval,level)
+function fast_getSubdivisionDims(Ms,trackedInterval,level)
     """Decides which dimensions to subdivide in and in what order.
     
     Parameters
@@ -709,7 +709,7 @@ function getSubdivisionDims(Ms,trackedInterval,level)
         idxs_by_dim = [reverse(dims_to_consider[sortperm(reverse(collect(size(M)))[(dims_to_consider)])]) for M in Ms]
         return idxs_by_dim
     else
-        dim_lengths = dimSize(trackedInterval)
+        dim_lengths = fast_dimSize(trackedInterval)
         max_length = maximum(dim_lengths[dims_to_consider])
         dims_to_consider = filter(x -> dim_lengths[(x)] > max_length/5,dims_to_consider)
         if length(dims_to_consider) > 1
@@ -730,7 +730,7 @@ function getSubdivisionDims(Ms,trackedInterval,level)
     end
 end
 
-function getSubdivisionDim(shapes,dim) # largest degree subdivide
+function fast_getSubdivisionDim(shapes,dim) # largest degree subdivide
     return Int.(((argmax(shapes)-1)%dim) .* ones(dim)')
 end
 
@@ -738,7 +738,7 @@ end
 #     (argmax(interval[1,:] - interval[2,:]) - 1) .* ones(Int(length(interval)/2))'
 # end
 
-function getInverseOrder(order)
+function fast_getInverseOrder(order)
     """Gets a particular order of matrices needed in getSubdivisionIntervals (helper function).
 
     Takes the order of dimensions in which a Chebyshev coefficient tensor M was subdivided and gets
@@ -773,7 +773,7 @@ function getInverseOrder(order)
     return Tuple(Int.(invOrder))
 end
 
-function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimension=false)
+function fast_getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimension=false)
     """Gets the matrices, error bounds, and intervals for the next iteration of subdivision.
 
     Parameters
@@ -800,9 +800,9 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     """
     
     if oneDimension
-        subdivisionDims = getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
+        subdivisionDims = fast_getSubdivisionDim(reduce(vcat,[[size(M)...] for M in Ms]),length(Ms))
     else
-        subdivisionDims = getSubdivisionDims(Ms,trackedInterval,level)
+        subdivisionDims = fast_getSubdivisionDims(Ms,trackedInterval,level)
     end
     dimSet = sort(subdivisionDims[1])
     allMs = []
@@ -821,8 +821,8 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
             tempErrs = []
             for (T,E) in zip(currMs, currErrs)
                 #Transform the polys
-                P1, P2 = TransformChebInPlaceND(T, thisDim, alpha, beta, thisDim), TransformChebInPlaceND(T, thisDim, -beta, alpha, exact)
-                E1 = getTransformationError(T, thisDim)
+                P1, P2 = fast_TransformChebInPlaceND(T, thisDim, alpha, beta, thisDim), fast_TransformChebInPlaceND(T, thisDim, -beta, alpha, exact)
+                E1 = fast_getTransformationError(T, thisDim)
                 push!(tempMs,P1)
                 push!(tempMs,P2)
                 push!(tempErrs,E1+E)
@@ -836,7 +836,7 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
             push!(allErrors,currErrs) #Already ordered because there's only 1.
         else
             #Order the polynomials so they match the intervals in subdivideInterval
-            invOrder = getInverseOrder(order)
+            invOrder = fast_getInverseOrder(order)
             push!(allMs,[currMs[i] for i in invOrder])
             push!(allErrors,([currErrs[i] for i in invOrder]))
         end
@@ -848,16 +848,16 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     
     for thisDim in dimSet
         newMidpoint = trackedInterval.nextTransformPoints[thisDim]
-        newSubinterval = ones(type, size(trackedInterval.interval)) #TODO: Make this outside for loop
+        newSubinterval = ones(size(trackedInterval.interval)) #TODO: Make this outside for loop
         newSubinterval[1,:] .= -1
         newIntervals = []
         for oldInterval in allIntervals
-            newInterval1 = copyInterval(oldInterval)
-            newInterval2 = copyInterval(oldInterval)
+            newInterval1 = fast_copyInterval(oldInterval)
+            newInterval2 = fast_copyInterval(oldInterval)
             newSubinterval[:,thisDim] = [-1; newMidpoint]
-            addTransform(newInterval1,newSubinterval)
+            fast_addTransform(newInterval1,newSubinterval)
             newSubinterval[:,thisDim] = [newMidpoint; 1]
-            addTransform(newInterval2,newSubinterval)
+            fast_addTransform(newInterval2,newSubinterval)
             newInterval1.nextTransformPoints[thisDim] = 0
             newInterval2.nextTransformPoints[thisDim] = 0
             push!(newIntervals,newInterval1)
@@ -868,12 +868,12 @@ function getSubdivisionIntervals(Ms,errors,trackedInterval,exact,level;oneDimens
     return allMs, allErrors, allIntervals
 end
 
-function isExteriorInterval(originalInterval,trackedInterval)
+function fast_isExteriorInterval(originalInterval,trackedInterval)
     """Determines if the current interval is exterior to its original interval."""
-    return any(getIntervalForCombining(trackedInterval) .== getIntervalForCombining(originalInterval))
+    return any(fast_getIntervalForCombining(trackedInterval) .== fast_getIntervalForCombining(originalInterval))
 end
 
-function trimMs(Ms, errors, relApproxTol=type(1e-3), absApproxTol=type(2)^-(precision-1))
+function fast_trimMs(Ms, errors, relApproxTol=1e-3, absApproxTol=2^(-52))
     """Reduces the degree of each chebyshev approximation M when doing so has negligible error.
 
     The coefficient matrices are trimmed in place. This function iteratively looks at the highest
@@ -922,7 +922,7 @@ function trimMs(Ms, errors, relApproxTol=type(1e-3), absApproxTol=type(2)^-(prec
     end
 end
 
-function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
+function fast_solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     """Recursively shrinks and subdivides the given interval to find the locations of all roots.
 
     Parameters
@@ -948,13 +948,13 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
 
     #TODO: Check if trackedInterval.interval has width 0 in some dimension, in which case we should get rid of that dimension.
     #If the interval is a point, return it
-    if isPoint(trackedInterval)
+    if fast_isPoint(trackedInterval)
         return [], [trackedInterval]
     end
 
     #If we ever change the options in this function, we will need to do a copy here.
     #Should be cheap, but as we never change them for now just avoid the copy
-    solverOptions = copySO(solverOptions)
+    solverOptions = fast_copySO(solverOptions)
     solverOptions.level += 1
 
     #Constant term check, runs at the beginning of the solve and before each subdivision
@@ -972,7 +972,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     #More expensive than constant term check, but testing show it saves time in lower dimensions
     if (solverOptions.low_dim_quadratic_check && ndims(Ms[1]) <= 3) || solverOptions.all_dim_quadratic_check
         for i in eachindex(Ms)
-            if quadraticCheck(Ms[i], errors[i])
+            if fast_quadraticCheck(Ms[i], errors[i])
                 return [], []
             end
         end
@@ -981,28 +981,28 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     #Trim
     Ms = copy(Ms)
     originalMs = copy(Ms)
-    trackedInterval = copyInterval(trackedInterval)
+    trackedInterval = fast_copyInterval(trackedInterval)
     errors = copy(errors)
-    trimMs(Ms, errors)
+    fast_trimMs(Ms, errors)
 
     #Solve
     dim = ndims(Ms[1])
     changed = true
     zoomCount = 0
-    originalInterval = copyInterval(trackedInterval)
-    originalIntervalSize = sizeOfInterval(trackedInterval)
+    originalInterval = fast_copyInterval(trackedInterval)
+    originalIntervalSize = fast_sizeOfInterval(trackedInterval)
     #Zoom in while we can
     global should_stop = false
-    lastSizes = dimSize(trackedInterval)
+    lastSizes = fast_dimSize(trackedInterval)
     while changed && zoomCount <= solverOptions.maxZoomCount
         #Zoom in until we stop changing or we hit machine epsilon
-        Ms, errors, trackedInterval, changed, should_stop = zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
+        Ms, errors, trackedInterval, changed, should_stop = fast_zoomInOnIntervalIter(Ms, errors, trackedInterval, solverOptions.exact)
 
         if trackedInterval.empty #Throw out the interval
             return [], []
         end
         #Only count in towards the max is we don't cut the interval in half
-        newSizes = dimSize(trackedInterval)
+        newSizes = fast_dimSize(trackedInterval)
         if all(newSizes .>= (lastSizes ./ 2)) #Check all dims and use >= to account for a dimension being 0.
             zoomCount += 1
         end
@@ -1015,7 +1015,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
             if solverOptions.verbose
                 print("*")
             end
-            if isExteriorInterval(originalInterval, trackedInterval)
+            if fast_isExteriorInterval(originalInterval, trackedInterval)
                 #input("val:")
                 return [], [trackedInterval]
             else
@@ -1023,23 +1023,23 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                 return [trackedInterval], []
             end
         else
-            startFinalStep(trackedInterval)
-            return solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
+            fast_startFinalStep(trackedInterval)
+            return fast_solvePolyRecursive(Ms, trackedInterval, errors, solverOptions)
         end
 
     elseif trackedInterval.finalStep
         trackedInterval.canThrowOutFinalStep = true
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
+        allMs, allErrors, allIntervals = fast_getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         resultsAll = []
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
-            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+            newInterior, newExterior = fast_solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultsAll, newInterior)
             append!(resultsAll,newExterior)
         end
         if length(resultsAll) == 0
             #Can't throw out final step! This might not actually be a root though!
             trackedInterval.possibleExtraRoot = true
-            if isExteriorInterval(originalInterval, trackedInterval)
+            if fast_isExteriorInterval(originalInterval, trackedInterval)
                 return [], [trackedInterval]
             else
                 return [trackedInterval], []
@@ -1060,10 +1060,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                 if length(result.possibleDuplicateRoots) > 0
                     append!(trackedInterval.possibleDuplicateRoots,result.possibleDuplicateRoots)
                 else
-                    push!(trackedInterval.possibleDuplicateRoots,getFinalPoint(result))
+                    push!(trackedInterval.possibleDuplicateRoots,fast_getFinalPoint(result))
                 end
             end
-            if isExteriorInterval(originalInterval, trackedInterval)
+            if fast_isExteriorInterval(originalInterval, trackedInterval)
                 return [], [trackedInterval]
             else
                 return [trackedInterval], []
@@ -1082,10 +1082,10 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         resultInterior, resultExterior = [], []
         #Get the new intervals and polynomials
-        allMs, allErrors, allIntervals = getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
+        allMs, allErrors, allIntervals = fast_getSubdivisionIntervals(Ms, errors, trackedInterval, solverOptions.exact, solverOptions.level;oneDimension=false)
         #Run each interval
         for (newMs, newErrs, newInt) in zip(allMs, allErrors, allIntervals)
-            newInterior, newExterior = solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
+            newInterior, newExterior = fast_solvePolyRecursive(newMs, newInt, newErrs, solverOptions)
             append!(resultInterior, newInterior)
             append!(resultExterior, newExterior)
         end
@@ -1100,22 +1100,22 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
         end
         while idx1 <= length(resultExterior)
             while idx2 <= length(resultExterior)
-                if overlapsWith(resultExterior[idx1],resultExterior[idx2])
+                if fast_overlapsWith(resultExterior[idx1],resultExterior[idx2])
                     #Combine, throw at the back. Set reRun to true.
-                    combinedInterval = copyInterval(originalInterval)
+                    combinedInterval = fast_copyInterval(originalInterval)
                     if combinedInterval.finalStep
-                        combinedInterval.interval = copyInterval(combinedInterval.preFinalInterval)
-                        combinedInterval.transforms = copyInterval(combinedInterval.preFinalTransforms)
+                        combinedInterval.interval = fast_copyInterval(combinedInterval.preFinalInterval)
+                        combinedInterval.transforms = fast_copyInterval(combinedInterval.preFinalTransforms)
                     end
-                    newAs = minimum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1])[1,:], getIntervalForCombining(resultExterior[idx2])[1,:]]),dims=2)
-                    newBs = maximum(reduce(hcat,[getIntervalForCombining(resultExterior[idx1])[2,:], getIntervalForCombining(resultExterior[idx2])[2,:]]),dims=2)
-                    final1 = getFinalInterval(resultExterior[idx1])
-                    final2 = getFinalInterval(resultExterior[idx2])
+                    newAs = minimum(reduce(hcat,[fast_getIntervalForCombining(resultExterior[idx1])[1,:], fast_getIntervalForCombining(resultExterior[idx2])[1,:]]),dims=2)
+                    newBs = maximum(reduce(hcat,[fast_getIntervalForCombining(resultExterior[idx1])[2,:], fast_getIntervalForCombining(resultExterior[idx2])[2,:]]),dims=2)
+                    final1 = fast_getFinalInterval(resultExterior[idx1])
+                    final2 = fast_getFinalInterval(resultExterior[idx2])
                     newAsFinal = minimum(reduce(hcat,[final1[1,:], final2[1,:]]),dims=2)
                     newBsFinal = maximum(reduce(hcat,[final1[2,:], final2[2,:]]),dims=2)
                     oldAs = originalInterval.interval[1,:]
                     oldBs = originalInterval.interval[2,:]
-                    oldAsFinal, oldBsFinal = getFinalInterval(originalInterval)[1,:],getFinalInterval(originalInterval)[2,:]
+                    oldAsFinal, oldBsFinal = fast_getFinalInterval(originalInterval)[1,:],fast_getFinalInterval(originalInterval)[2,:]
                     #Find the final A and B values exactly. Then do the currSubinterval calculation exactly.
                     #Look at what was done on the example that's failing and see why.
                     equalMask = oldBsFinal .== oldAsFinal
@@ -1128,7 +1128,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     currSubinterval[2,:][reshape(oldBs.==newBs,length(newBs))] .= 1
                     #Update the current subinterval. Use the best transform we can get here, but use the exact combined
                     #interval for tracking
-                    addTransform(combinedInterval,currSubinterval)
+                    fast_addTransform(combinedInterval,currSubinterval)
                     combinedInterval.interval = reduce(hcat,[newAs, newBs])'
                     combinedInterval.reRun = true
                     deleteat!(resultExterior,idx2)
@@ -1152,14 +1152,14 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
                     #Project the MS onto the interval, then recall the function.
                     #TODO: Instead of using the originalMs, use Ms, and then don't use the original interval, use the one
                     #we started subdivision with.
-                    lastTransform = getLastTransform(tempInterval)
-                    tempMs, tempErrors = transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
-                    tempResultsInterior, tempResultsExterior = solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
+                    lastTransform = fast_getLastTransform(tempInterval)
+                    tempMs, tempErrors = fast_transformChebToInterval(originalMs, lastTransform[:,1],lastTransform[:,2], errors, solverOptions.exact)
+                    tempResultsInterior, tempResultsExterior = fast_solvePolyRecursive(tempMs, tempInterval, tempErrors, solverOptions)
                     #We can assume that nothing in these has to be recombined
                     append!(resultInterior,tempResultsInterior)
                     append!(newResultExterior,tempResultsExterior)
                 end
-            elseif isExteriorInterval(originalInterval, tempInterval)
+            elseif fast_isExteriorInterval(originalInterval, tempInterval)
                 push!(newResultExterior,tempInterval)
             else
                 push!(resultInterior,tempInterval)
@@ -1169,7 +1169,7 @@ function solvePolyRecursive(Ms,trackedInterval,errors,solverOptions)
     end
 end
 
-function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBoxes = false, exact = false, constant_check = true, low_dim_quadratic_check = true, all_dim_quadratic_check = false)
+function fast_solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBoxes = false, exact = false, constant_check = true, low_dim_quadratic_check = true, all_dim_quadratic_check = false)
 
     """
     Initiates shrinking and subdivision recursion and returns the roots and bounding boxes.
@@ -1211,8 +1211,8 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
 
     # Solve
     ndim = length(Ms)
-    originalInterval = TrackedInterval(hcat(fill(type(-1),ndim), fill(type(1),ndim))')
-    solverOptions = SolverOptions()
+    originalInterval = FastTrackedInterval(hcat(fill(-1.0,ndim), fill(1.0,ndim))')
+    solverOptions = FastSolverOptions()
     solverOptions.verbose = verbose
     solverOptions.exact = exact
     solverOptions.constant_check = constant_check
@@ -1224,7 +1224,7 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
         println("Finding roots...")
     end
 
-    b1, b2 = solvePolyRecursive(Ms, originalInterval, errors, solverOptions)
+    b1, b2 = fast_solvePolyRecursive(Ms, originalInterval, errors, solverOptions)
 
     boundingIntervals = append!(b1, b2)
     roots = []
@@ -1234,7 +1234,7 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
     for interval in boundingIntervals
         #TODO: Figure out the best way to return the bounding intervals.
         #Right now interval.finalInterval is the interval where we say the root is.
-        getFinalInterval(interval)
+        fast_getFinalInterval(interval)
         if interval.possibleExtraRoot
             hasExtraRoots = true
         end
@@ -1242,7 +1242,7 @@ function solveChebyshevSubdivision(Ms, errors; verbose = false, returnBoundingBo
             append!(roots, interval.possibleDuplicateRoots)
             hasDupRoots = true
         else
-            push!(roots, getFinalPoint(interval))
+            push!(roots, fast_getFinalPoint(interval))
         end
     end
 
