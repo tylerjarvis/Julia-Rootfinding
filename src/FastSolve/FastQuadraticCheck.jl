@@ -126,7 +126,7 @@ function fast_quadraticCheck2D(test_coeff,tol)
         y = interval[2][2]
         x = -(c[2] + c[5]*y)/cc3
         if interval[1][1] < x < interval[2][1]
-            eval = eval_func(x,y)
+            eval = fast_eval_func(x,y)
             min_satisfied = min_satisfied || eval < other_sum
             max_satisfied = max_satisfied || eval > -other_sum
             if min_satisfied && max_satisfied
