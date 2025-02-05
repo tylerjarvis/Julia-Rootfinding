@@ -90,8 +90,33 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         print(" ")
     end
 
+    # Set precision for Solver
+    global type = Float64
+    global precision = roundoff
+
+    if precision <= 11
+        precision = 11
+        type = Float16
+    elseif precision <= 24
+        precision = 24
+        type = Float32
+    elseif precision <= 53
+        precision = 53
+    else
+        setprecision(precision)
+        type = BigFloat
+    end
+
     for i in 1:dim
-        polys[i], errs[i] = chebApproximate(funcs[i],a,b)
+        if typeof(funcs[i]) == MultiPower
+            polys[i] = multipower_to_cheb(funcs[i].coeff)
+            errs[i] = type(2)^-(precision-1)
+        elseif typeof(funcs[i]) == MultiCheb
+            polys[i] = funcs[i].coeff
+            errs[i] = type(2)^-(precision-1)
+        else
+            polys[i], errs[i] = chebApproximate(funcs[i],a,b)
+        end
         if verbose
             print(i)
             print(": ")
@@ -104,34 +129,10 @@ function solve(funcs,a,b; verbose = false, returnBoundingBoxes = false, exact=fa
         end
     end
 
-    # Set precision for Solver
-    global type = Float64
-    global precision = roundoff
-
-    if precision <= 11
-        polys = [Float16.(arr) for arr in polys]
-        errs = Float16.(errs)
-        a = Float16.(a)
-        b = Float16.(b)
-        precision = 11
-        type = Float16
-    elseif precision <= 24
-        polys = [Float32.(arr) for arr in polys]
-        errs = Float32.(errs)
-        a = Float32.(a)
-        b = Float32.(b)
-        precision = 24
-        type = Float32
-    elseif precision <= 53
-        precision = 53
-    else
-        setprecision(precision)
-        polys = [BigFloat.(arr) for arr in polys]
-        errs = BigFloat.(errs)
-        a = BigFloat.(a)
-        b = BigFloat.(b)
-        type = BigFloat
-    end
+    polys = [type.(arr) for arr in polys]
+    errs = type.(errs)
+    a = type.(a)
+    b = type.(b)
 
     minBoundingIntervalSize = type(minBoundingIntervalSize)
     
