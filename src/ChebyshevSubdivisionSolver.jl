@@ -18,7 +18,7 @@ end
 # TODO: import from a library instead
 function homebrewSplit(a)
     """Returns x,y such that a = x+y exactly and a = x in floating point."""
-    c = (type(2)^27 + 1) * a
+    c = (type(2)^ceil(Int,precision/2) + 1) * a
     x = c-(c-a)
     y = a-x
     return x,y
@@ -501,7 +501,6 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     s=1
     dim = length(Ms)
     #Some constants we use here
-    widthToAdd = type(1e-10) #Add this width to the new intervals we find to avoid rounding error throwing out roots
     minZoomForChange = type(0.99) #If the volume doesn't shrink by this amount say that it hasn't changed
     minZoomForBaseCaseEnd = type(0.4)^dim #If the volume doesn't change by at least this amount when running with no error, stop
     #Get the matrix of the linear terms
@@ -547,9 +546,12 @@ function boundingIntervalLinearSystem(Ms, errors, finalStep)
     a_orig = a0
     b_orig = b0
     U,S,Vh = svd(A')
+    condNum = S[end]/S[1]
     Ainv = ((type(1) ./ S).*Vh')' * (U')
     center = -Ainv*consts'
-    wellConditioned = S[1] > 0 && S[end]/S[1] > 1e-10
+    wellConditioned = S[1] > 0 && condNum > 1e-10
+    machEps = type(2)^-(precision-1)
+    widthToAdd = max(condNum,2)*machEps
     for i = 0:1
         #Now do the linear solve check
         #We use the matrix inverse to find the width, so might as well use it both spots. Should be fine as dim is small.
