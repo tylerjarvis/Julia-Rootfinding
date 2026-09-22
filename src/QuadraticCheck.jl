@@ -1,7 +1,11 @@
 using IterTools
+# quadraticCheckND uses diagind. Without this the function throws UndefVarError whenever
+# QuadraticCheck.jl is loaded on its own, and works only when something else in the
+# session has already brought LinearAlgebra into scope.
+using LinearAlgebra
 
+"""Returns Julia indicies of fixed vars"""
 function get_fixed_vars(dim)
-    " Returns Julia indicies of fixed vars "
     if dim < 2
         return []
     end
@@ -33,7 +37,7 @@ function quadraticCheck2D(test_coeff,tol)
         c[6] = test_coeff[3,1]
     end
 
-    other_sum = sum(abs.(test_coeff)) - sum(abs.(c)) + tol
+    other_sum = sum(abs, test_coeff) - sum(abs.(c)) + tol
     k0 = c[1]-c[4]-c[6]
     k3 = 2*c[4]
     k5 = 2*c[6]
@@ -148,27 +152,27 @@ function quadraticCheck2D(test_coeff,tol)
     return true
 end
 
+"""One of subinterval_checks
+
+Finds the min of the absolute value of the quadratic part, and compares to the sum of the
+rest of the terms.  There can't be a root if min(extreme_values) > other_sum	or if
+max(extreme_values) < -other_sum. We can short circuit and finish
+faster as soon as we find one value that is < other_sum and one value that > -other_sum.
+
+Parameters
+----------
+test_coeff : array
+    The coefficient matrix of the polynomial to check
+tol: float
+    The bound of the sup norm error of the chebyshev approximation.
+
+Returns
+-------
+mask : list
+    A list of the results of each interval. false if the function is guarenteed to never be zero
+    in the unit box, true otherwise
+"""
 function quadraticCheck3D(test_coeff,tol)
-    """One of subinterval_checks
-
-    Finds the min of the absolute value of the quadratic part, and compares to the sum of the
-    rest of the terms.  There can't be a root if min(extreme_values) > other_sum	or if
-    max(extreme_values) < -other_sum. We can short circuit and finish
-    faster as soon as we find one value that is < other_sum and one value that > -other_sum.
-
-    Parameters
-    ----------
-    test_coeff : array
-        The coefficient matrix of the polynomial to check
-    tol: float
-        The bound of the sup norm error of the chebyshev approximation.
-
-    Returns
-    -------
-    mask : list
-        A list of the results of each interval. false if the function is guarenteed to never be zero
-        in the unit box, true otherwise
-    """
     if ndims(test_coeff) != 3
         return false
     end
@@ -206,7 +210,7 @@ function quadraticCheck3D(test_coeff,tol)
     end
 
     #The sum of the absolute values of everything else
-    other_sum = sum(abs.(test_coeff)) - sum(abs.(c)) + tol
+    other_sum = sum(abs, test_coeff) - sum(abs.(c)) + tol
 
     #function for evaluating c0 + c1x + c2y +c3z + c4xy + c5xz + c6yz + c7T_2(x) + c8T_2(y) + c9T_2(z)
     # Use the Horner form because it is much faster, also do any repeated computatons in advance
@@ -549,25 +553,25 @@ function quadraticCheck3D(test_coeff,tol)
 
 end
 
+"""One of subinterval_checks
+
+Finds the min of the absolute value of the quadratic part, and compares to the sum of the
+rest of the terms. There can't be a root if min(extreme_values) > other_sum	or if
+max(extreme_values) < -other_sum. We can short circuit and finish
+faster as soon as we find one value that is < other_sum and one value that > -other_sum.
+
+Parameters
+----------
+test_coeff_in : numpy array
+    The coefficient matrix of the polynomial to check
+tol: float
+    The bound of the sup norm error of the chebyshev approximation.
+
+Returns
+-------
+True if there is guaranteed to be no root in the interval, False otherwise
+"""
 function quadraticCheckND(test_coeff, tol)
-    """One of subinterval_checks
-
-    Finds the min of the absolute value of the quadratic part, and compares to the sum of the
-    rest of the terms. There can't be a root if min(extreme_values) > other_sum	or if
-    max(extreme_values) < -other_sum. We can short circuit and finish
-    faster as soon as we find one value that is < other_sum and one value that > -other_sum.
-
-    Parameters
-    ----------
-    test_coeff_in : numpy array
-        The coefficient matrix of the polynomial to check
-    tol: float
-        The bound of the sup norm error of the chebyshev approximation.
-
-    Returns
-    -------
-    True if there is guaranteed to be no root in the interval, False otherwise
-    """
     #get the dimension and make sure the coeff tensor has all the right
     # quadratic coeff spots, set to zero if necessary
     dim = ndims(test_coeff)
@@ -622,8 +626,8 @@ function quadraticCheckND(test_coeff, tol)
     #create a poly object for evals
     k0 = const1 - sum(pure_quad_coeff)
 
+    """fast evaluation of quadratic chebyshev polynomials using horner's algorithm"""
     function eval_func(point)
-        "fast evaluation of quadratic chebyshev polynomials using horner's algorithm"
         _sum = k0
         for i in 1:dim
             coord = point[i]
@@ -633,7 +637,7 @@ function quadraticCheckND(test_coeff, tol)
     end
 
     #The sum of the absolute values of everything else
-    other_sum = sum(abs.(test_coeff)) .+ tol
+    other_sum = sum(abs, test_coeff) .+ tol
 
     #iterator for sides
     fixed_vars = get_fixed_vars(dim)

@@ -1,8 +1,29 @@
-include("../../Julia-Rootfinding/src/StructsWithTheirFunctions/TrackedInterval.jl")
+# TrackedInterval.jl does not stand alone: getFinalInterval calls twoProd, which lives in
+# ChebyshevSubdivisionSolver.jl. Including the solver pulls in TrackedInterval.jl itself
+# (and SolverOptions.jl and QuadraticCheck.jl) transitively, so this covers both.
+# These were previously pulled in as a side effect of including ChebyshevSubdivisionSolver.jl,
+# which used to include its own dependencies. Those includes now live in YRoots.jl, so a test
+# that loads a source file directly has to name what that file needs.
+include(joinpath(@__DIR__, "..", "src", "StructsWithTheirFunctions", "SolverOptions.jl"))
+include(joinpath(@__DIR__, "..", "src", "StructsWithTheirFunctions", "TrackedInterval.jl"))
+include(joinpath(@__DIR__, "..", "src", "QuadraticCheck.jl"))
+include(joinpath(@__DIR__, "..", "src", "ChebyshevSubdivisionSolver.jl"))
 using Test
 
+# TrackedInterval.jl reads two globals that solve() normally sets on the way in
+# (CombinedSolver.jl sets `type` and `precision` from its `roundoff` argument). Nothing
+# in this file goes through solve(), so they are set here. Without them the constructor
+# throws UndefVarError on `type` at TrackedInterval.jl:53 and every test in this file
+# errors -- which is what happened whenever this suite ran before
+# ChebyshevSubdivisionSolverTest.jl, the only other file that sets them.
+function setupTrackedIntervalGlobals()
+    global type = Float64
+    global precision = 53
+end
+
 function test_all_TrackedInterval()
-    println("All tests in TrackedIntervalTest.jl\tbegin...")
+    @testset "All tests in TrackedIntervalTest.jl" begin
+        setupTrackedIntervalGlobals()
         test_copyInterval()
         test_addTransform()
         test_getIntervalForCombining()
@@ -12,10 +33,7 @@ function test_all_TrackedInterval()
         test_contains()
         test_overlapsWith()
         test_startFinalStep()
-        test_getFinalInterval()
-        test_getFinalPoint()
-        test_overlapsWith()
-        test_startFinalStep()
+    end
 end
 
 function test_copyInterval()
@@ -220,7 +238,52 @@ function test_getFinalPoint()
 end
 
 function test_contains()
-    @test_skip "Test not implemented yet"
+    @testset "contains unit tests" begin
+        # x in [-1,1], y in [-2,2]
+        tInterval_1 = TrackedInterval([-1.;1.;;-2.;2.])
+
+        # interior and the exact corners, which are inside a closed interval
+        @test contains(tInterval_1, [0.0, 0.0])
+        @test contains(tInterval_1, [-1.0, -2.0])
+        @test contains(tInterval_1, [1.0, 2.0])
+        @test contains(tInterval_1, [-1.0, 2.0])
+        @test contains(tInterval_1, [0.5, -1.75])
+
+        # outside in one dimension only, in each dimension and each direction. These are
+        # the cases that a lexicographic comparison gets wrong: it stops at the first
+        # coordinate that differs, so a point well inside on x was reported as contained
+        # however far outside it was on y.
+        @test contains(tInterval_1, [0.0, 5.0]) == false
+        @test contains(tInterval_1, [0.0, -5.0]) == false
+        @test contains(tInterval_1, [0.5, -9.0]) == false
+        @test contains(tInterval_1, [2.0, 0.0]) == false
+        @test contains(tInterval_1, [-2.0, 0.0]) == false
+
+        # just outside, on each face
+        @test contains(tInterval_1, [1.0 + 1e-12, 0.0]) == false
+        @test contains(tInterval_1, [0.0, -2.0 - 1e-12]) == false
+
+        # outside in every dimension at once
+        @test contains(tInterval_1, [7.0, 7.0]) == false
+
+        # contains reads the current interval, so it follows the interval as it moves
+        tInterval_2 = TrackedInterval([-1.;1.;;-1.;1.])
+        @test contains(tInterval_2, [0.9, 0.9])
+        tInterval_2.interval = [-1. -1.; 0. 0.]
+        @test contains(tInterval_2, [0.9, 0.9]) == false
+        @test contains(tInterval_2, [-0.5, -0.5])
+
+        # one dimension, and a degenerate interval that is a single point
+        tInterval_3 = TrackedInterval([-3.;4.;;])
+        @test contains(tInterval_3, [0.0])
+        @test contains(tInterval_3, [-3.0])
+        @test contains(tInterval_3, [4.0])
+        @test contains(tInterval_3, [4.5]) == false
+
+        tInterval_4 = TrackedInterval([2.;2.;;5.;5.])
+        @test contains(tInterval_4, [2.0, 5.0])
+        @test contains(tInterval_4, [2.0, 5.1]) == false
+    end
 end
 
 function test_overlapsWith()
